@@ -11,11 +11,13 @@ void main() {
                 Color(0xFF16171A),
                 Color(0xFF33FCFF),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
           child: const Center(
             child: Text(
-              'Sup Dawg',
+              'Welcome to The Future',
               style: TextStyle(color: Colors.white),
             ),
           ),
