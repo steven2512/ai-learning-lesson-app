@@ -1,8 +1,10 @@
+import 'package:adv_basics/question_screen.dart';
 import 'package:flutter/material.dart';
 
 final backgroundImage = Image.asset(
   'assets/images/quiz-logo.png',
   width: 250,
+  color: const Color.fromARGB(200, 255, 255, 255),
 );
 final color1 = Colors.purple;
 final mainMessage = Text(
@@ -21,6 +23,8 @@ class MainTheme extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.purple, Colors.blue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
       child: Center(
@@ -31,11 +35,16 @@ class MainTheme extends StatelessWidget {
             mediumBox,
             mainMessage,
             smallBox,
-            ElevatedButton(
-              onPressed: () {},
-              child: Text(
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(QuestionScreen()),
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+              ),
+              icon: Icon(Icons.arrow_right_alt),
+              label: Text(
                 'Start Quiz',
-                style: TextStyle(color: Colors.black),
               ),
             ),
             SizedBox(height: 200),
