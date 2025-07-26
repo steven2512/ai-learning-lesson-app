@@ -1,34 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:app/basicTextStyle.dart';
+
+const startAlignment = Alignment.topLeft;
+const endAlignment = Alignment.bottomRight;
 
 class GradientContainer extends StatelessWidget {
-  const GradientContainer({super.key});
+  const GradientContainer(this.colors, {super.key});
+
+  final List<Color> colors;
 
   @override
   Widget build(BuildContext buildContext) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFEFF4FA), // Top
-            Color.fromARGB(
-              255,
-              243,
-              248,
-              255,
-            ), // Slightly deeper blue for bottom
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: colors,
+          begin: startAlignment,
+          end: endAlignment,
         ),
       ),
       child: const Center(
-        child: Text(
-          'Welcome to The Future',
-          style: TextStyle(
-            color: Color(0xFF1F2933),
-            fontSize: 28,
-          ),
-        ),
+        child: BasicTextStyle('Welcome to The Future'),
       ),
     );
   }
