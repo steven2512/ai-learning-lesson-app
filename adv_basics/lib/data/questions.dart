@@ -19,11 +19,14 @@ const List<String> a1 = [
 ];
 
 //Q2
+// Q2
 const String q2 =
-    '2. Which is smarter: a computer that remembers everything, or a computer that learns from mistakes?';
+    '2. Which grows faster: a machine that memorizes facts or a machine that learns rules?';
 const List<String> a2 = [
-  'A. Remembers everything',
-  'B. Learns from mistakes',
+  'A. The fact-memorizing machine',
+  'B. The rule-learning machine',
+  'C. Both grow the same',
+  'D. Neither grows at all',
 ];
 
 //Q3

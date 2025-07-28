@@ -8,7 +8,7 @@ final backgroundImage = Image.asset(
 );
 final color1 = Colors.purple;
 final mainMessage = Text(
-  'Learn FLutter the fun way!',
+  'Learn AI the fun way!',
   style: TextStyle(color: Colors.white, fontSize: 25),
 );
 
@@ -34,7 +34,7 @@ class StartScreen extends StatelessWidget {
             ),
             icon: Icon(Icons.arrow_right_alt),
             label: Text(
-              'Start Quiz',
+              'Start Journey',
             ),
           ),
           SizedBox(height: 200),
