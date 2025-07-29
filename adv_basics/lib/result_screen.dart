@@ -35,24 +35,28 @@ class ResultScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'You answerd ${userAnswers.fold(0, (acc, cur) => cur == questions[acc].answers[0] ? acc + 1 : acc)} out of ${questions.length} questions correctly!',
+              'You answered ${userAnswers.fold(0, (acc, cur) => cur == questions[acc].answers[0] ? acc + 1 : acc)} out of ${questions.length} questions correctly!',
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
-                fontSize: 20,
+                fontSize: 21,
+                height: 1.2,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
+            ),
+            SizedBox(
+              height: 20,
             ),
             Text(
               'Lessons 1 Review',
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+                fontSize: 25,
+                fontWeight: FontWeight.w900,
                 color: const Color.fromARGB(255, 255, 230, 0),
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 2),
             QuestionSummary(summary: getSummary()),
             SizedBox(height: 30),
             ElevatedButton(
