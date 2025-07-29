@@ -5,7 +5,9 @@ import 'package:adv_basics/data/questions.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class QuestionScreen extends StatefulWidget {
-  const QuestionScreen({super.key});
+  final void Function(String answer) storeAnswer;
+
+  const QuestionScreen({super.key, required this.storeAnswer});
 
   @override
   State<QuestionScreen> createState() {
@@ -16,7 +18,9 @@ class QuestionScreen extends StatefulWidget {
 class _QuestionScreenState extends State<QuestionScreen> {
   var currentQuestionIndex = 0;
 
-  void switchQuestion() {
+  void switchQuestion(String userAnswer) {
+    //store User's Answer when move on to next question
+    widget.storeAnswer(userAnswer);
     setState(() {
       currentQuestionIndex++;
     });
@@ -61,8 +65,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
               (item) => AnswerButton(
                 text: item,
                 onTap: () {
-                  switchQuestion();
-                }, // <--- must explicitly name it
+                  switchQuestion(item);
+                },
               ),
             ),
           ],

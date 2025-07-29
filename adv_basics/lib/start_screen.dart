@@ -1,5 +1,6 @@
 import 'package:adv_basics/question_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final backgroundImage = Image.asset(
   'assets/images/quiz-logo.png',
@@ -9,7 +10,11 @@ final backgroundImage = Image.asset(
 final color1 = Colors.purple;
 final mainMessage = Text(
   'Learn AI the fun way!',
-  style: TextStyle(color: Colors.white, fontSize: 25),
+  style: GoogleFonts.lato(
+    color: Colors.white,
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+  ),
 );
 
 class StartScreen extends StatelessWidget {
@@ -23,18 +28,24 @@ class StartScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          backgroundImage,
           SizedBox(height: 50),
+          backgroundImage,
+          SizedBox(height: 30),
           mainMessage,
-          SizedBox(height: 20),
+          SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: startQuiz,
             style: ElevatedButton.styleFrom(
+              minimumSize: const Size(100, 40),
               foregroundColor: Colors.black,
             ),
             icon: Icon(Icons.arrow_right_alt),
             label: Text(
               'Start Journey',
+              style: GoogleFonts.lato(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           SizedBox(height: 200),
