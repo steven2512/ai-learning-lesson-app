@@ -34,6 +34,13 @@ class QuestionSummary extends StatelessWidget {
 
   final List<Map<String, Object>> summary;
 
+  Color getCorrectColor(int index) {
+    return ((summary[index]['correct'] as String) ==
+            (summary[index]['user_answer'] as String))
+        ? Color.fromARGB(255, 51, 255, 0)
+        : Color.fromARGB(255, 211, 202, 202);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -52,7 +59,7 @@ class QuestionSummary extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color.fromARGB(255, 98, 255, 106),
+                    color: getCorrectColor(x['index'] as int),
                   ),
                   child: Text(
                     ((x['index'] as int) + 1).toString(),
