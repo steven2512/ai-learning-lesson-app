@@ -1,3 +1,4 @@
+import 'package:adv_basics/question_screen.dart';
 import 'package:adv_basics/questions_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,7 +6,12 @@ import 'package:adv_basics/data/questions.dart';
 
 class ResultScreen extends StatelessWidget {
   final List<String> userAnswers;
-  const ResultScreen({required this.userAnswers, super.key});
+  const ResultScreen({
+    required this.userAnswers,
+    required this.restartQuiz,
+    super.key,
+  });
+  final void Function() restartQuiz;
 
   List<Map<String, Object>> getSummary() {
     final List<Map<String, Object>> summary = [];
@@ -29,7 +35,7 @@ class ResultScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'You answerd X out of Y questions correctly!',
+              'You answerd ${userAnswers.fold(0, (acc, cur) => cur == questions[acc].answers[0] ? acc + 1 : acc)} out of ${questions.length} questions correctly!',
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                 fontSize: 20,
@@ -37,8 +43,6 @@ class ResultScreen extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            QuestionSummary(summary: getSummary()),
-            SizedBox(height: 10),
             Text(
               'Lessons 1 Review',
               textAlign: TextAlign.center,
@@ -48,9 +52,13 @@ class ResultScreen extends StatelessWidget {
                 color: const Color.fromARGB(255, 255, 230, 0),
               ),
             ),
+            SizedBox(height: 10),
+            QuestionSummary(summary: getSummary()),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                restartQuiz();
+              },
 
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
