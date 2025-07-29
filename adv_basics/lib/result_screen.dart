@@ -35,7 +35,7 @@ class ResultScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'You answered ${userAnswers.fold(0, (acc, cur) => cur == questions[acc].answers[0] ? acc + 1 : acc)} out of ${questions.length} questions correctly!',
+              'You answered ${userAnswers.asMap().entries.fold(0, (acc, entry) => entry.value == questions[entry.key].answers[0] ? acc + 1 : acc)} out of ${questions.length} questions correctly!',
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                 fontSize: 21,

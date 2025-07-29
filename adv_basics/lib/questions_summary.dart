@@ -45,49 +45,64 @@ class QuestionSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 300,
-      child: SingleChildScrollView(
-        child: Column(
-          spacing: 3,
-          children: summary.map((x) {
-            return Row(
-              children: [
-                Container(
-                  margin: EdgeInsetsGeometry.only(bottom: 50, right: 15),
-                  padding: EdgeInsetsGeometry.symmetric(
-                    vertical: 10,
-                    horizontal: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: getCorrectColor(x['index'] as int),
-                  ),
-                  child: Text(
-                    ((x['index'] as int) + 1).toString(),
-                    style: indexStyle,
-                  ),
+      child: Scrollbar(
+        thumbVisibility: false, // set false to auto-hide like iOS
+        trackVisibility: false,
+        thickness: 3,
+        radius: const Radius.circular(8),
+        interactive: true,
+        child: SingleChildScrollView(
+          //Main Column
+          child: Column(
+            spacing: 3,
+            children: summary.map((x) {
+              //Main rows within the Big column
+              return Container(
+                padding: EdgeInsetsGeometry.only(right: 30),
+                child: Row(
+                  children: [
+                    Container(
+                      margin: EdgeInsetsGeometry.only(bottom: 50, right: 15),
+                      padding: EdgeInsetsGeometry.symmetric(
+                        vertical: 10,
+                        horizontal: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: getCorrectColor(x['index'] as int),
+                      ),
+                      child: Text(
+                        ((x['index'] as int) + 1).toString(),
+                        style: indexStyle,
+                      ),
+                    ),
+                    //Column within a Row within a Column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        //Question + user answer + correct answer
+                        children: [
+                          Text(
+                            (x['question'] as String),
+                            style: questionStyle,
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            (x['user_answer'] as String),
+                            style: userAnswerStyle,
+                          ),
+                          Text(
+                            (x['correct'] as String),
+                            style: correctAnswerStyle,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(
-                        (x['question'] as String),
-                        style: questionStyle,
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        (x['user_answer'] as String),
-                        style: userAnswerStyle,
-                      ),
-                      Text(
-                        (x['correct'] as String),
-                        style: correctAnswerStyle,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
