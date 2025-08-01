@@ -10,12 +10,11 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 class MyGame extends FlameGame with PanDetector {
-  ///MainGame
   late Background background;
   late Robot robot;
   late Obstacle obstacle1;
   late Ground ground;
-  late int failCount = 0;
+  int failCount = 0;
   late TextComponent failText;
   bool collied = false;
   Vector2? dragStart;
@@ -23,40 +22,28 @@ class MyGame extends FlameGame with PanDetector {
 
   @override
   FutureOr<void> onLoad() async {
-    //main background
-    background = Background(
-      backgroundSize: Vector2(size.x, size.y),
-    );
+    background = Background(backgroundSize: Vector2(size.x, size.y));
+    ground = Ground(dimensions: Vector2(size.x, size.y));
 
-    //Ground
-    ground = Ground(
-      dimensions: Vector2(
-        size.x,
-        size.y,
-      ),
-    );
-
-    //robot (main char)
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
     );
 
-    //obstacle
     obstacle1 = Obstacle(
       initialPosition: Vector2(size.x, size.y / 3),
     );
 
-    //Fail count - Text
     failText = TextComponent(
       text: "Fail Count: $failCount",
       position: Vector2(size.x / 2 - 60, size.y / 4.5),
-
       textRenderer: TextPaint(
-        style: TextStyle(color: Colors.white, fontSize: 24),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+        ),
       ),
     );
 
-    //add Objects to screen
     add(background);
     add(ground);
     add(robot);
@@ -64,7 +51,6 @@ class MyGame extends FlameGame with PanDetector {
     add(failText);
   }
 
-  //Increment Fail Attempts when Collison happens
   void incrementFail() {
     failCount++;
     failText.text = "Fail Count: $failCount";
@@ -74,14 +60,14 @@ class MyGame extends FlameGame with PanDetector {
   void update(double dt) {
     super.update(dt);
 
-    //Collison logic
+    // Simple collision logic
     if (robot.toRect().overlaps(obstacle1.toRect())) {
       collied = true;
-      // incrementFail();
       if (robot.isJumping) {
         robot.trip();
       }
     }
+
     if (collied && !robot.isTriping) {
       incrementFail();
       pauseEngine();
@@ -89,9 +75,6 @@ class MyGame extends FlameGame with PanDetector {
       incrementFail();
       pauseEngine();
     }
-    // robot.position.setFrom(robot.initialPosition);
-    // obstacle1.position.setFrom(obstacle1.initialPosition);
-    // obstacle1.velocity.x = 0;
   }
 
   @override
@@ -110,11 +93,14 @@ class MyGame extends FlameGame with PanDetector {
     if (dragStart == null || dragLast == null) return;
     final delta = dragLast! - dragStart!;
 
+    // Swipe up = jump
     if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
-      // Swipe UP
-      robot.jump();
-    } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
-      // Swipe DOWN
+      if (!robot.isDucking) {
+        robot.jump();
+      }
+    }
+    // Swipe down = duck
+    else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
       robot.duck();
     }
 
