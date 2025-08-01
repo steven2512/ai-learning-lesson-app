@@ -16,6 +16,7 @@ class MyGame extends FlameGame with PanDetector {
   late Ground ground;
   int failCount = 0;
   late TextComponent failText;
+
   bool collied = false;
   Vector2? dragStart;
   Vector2? dragLast;
@@ -25,13 +26,8 @@ class MyGame extends FlameGame with PanDetector {
     background = Background(backgroundSize: Vector2(size.x, size.y));
     ground = Ground(dimensions: Vector2(size.x, size.y));
 
-    robot = Robot(
-      initialPosition: Vector2(size.x / 2, size.y / 2),
-    );
-
-    obstacle1 = Obstacle(
-      initialPosition: Vector2(size.x, size.y / 3),
-    );
+    robot = Robot(initialPosition: Vector2(size.x / 2, size.y / 2));
+    obstacle1 = Obstacle(initialPosition: Vector2(size.x, size.y / 3));
 
     failText = TextComponent(
       text: "Fail Count: $failCount",
@@ -60,7 +56,7 @@ class MyGame extends FlameGame with PanDetector {
   void update(double dt) {
     super.update(dt);
 
-    // Simple collision logic
+    // Simple collision detection
     if (robot.toRect().overlaps(obstacle1.toRect())) {
       collied = true;
       if (robot.isJumping) {
@@ -68,6 +64,7 @@ class MyGame extends FlameGame with PanDetector {
       }
     }
 
+    // Handle fail conditions
     if (collied && !robot.isTriping) {
       incrementFail();
       pauseEngine();
@@ -93,7 +90,7 @@ class MyGame extends FlameGame with PanDetector {
     if (dragStart == null || dragLast == null) return;
     final delta = dragLast! - dragStart!;
 
-    // Swipe up = jump
+    // Swipe up = jump (only if not ducking)
     if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
       if (!robot.isDucking) {
         robot.jump();
