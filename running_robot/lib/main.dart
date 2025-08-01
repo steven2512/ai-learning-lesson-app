@@ -35,7 +35,7 @@ class EmptyGame extends FlameGame with TapDetector {
     //Fail count - Text
     failText = TextComponent(
       text: "Fail Count: $failCount",
-      position: Vector2(size.x / 2 - 60, size.y / 3),
+      position: Vector2(size.x / 2 - 60, size.y / 4.5),
 
       textRenderer: TextPaint(
         style: TextStyle(color: Colors.white, fontSize: 24),
@@ -71,7 +71,7 @@ class EmptyGame extends FlameGame with TapDetector {
   }
 }
 
-class Robot extends RectangleComponent {
+class Robot extends SpriteComponent {
   //Later on velocity changes when Flame calls update -> position of Robot changes
   Vector2 velocity = Vector2.zero();
   Vector2 initialPosition;
@@ -86,6 +86,12 @@ class Robot extends RectangleComponent {
       ) {
     position = initialPosition.clone();
   }
+
+  @override
+  FutureOr<void> onLoad() async {
+    sprite = await Sprite.load('robot_yellowDamage1.png');
+  }
+
   @override
   Rect toRect() {
     // TODO: implement toRect
