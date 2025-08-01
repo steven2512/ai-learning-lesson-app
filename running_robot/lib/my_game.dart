@@ -24,7 +24,7 @@ class MyGame extends FlameGame with TapDetector {
 
     //robot (main char)
     robot = Robot(
-      initialPosition: Vector2(size.x / 2 - 50, size.y / 2 - 50),
+      initialPosition: Vector2(size.x / 2, size.y / 2),
     );
 
     //obstacle
@@ -62,13 +62,14 @@ class MyGame extends FlameGame with TapDetector {
     //Collison logic
     if (robot.toRect().overlaps(obstacle1.toRect())) {
       incrementFail();
-      robot.fall();
-
+      if (robot.isJumping) {
+        robot.trip();
+      }
       // robot.position.setFrom(robot.initialPosition);
       // obstacle1.position.setFrom(obstacle1.initialPosition);
       // obstacle1.velocity.x = 0;
 
-      if (failCount == 3) {
+      if (failCount == 30) {
         pauseEngine();
         failText.text = "Game Over!";
       }
@@ -77,7 +78,6 @@ class MyGame extends FlameGame with TapDetector {
 
   @override
   void onTap() {
-    robot.velocity.y = -500;
-    robot.isOnGround = false;
+    robot.jump();
   }
 }
