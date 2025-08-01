@@ -9,12 +9,14 @@ void main() {
     //As soon as GameWidget obj is created, Flame will repeatedly runs game.update() 60 times per minute
     //So everything that is added on Load will constantly be updated
     GameWidget(
-      game: EmptyGame(),
+      game: MyGame(),
     ),
   );
 }
 
-class EmptyGame extends FlameGame with TapDetector {
+class MyGame extends FlameGame with TapDetector {
+  ///MainGame
+  late Background background;
   late Robot robot;
   late Obstacle obstacle1;
   late int failCount = 0;
@@ -22,6 +24,11 @@ class EmptyGame extends FlameGame with TapDetector {
 
   @override
   FutureOr<void> onLoad() async {
+    //main background
+    background = Background(
+      backgroundSize: Vector2(size.x, size.y),
+    );
+
     //robot (main char)
     robot = Robot(
       initialPosition: Vector2(size.x / 2 - 50, size.y / 2 - 50),
@@ -43,11 +50,13 @@ class EmptyGame extends FlameGame with TapDetector {
     );
 
     //add Objects to screen
+    add(background);
     add(robot);
     add(obstacle1);
     add(failText);
   }
 
+  //Increment Fail Attempts when Collison happens
   void incrementFail() {
     failCount++;
     failText.text = "Fail Count: $failCount";
@@ -56,11 +65,18 @@ class EmptyGame extends FlameGame with TapDetector {
   @override
   void update(double dt) {
     super.update(dt);
+
+    //Collison logic
     if (robot.toRect().overlaps(obstacle1.toRect())) {
       incrementFail();
       robot.position.setFrom(robot.initialPosition);
       obstacle1.position.setFrom(obstacle1.initialPosition);
       // obstacle1.velocity.x = 0;
+
+      if (failCount == 3) {
+        pauseEngine();
+        failText.text = "Game Over!";
+      }
     }
   }
 
@@ -71,7 +87,34 @@ class EmptyGame extends FlameGame with TapDetector {
   }
 }
 
+class Background extends RectangleComponent {
+  Vector2 backgroundSize;
+
+  Background({required this.backgroundSize})
+    : super(
+        size: backgroundSize,
+        paint: Paint()
+          ..shader =
+              LinearGradient(
+                colors: [
+                  Color.fromARGB(255, 0, 114, 214),
+                  Color.fromARGB(255, 46, 46, 255),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(
+                Rect.fromLTWH(
+                  0,
+                  0,
+                  backgroundSize.x,
+                  backgroundSize.y,
+                ),
+              ),
+      );
+}
+
 class Robot extends SpriteComponent {
+  ///Represents a robot object (character)
   //Later on velocity changes when Flame calls update -> position of Robot changes
   Vector2 velocity = Vector2.zero();
   Vector2 initialPosition;
@@ -94,7 +137,6 @@ class Robot extends SpriteComponent {
 
   @override
   Rect toRect() {
-    // TODO: implement toRect
     return super.toRect();
   }
 
@@ -121,8 +163,9 @@ class Robot extends SpriteComponent {
 }
 
 class Obstacle extends RectangleComponent {
+  ///Represents an obstacle that might interact with main Object
   Vector2 initialPosition;
-  Vector2 velocity = Vector2(0, 0);
+  Vector2 velocity = Vector2(-200, 0);
   bool isOnGround = true;
 
   Obstacle({required this.initialPosition})
