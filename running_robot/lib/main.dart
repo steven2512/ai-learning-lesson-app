@@ -17,27 +17,56 @@ void main() {
 class EmptyGame extends FlameGame with TapDetector {
   late Robot robot;
   late Obstacle obstacle1;
+  late int failCount = 0;
+  late TextComponent failText;
 
   @override
   FutureOr<void> onLoad() async {
-    //square object
+    //robot (main char)
     robot = Robot(
       initialPosition: Vector2(size.x / 2 - 50, size.y / 2 - 50),
     );
 
+    //obstacle
     obstacle1 = Obstacle(
       initialPosition: Vector2(size.x, size.y / 2),
     );
-    //change pos of object to middle of screen
+
+    //Fail count - Text
+    failText = TextComponent(
+      text: "Fail Count: $failCount",
+      position: Vector2(size.x / 2 - 60, size.y / 3),
+
+      textRenderer: TextPaint(
+        style: TextStyle(color: Colors.white, fontSize: 24),
+      ),
+    );
 
     //add Objects to screen
     add(robot);
     add(obstacle1);
+    add(failText);
+  }
+
+  void incrementFail() {
+    failCount++;
+    failText.text = "Fail Count: $failCount";
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (robot.toRect().overlaps(obstacle1.toRect())) {
+      incrementFail();
+      robot.position.setFrom(robot.initialPosition);
+      obstacle1.position.setFrom(obstacle1.initialPosition);
+      // obstacle1.velocity.x = 0;
+    }
   }
 
   @override
   void onTap() {
-    robot.velocity.y = -400;
+    robot.velocity.y = -500;
     robot.isOnGround = false;
   }
 }
@@ -56,6 +85,11 @@ class Robot extends RectangleComponent {
         paint: Paint()..color = Colors.blue,
       ) {
     position = initialPosition.clone();
+  }
+  @override
+  Rect toRect() {
+    // TODO: implement toRect
+    return super.toRect();
   }
 
   //Called 60 times per second
@@ -82,7 +116,7 @@ class Robot extends RectangleComponent {
 
 class Obstacle extends RectangleComponent {
   Vector2 initialPosition;
-  Vector2 velocity = Vector2(-200, 0);
+  Vector2 velocity = Vector2(0, 0);
   bool isOnGround = true;
 
   Obstacle({required this.initialPosition})
