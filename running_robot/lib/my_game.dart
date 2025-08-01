@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flame/events.dart';
 import 'package:running_robot/background.dart';
 import 'package:running_robot/ground.dart';
 import 'package:running_robot/obstacle.dart';
@@ -8,7 +9,7 @@ import 'package:flame/input.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-class MyGame extends FlameGame with TapDetector {
+class MyGame extends FlameGame with PanDetector {
   ///MainGame
   late Background background;
   late Robot robot;
@@ -17,6 +18,8 @@ class MyGame extends FlameGame with TapDetector {
   late int failCount = 0;
   late TextComponent failText;
   bool collied = false;
+  Vector2? dragStart;
+  Vector2? dragLast;
 
   @override
   FutureOr<void> onLoad() async {
@@ -40,7 +43,7 @@ class MyGame extends FlameGame with TapDetector {
 
     //obstacle
     obstacle1 = Obstacle(
-      initialPosition: Vector2(size.x, size.y / 2),
+      initialPosition: Vector2(size.x, size.y / 3),
     );
 
     //Fail count - Text
@@ -92,7 +95,30 @@ class MyGame extends FlameGame with TapDetector {
   }
 
   @override
-  void onTap() {
-    robot.jump();
+  void onPanStart(DragStartInfo info) {
+    dragStart = info.eventPosition.global;
+    dragLast = dragStart;
+  }
+
+  @override
+  void onPanUpdate(DragUpdateInfo info) {
+    dragLast = info.eventPosition.global;
+  }
+
+  @override
+  void onPanEnd(DragEndInfo info) {
+    if (dragStart == null || dragLast == null) return;
+    final delta = dragLast! - dragStart!;
+
+    if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
+      // Swipe UP
+      robot.jump();
+    } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
+      // Swipe DOWN
+      robot.duck();
+    }
+
+    dragStart = null;
+    dragLast = null;
   }
 }
