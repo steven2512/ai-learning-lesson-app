@@ -44,11 +44,13 @@ class QuestionSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
+      //Forced to fit big content into SMALL space to use Scrollbar
       height: 300,
+      //Scrollbar
       child: Scrollbar(
         thumbVisibility: false, // set false to auto-hide like iOS
         trackVisibility: false,
-        thickness: 3,
+        thickness: 2.5,
         radius: const Radius.circular(8),
         interactive: true,
         child: SingleChildScrollView(
@@ -56,9 +58,10 @@ class QuestionSummary extends StatelessWidget {
           child: Column(
             spacing: 3,
             children: summary.map((x) {
-              //Main rows within the Big column
+              //Rows within the Main column
               return Container(
                 padding: EdgeInsetsGeometry.only(right: 30),
+                //Rows components
                 child: Row(
                   children: [
                     Container(
