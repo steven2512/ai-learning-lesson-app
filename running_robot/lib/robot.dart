@@ -3,17 +3,17 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class Robot extends SpriteComponent {
-  // Physics
+  ///Represents a robot object (character)
+  //Later on velocity changes when Flame calls update -> position of Robot changes
+  Vector2 velocity = Vector2.zero();
+  Vector2 initialPosition;
   final double gravity = 800;
-  final Vector2 velocity = Vector2.zero();
-  final Vector2 initialPosition;
-
-  // States
-  bool isTripping = false;
+  bool isTriping = false;
   bool isJumping = false;
   int extraFrames = 0;
   double angleChange = 0;
 
+  //Constructor
   Robot({required this.initialPosition})
     : super(
         size: Vector2.all(100),
@@ -23,85 +23,62 @@ class Robot extends SpriteComponent {
     position = initialPosition.clone();
   }
 
-  @override
-  FutureOr<void> onLoad() async {
-    sprite = await Sprite.load('robot_yellowDamage1.png');
-  }
-
   void reset() {
     isJumping = false;
-    isTripping = false;
-    angle = 0;
-    velocity.setZero();
+    isTriping = false;
     position.setFrom(initialPosition);
   }
 
   void trip() {
     isJumping = false;
-    isTripping = true;
-    angleChange = 5;
-    extraFrames = 30;
+    isTriping = true;
+    angleChange = 3;
+    extraFrames = 20;
   }
 
   void jump() {
-    if (!isJumping && !isTripping) {
-      velocity.y = -500;
-      isJumping = true;
-    }
+    velocity.y = -500;
+    isJumping = true;
   }
 
-  void handleGroundCollision() {
-    position.y = initialPosition.y;
-
-    if (isTripping) {
-      velocity.setZero();
-      angleChange = 0;
-      isTripping = false;
-    } else {
-      reset();
-    }
+  @override
+  FutureOr<void> onLoad() async {
+    sprite = await Sprite.load('robot_yellowDamage1.png');
   }
 
+  @override
+  Rect toRect() {
+    return super.toRect();
+  }
+
+  //Called 60 times per second
   @override
   void update(double dt) {
     super.update(dt);
 
-    // Gravity and movement
-    if (isJumping || isTripping) {
+    // Apply gravity when in air or tripping
+    if (isJumping || isTriping) {
       velocity.y += gravity * dt;
       position += velocity * dt;
     }
 
-    // Rotation while tripping
-    if (isTripping) {
+    if (isTriping) {
+      // Stronger spin
       angle += angleChange * dt;
-      angleChange *= 0.98;
+      angleChange *= 0.99; // slower decay
     }
 
-    // Ground check
-    final groundY = initialPosition.y;
-    final clearance = isTripping ? (size.length / 2 - size.y / 2) : 0;
+    // Ground collision (line respected at initialPosition.y)
+    if (position.y >= initialPosition.y) {
+      position.y = initialPosition.y;
 
-    if (position.y >= groundY - clearance) {
-      position.y = groundY - clearance;
-
-      if (isTripping) {
-        if (velocity.y.abs() > 200 && extraFrames > 0) {
-          // Bounce
-          velocity.y = -velocity.y * 0.5;
-          extraFrames--;
+      if (isTriping) {
+        // Pronounced bounce
+        if (velocity.y.abs() > 100) {
+          velocity.y = -velocity.y * 0.6; // stronger rebound
+          angleChange *= 0.9; // maintain spin
         } else {
-          // Slow stop without snapping upright
-          velocity.y = 0;
-          angleChange *= 0.9;
-          angle += angleChange * dt;
-
-          extraFrames--;
-          if (extraFrames <= -15) {
-            isTripping = false;
-            isJumping = false;
-            velocity.setZero();
-          }
+          reset();
         }
       } else {
         reset();

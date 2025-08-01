@@ -16,6 +16,7 @@ class MyGame extends FlameGame with TapDetector {
   late Ground ground;
   late int failCount = 0;
   late TextComponent failText;
+  bool collied = false;
 
   @override
   FutureOr<void> onLoad() async {
@@ -72,20 +73,22 @@ class MyGame extends FlameGame with TapDetector {
 
     //Collison logic
     if (robot.toRect().overlaps(obstacle1.toRect())) {
-      incrementFail();
+      collied = true;
+      // incrementFail();
       if (robot.isJumping) {
         robot.trip();
-        obstacle1.resetPosition();
-      }
-      // robot.position.setFrom(robot.initialPosition);
-      // obstacle1.position.setFrom(obstacle1.initialPosition);
-      // obstacle1.velocity.x = 0;
-
-      if (failCount == 130) {
-        pauseEngine();
-        failText.text = "Game Over!";
       }
     }
+    if (collied && !robot.isTriping) {
+      incrementFail();
+      pauseEngine();
+    } else if (collied && robot.isTriping && obstacle1.x <= -50) {
+      incrementFail();
+      pauseEngine();
+    }
+    // robot.position.setFrom(robot.initialPosition);
+    // obstacle1.position.setFrom(obstacle1.initialPosition);
+    // obstacle1.velocity.x = 0;
   }
 
   @override
