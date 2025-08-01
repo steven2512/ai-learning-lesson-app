@@ -4,26 +4,34 @@ import 'package:flutter/material.dart';
 
 class Robot extends PositionComponent {
   ///Represents a robot object (character)
-  //Later on velocity changes when Flame calls update -> position of Robot changes
-  Vector2 velocity = Vector2.zero();
-  Vector2 initialPosition;
-  final double gravity = 800;
-  bool isTriping = false;
-  bool isJumping = false;
-  int extraFrames = 0;
-  double angleChange = 0;
-  late SpriteComponent body;
-  late SpriteComponent leftTrack;
-  late SpriteComponent rightTrack;
+
+  // Physics and state fields
+  Vector2 velocity = Vector2.zero(); // Current velocity (x,y)
+  Vector2 initialPosition; // Where the robot starts (used to reset)
+  final double gravity = 800; // Downward acceleration
+
+  bool isTriping = false; // True when falling/spinning after tripping
+  bool isJumping = false; // True when in a jump
+  int extraFrames = 0; // Used during trip for extra spin time
+  double angleChange = 0; // How fast to spin when tripping
+
+  // Visual components
+  late SpriteComponent body; // Robot body sprite
+  late SpriteComponent leftTrack; // Left track sprite
+  late SpriteComponent rightTrack; // Right track sprite
+
+  // Ducking animation state
   bool isDucking = false;
   double duckTimer = 0.0;
-  final double duckDuration = 0.4; // total time (0.2 down + 0.2 up
-  double trackAnimationTimer = 0.0;
-  int trackFrame = 0;
-  late Sprite track1;
-  late Sprite track2;
+  final double duckDuration = 0.4; // Total time for duck down+up
 
-  //Constructor
+  // Track animation (flipbook) state
+  double trackAnimationTimer = 0.0; // Timer to switch frames
+  int trackFrame = 0; // 0 or 1: which frame is shown
+  late Sprite track1; // First track frame
+  late Sprite track2; // Second track frame
+
+  // Constructor: sets size, anchor and starting position
   Robot({required this.initialPosition})
     : super(
         size: Vector2.all(50),
@@ -34,39 +42,45 @@ class Robot extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    // Body
+    // Load track sprites for animation
     track1 = await Sprite.load('tracks_long1.png');
     track2 = await Sprite.load('tracks_long2.png');
+
+    // Load body sprite
     body = SpriteComponent()
       ..sprite = await Sprite.load('robot_yellowBody.png')
       ..anchor = Anchor.center
-      ..size = Vector2(100, 100); // make sure body is 100x100
+      ..size = Vector2(100, 90)
+      ..position = Vector2(20, 42); // make sure body is 100x100
 
-    // Tracks
+    // Create left track component
     leftTrack = SpriteComponent()
       ..sprite = await Sprite.load('tracks_long1.png')
       ..anchor = Anchor.center
-      ..size =
-          Vector2(70, 60) // make track visible
-      ..position = Vector2(-35, 43); // push far left and down a bit
+      ..size = Vector2(70, 60)
+      ..position = Vector2(-13, 84); // offset to the left and down
 
+    // Create right track component
     rightTrack = SpriteComponent()
       ..sprite = await Sprite.load('tracks_long1.png')
       ..anchor = Anchor.center
       ..size = Vector2(60, 60)
-      ..position = Vector2(45, 43); // push far right
+      ..position = Vector2(64, 84); // offset to the right and down
 
+    // Add them in order: right track (behind), body, left track (front)
     add(rightTrack);
     add(body);
     add(leftTrack);
   }
 
+  // Reset robot state to initial (used after landing)
   void reset() {
     isJumping = false;
     isTriping = false;
     position.setFrom(initialPosition);
   }
 
+  // Trigger trip state: spinning fall
   void trip() {
     isJumping = false;
     isTriping = true;
@@ -74,11 +88,13 @@ class Robot extends PositionComponent {
     extraFrames = 20;
   }
 
+  // Trigger jump: set vertical velocity upwards
   void jump() {
     velocity.y = -500;
     isJumping = true;
   }
 
+  // Trigger duck animation
   void duck() {
     if (isDucking) return;
     isDucking = true;
@@ -90,32 +106,32 @@ class Robot extends PositionComponent {
     return super.toRect();
   }
 
-  //Called 60 times per second
+  // Update called 60x per second
   @override
   void update(double dt) {
     super.update(dt);
 
-    // Apply gravity when in air or tripping
+    // Apply gravity and position change while jumping or tripping
     if (isJumping || isTriping) {
       velocity.y += gravity * dt;
       position += velocity * dt;
     }
 
+    // Handle tripping spin: increase angle
     if (isTriping) {
-      // Stronger spin
       angle += angleChange * dt;
-      angleChange *= 0.99; // slower decay
+      angleChange *= 0.99; // slow down spin over time
     }
 
-    // Ground collision (line respected at initialPosition.y)
+    // Ground collision: stop at initialPosition.y
     if (position.y >= initialPosition.y) {
       position.y = initialPosition.y;
 
+      // Bounce if tripping with high velocity, otherwise reset
       if (isTriping) {
-        // Pronounced bounce
         if (velocity.y.abs() > 100) {
-          velocity.y = -velocity.y * 0.6; // stronger rebound
-          angleChange *= 0.9; // maintain spin
+          velocity.y = -velocity.y * 0.6;
+          angleChange *= 0.9;
         } else {
           reset();
         }
@@ -123,38 +139,50 @@ class Robot extends PositionComponent {
         reset();
       }
     }
+
+    // Handle duck animation
     if (isDucking) {
       duckTimer -= dt;
 
-      // progress goes from 0 → 1 → 0
+      // progress goes 0 → 1 → 0
       double half = duckDuration / 2;
       double t;
       if (duckTimer > half) {
-        // going down (first half)
-        t = 1 - (duckTimer - half) / half; // 0 to 1
+        // Going down
+        t = 1 - (duckTimer - half) / half;
+        t = 1 - (1 - t) * (1 - t); // ease-out: quick start, slow finish
       } else {
-        // coming back up (second half)
-        t = duckTimer / half; // 1 back to 0
+        // Coming up
+        t = duckTimer / half;
+        t = t * t; // ease-in: slow start, quick finish
       }
 
-      // interpolate values:
-      // scaleY: 1 → 0.7
-      double scaleY = 1 - 0.3 * t;
-      double offsetY = 10 * t;
+      // Drop the whole robot (simulate suspension compression)
+      position.y = initialPosition.y + 8 * t; // 8px downward
 
+      // Slight squash on the body (subtle, mechanical)
+      double scaleY = 1 - 0.15 * t; // only 15% squish
       body.scale = Vector2(1.0, scaleY);
-      body.position.y = offsetY;
 
+      // Tilt the tracks outward for stability
+      leftTrack.angle = -0.05 * t; // ~3 degrees
+      rightTrack.angle = 0.05 * t;
+
+      // When duck is done, reset everything
       if (duckTimer <= 0) {
         isDucking = false;
+        position.y = initialPosition.y;
         body.scale = Vector2.all(1.0);
-        body.position.y = 0;
+        leftTrack.angle = 0;
+        rightTrack.angle = 0;
       }
     }
+
+    // Animate tracks/wheels when robot is on ground
+    //and not tripping/jumping
     if (!isTriping && !isJumping) {
       trackAnimationTimer += dt;
       if (trackAnimationTimer > 0.1) {
-        // change frame every 0.1 sec
         trackAnimationTimer = 0;
         trackFrame = (trackFrame + 1) % 2;
         final currentSprite = (trackFrame == 0) ? track1 : track2;

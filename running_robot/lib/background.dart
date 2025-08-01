@@ -12,8 +12,8 @@ class Background extends RectangleComponent {
           ..shader =
               LinearGradient(
                 colors: [
-                  Color.fromARGB(255, 0, 114, 214),
-                  Color.fromARGB(255, 46, 46, 255),
+                  Color.fromARGB(255, 0, 136, 255),
+                  Color.fromARGB(255, 73, 73, 255),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
