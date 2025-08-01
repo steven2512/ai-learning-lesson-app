@@ -3,17 +3,17 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class Robot extends SpriteComponent {
-  ///Represents a robot object (character)
-  //Later on velocity changes when Flame calls update -> position of Robot changes
-  Vector2 velocity = Vector2.zero();
-  Vector2 initialPosition;
+  // Physics
   final double gravity = 800;
-  final double resistance = -50;
-  bool isOnGround = true;
-  bool isTriping = false;
-  bool isJumping = false;
+  final Vector2 velocity = Vector2.zero();
+  final Vector2 initialPosition;
 
-  //Constructor
+  // States
+  bool isTripping = false;
+  bool isJumping = false;
+  int extraFrames = 0;
+  double angleChange = 0;
+
   Robot({required this.initialPosition})
     : super(
         size: Vector2.all(100),
@@ -23,53 +23,89 @@ class Robot extends SpriteComponent {
     position = initialPosition.clone();
   }
 
-  void resetPosition() {
-    position.setFrom(initialPosition);
-  }
-
-  void trip() {
-    isJumping = false;
-    isTriping = true;
-    velocity = Vector2.zero();
-  }
-
-  void jump() {
-    velocity.y = -500;
-    isJumping = true;
-  }
-
   @override
   FutureOr<void> onLoad() async {
     sprite = await Sprite.load('robot_yellowDamage1.png');
   }
 
-  @override
-  Rect toRect() {
-    return super.toRect();
+  void reset() {
+    isJumping = false;
+    isTripping = false;
+    angle = 0;
+    velocity.setZero();
+    position.setFrom(initialPosition);
   }
 
-  //Called 60 times per second
+  void trip() {
+    isJumping = false;
+    isTripping = true;
+    angleChange = 5;
+    extraFrames = 30;
+  }
+
+  void jump() {
+    if (!isJumping && !isTripping) {
+      velocity.y = -500;
+      isJumping = true;
+    }
+  }
+
+  void handleGroundCollision() {
+    position.y = initialPosition.y;
+
+    if (isTripping) {
+      velocity.setZero();
+      angleChange = 0;
+      isTripping = false;
+    } else {
+      reset();
+    }
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
 
-    //Add gravity if we accelerate upwards + falling down
-    if (isJumping || isTriping) {
-      // Always apply gravity when in the air or tripping
+    // Gravity and movement
+    if (isJumping || isTripping) {
       velocity.y += gravity * dt;
       position += velocity * dt;
     }
-    if (isTriping) {
-      angle += 5 * dt;
+
+    // Rotation while tripping
+    if (isTripping) {
+      angle += angleChange * dt;
+      angleChange *= 0.98;
     }
 
-    //Readjust position to the Ground when
-    //falling down past the initialPoint
-    if (position.y >= initialPosition.y) {
-      isJumping = false;
-      isTriping = false;
-      velocity.y = 0;
-      position.y = initialPosition.y;
+    // Ground check
+    final groundY = initialPosition.y;
+    final clearance = isTripping ? (size.length / 2 - size.y / 2) : 0;
+
+    if (position.y >= groundY - clearance) {
+      position.y = groundY - clearance;
+
+      if (isTripping) {
+        if (velocity.y.abs() > 200 && extraFrames > 0) {
+          // Bounce
+          velocity.y = -velocity.y * 0.5;
+          extraFrames--;
+        } else {
+          // Slow stop without snapping upright
+          velocity.y = 0;
+          angleChange *= 0.9;
+          angle += angleChange * dt;
+
+          extraFrames--;
+          if (extraFrames <= -15) {
+            isTripping = false;
+            isJumping = false;
+            velocity.setZero();
+          }
+        }
+      } else {
+        reset();
+      }
     }
   }
 }

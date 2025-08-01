@@ -14,6 +14,10 @@ class Obstacle extends RectangleComponent {
       ) {
     position = initialPosition.clone();
   }
+  void resetPosition() {
+    position.setFrom(initialPosition);
+    velocity = Vector2.zero();
+  }
 
   @override
   void update(double dt) {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:running_robot/background.dart';
+import 'package:running_robot/ground.dart';
 import 'package:running_robot/obstacle.dart';
 import 'package:running_robot/robot.dart';
 import 'package:flame/components.dart';
@@ -12,6 +13,7 @@ class MyGame extends FlameGame with TapDetector {
   late Background background;
   late Robot robot;
   late Obstacle obstacle1;
+  late Ground ground;
   late int failCount = 0;
   late TextComponent failText;
 
@@ -20,6 +22,14 @@ class MyGame extends FlameGame with TapDetector {
     //main background
     background = Background(
       backgroundSize: Vector2(size.x, size.y),
+    );
+
+    //Ground
+    ground = Ground(
+      dimensions: Vector2(
+        size.x,
+        size.y,
+      ),
     );
 
     //robot (main char)
@@ -44,6 +54,7 @@ class MyGame extends FlameGame with TapDetector {
 
     //add Objects to screen
     add(background);
+    add(ground);
     add(robot);
     add(obstacle1);
     add(failText);
@@ -64,12 +75,13 @@ class MyGame extends FlameGame with TapDetector {
       incrementFail();
       if (robot.isJumping) {
         robot.trip();
+        obstacle1.resetPosition();
       }
       // robot.position.setFrom(robot.initialPosition);
       // obstacle1.position.setFrom(obstacle1.initialPosition);
       // obstacle1.velocity.x = 0;
 
-      if (failCount == 30) {
+      if (failCount == 130) {
         pauseEngine();
         failText.text = "Game Over!";
       }
