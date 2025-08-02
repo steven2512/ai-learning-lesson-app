@@ -11,10 +11,24 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:running_robot/text_objects/1/main_text.dart';
+
+enum GamePhase {
+  intro, // showing text and gestures
+  waitingForSwipe,
+  fisrtRun,
+  firstTutorial,
+  secondRun,
+  secondTutorial,
+  thirdRun, // normal gameplay
+  paused,
+}
 
 class MyGame extends FlameGame with PanDetector {
-  late Background background;
+  //current phase
+  GamePhase phase = GamePhase.intro;
 
+  late Background background;
   late Robot robot;
   late JumpObstacle smallFence;
   late DuckObstacle bird;
@@ -46,6 +60,7 @@ class MyGame extends FlameGame with PanDetector {
     // Robot no longer takes gameState
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
+      gamePhase: phase,
     );
 
     // Jump obstacle
@@ -53,33 +68,20 @@ class MyGame extends FlameGame with PanDetector {
       initialPosition: Vector2(size.x + 200, size.y / 1.797),
       picturePath: 'fence.png',
       obstacleSize: Vector2.all(75),
+      gamePhase: phase,
     );
     allJumpObstacles.add(smallFence);
 
     // Duck obstacle
     bird = DuckObstacle(
       initialPosition: Vector2(size.x + 1000, size.y / 2.5),
+      gamePhase: phase,
     );
     allDuckObstacles.add(bird);
 
-    // Text
-    mainText = TextBoxComponent(
-      align: Anchor.center,
-      text: "Let's now observe our little friend: Robot A",
-      anchor: Anchor.center,
-      boxConfig: const TextBoxConfig(
-        maxWidth: 350,
-        timePerChar: 0.0,
-      ),
-      position: Vector2(size.x / 2, size.y / 4.5),
-      textRenderer: TextPaint(
-        style: GoogleFonts.lato(
-          fontSize: 25,
-          letterSpacing: 0.5,
-          color: Colors.black,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
+    //Main Text on top of Level
+    mainText = MainText(
+      dimensions: Vector2(size.x, size.y),
     );
 
     add(background);
@@ -153,27 +155,58 @@ class MyGame extends FlameGame with PanDetector {
     if (dragStart == null || dragLast == null) return;
     final delta = dragLast! - dragStart!;
 
-    // Swipe up = jump
-    if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
-      if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
-    }
-    // Swipe down = duck
-    else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
-      if (useFancyDuck) {
-        robot.fancyDuck();
-      } else {
-        robot.normalDuck();
-      }
-    }
-    // Swipe left = pause all obstacles
-    else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
-      robot.stop();
-      pauseAllJumpObstacles();
-    }
-    // Swipe right = resume all obstacles
-    else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-      robot.resume();
-      resumeAllObstacles();
+    switch (phase) {
+      case GamePhase.intro:
+        // TODO: Handle intro swipes (currently do nothing)
+        break;
+
+      case GamePhase.waitingForSwipe:
+        // TODO: Handle waiting for swipe to start
+        if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+          resumeAllObstacles();
+          robot.resume();
+          phase = GamePhase.fisrtRun; // move into first run when swipe right
+        }
+        break;
+
+      case GamePhase.fisrtRun:
+        // TODO: Handle swipes during the first run
+        break;
+
+      case GamePhase.firstTutorial:
+        // TODO: Handle swipes during the first tutorial
+        break;
+
+      case GamePhase.secondRun:
+        // TODO: Handle swipes during the second run
+        break;
+
+      case GamePhase.secondTutorial:
+        // TODO: Handle swipes during the second tutorial
+        break;
+
+      case GamePhase.thirdRun:
+        // TODO: Normal gameplay swipe logic
+        if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
+          if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
+        } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
+          if (useFancyDuck) {
+            robot.fancyDuck();
+          } else {
+            robot.normalDuck();
+          }
+        } else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
+          robot.stop();
+          pauseAllJumpObstacles();
+        } else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+          robot.resume();
+          resumeAllObstacles();
+        }
+        break;
+
+      case GamePhase.paused:
+        // TODO: Maybe handle unpausing
+        break;
     }
 
     dragStart = null;

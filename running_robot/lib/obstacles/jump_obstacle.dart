@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import 'package:running_robot/my_game.dart';
 
 class JumpObstacle extends SpriteComponent {
   final Vector2 initialPosition;
@@ -7,11 +8,13 @@ class JumpObstacle extends SpriteComponent {
   final String picturePath;
   bool isPaused = false;
   Vector2 velocity = Vector2(-200, 0);
+  GamePhase gamePhase;
 
   JumpObstacle({
     required this.initialPosition,
     required this.picturePath,
     required this.obstacleSize,
+    required this.gamePhase,
   }) : super(
          position: initialPosition.clone(),
          size: obstacleSize, // give it a size up-front
@@ -29,9 +32,11 @@ class JumpObstacle extends SpriteComponent {
   @override
   void update(double dt) {
     super.update(dt);
-    if (isPaused) {
-      return;
-    }
+
+    //intro -everything freezes
+    if (gamePhase == GamePhase.intro) return;
+
+    if (isPaused) return;
 
     position.x += velocity.x * dt;
     if (position.x <= -50) {

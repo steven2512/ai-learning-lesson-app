@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flame/components.dart';
+import 'package:running_robot/my_game.dart';
 
 class Robot extends PositionComponent {
+  GamePhase gamePhase;
+
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
   static const double _duckOffset = 20;
@@ -44,8 +47,10 @@ class Robot extends PositionComponent {
   // Misc
   double _angleDelta = 0;
 
-  Robot({required this.initialPosition})
-    : super(size: Vector2.all(50), anchor: Anchor.center) {
+  Robot({
+    required this.initialPosition,
+    required this.gamePhase,
+  }) : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
   }
 
@@ -121,6 +126,9 @@ class Robot extends PositionComponent {
   @override
   void update(double dt) {
     super.update(dt);
+
+    //intro -everything freezes
+    if (gamePhase == GamePhase.intro) return;
 
     _updateFancyDuck(dt);
     _updateNormalDuck(dt);

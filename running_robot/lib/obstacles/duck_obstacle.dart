@@ -1,13 +1,16 @@
 // bird.dart
 import 'package:flame/components.dart';
+import 'package:running_robot/my_game.dart';
 
 class DuckObstacle extends SpriteAnimationComponent {
   final Vector2 initialPosition;
+  GamePhase gamePhase;
   bool isPaused = false;
   Vector2 velocity = Vector2(-250, 0); // fly left
 
   DuckObstacle({
     required this.initialPosition,
+    required this.gamePhase,
   }) : super(
          position: initialPosition.clone(),
          size: Vector2.all(60), // scale up from 21×21
@@ -34,6 +37,10 @@ class DuckObstacle extends SpriteAnimationComponent {
   @override
   void update(double dt) {
     super.update(dt);
+
+    //intro -everything freezes
+    if (gamePhase == GamePhase.intro) return;
+
     if (isPaused) return;
 
     position += velocity * dt; // constant leftward motion
