@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 class Background extends RectangleComponent {
@@ -12,8 +11,8 @@ class Background extends RectangleComponent {
           ..shader =
               LinearGradient(
                 colors: [
-                  Color.fromARGB(255, 0, 136, 255),
-                  Color.fromARGB(255, 73, 73, 255),
+                  Color.fromARGB(255, 255, 255, 255),
+                  Color.fromARGB(255, 255, 255, 255),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
