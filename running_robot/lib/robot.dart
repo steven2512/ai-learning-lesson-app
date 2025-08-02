@@ -42,7 +42,7 @@ class Robot extends PositionComponent {
   // ──────────────────────────────────────────────────────────────────────────────
   // NEW: world-resume delay
   // ──────────────────────────────────────────────────────────────────────────────
-  static const double _worldLag = 0.09; // 50 ms
+  static const double _worldLag = 0.08; // 50 ms
   double _worldLagTimer = 0.0; // counts down each frame
 
   Robot({required this.initialPosition, required this.gameState})

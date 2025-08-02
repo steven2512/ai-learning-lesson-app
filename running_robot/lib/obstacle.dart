@@ -1,36 +1,48 @@
+import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import 'package:running_robot/game_state.dart';
 
-class Obstacle extends RectangleComponent {
-  ///Represents an obstacle that might interact with main Object
-  Vector2 initialPosition;
+class JumpObstacle extends SpriteComponent {
+  final Vector2 initialPosition;
+  Vector2 obstacleSize;
+  final GameState gameState;
+  final String picturePath;
   Vector2 velocity = Vector2(-200, 0);
-  bool isOnGround = true;
-  GameState gameState;
 
-  Obstacle({required this.initialPosition, required this.gameState})
-    : super(
-        size: Vector2.all(50),
-        paint: Paint()..color = Colors.white,
-      ) {
-    position = initialPosition.clone();
-  }
-  void resetPosition() {
-    position.setFrom(initialPosition);
-    velocity = Vector2.zero();
+  JumpObstacle({
+    required this.initialPosition,
+    required this.gameState,
+    required this.picturePath,
+    required this.obstacleSize,
+  }) : super(
+         position: initialPosition.clone(),
+         size: obstacleSize, // give it a size up-front
+         anchor: Anchor.center,
+       );
+
+  // load the PNG and attach it to this component
+  @override
+  Future<void> onLoad() async {
+    sprite = await Sprite.load(picturePath);
+    // optional: resize to the sprite’s native size
+    // size = sprite!.srcSize;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    // Stop obstacle movement if global stop flag is true
     if (gameState.isStopped) return;
 
     position.x += velocity.x * dt;
     if (position.x <= -100) {
       position.setFrom(initialPosition);
     }
+  }
+
+  // optional helper
+  void resetPosition() {
+    position.setFrom(initialPosition);
+    velocity = Vector2.zero();
   }
 }

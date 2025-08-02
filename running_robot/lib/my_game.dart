@@ -13,15 +13,22 @@ import 'package:flutter/material.dart';
 class MyGame extends FlameGame with PanDetector {
   late Background background;
   late Robot robot;
-  late Obstacle obstacle1;
+  late JumpObstacle smallFence;
   late Ground ground;
   int failCount = 0;
   late TextComponent failText;
   final GameState gameState = GameState(); // NEW
+  late JumpObstacle currentColliedJumpObstacles;
 
-  bool collied = false;
+  //Check collisons flags
+  bool colliedJumpObstacles = false;
+  bool colliedDuckObstacles = false;
+  bool colliedRainObstacles = false;
+
+  //Motions dector
   Vector2? dragStart;
   Vector2? dragLast;
+  List<JumpObstacle> allJumpObstacles = [];
 
   @override
   FutureOr<void> onLoad() async {
@@ -31,15 +38,22 @@ class MyGame extends FlameGame with PanDetector {
       gameState: gameState,
     );
 
+    //Main Character (robot)
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
       gameState: gameState,
     );
-    obstacle1 = Obstacle(
-      initialPosition: Vector2(size.x, size.y / 3),
-      gameState: gameState,
-    );
 
+    //Fence (to jump over)
+    smallFence = JumpObstacle(
+      initialPosition: Vector2(size.x, size.y / 2.5),
+      gameState: gameState,
+      picturePath: 'fence.png',
+      obstacleSize: Vector2.all(70),
+    );
+    allJumpObstacles.add(smallFence);
+
+    //Text
     failText = TextComponent(
       text: "Fail Count: $failCount",
       position: Vector2(size.x / 2 - 60, size.y / 4.5),
@@ -51,10 +65,11 @@ class MyGame extends FlameGame with PanDetector {
       ),
     );
 
+    //Add all objects to screen
     add(background);
     add(ground);
     add(robot);
-    add(obstacle1);
+    allJumpObstacles.forEach((x) => add(x));
     add(failText);
   }
 
@@ -68,19 +83,26 @@ class MyGame extends FlameGame with PanDetector {
     super.update(dt);
 
     if (gameState.isStopped) return;
-    // Simple collision detection
-    if (robot.toRect().overlaps(obstacle1.toRect())) {
-      collied = true;
-      if (robot.isJumping) {
-        robot.trip();
+
+    // Jump Obstacle detection
+    for (var i = 0; i < allJumpObstacles.length; i++) {
+      if (robot.toRect().overlaps(allJumpObstacles[i].toRect())) {
+        currentColliedJumpObstacles = allJumpObstacles[i];
+        colliedJumpObstacles = true;
+        if (robot.isJumping) {
+          robot.trip();
+          break;
+        }
       }
     }
 
     // Handle fail conditions
-    if (collied && !robot.isTriping) {
+    if (colliedJumpObstacles && !robot.isTriping) {
       incrementFail();
       pauseEngine();
-    } else if (collied && robot.isTriping && obstacle1.x <= -50) {
+    } else if (colliedJumpObstacles &&
+        robot.isTriping &&
+        currentColliedJumpObstacles.x <= -50) {
       incrementFail();
       pauseEngine();
     }
@@ -118,7 +140,7 @@ class MyGame extends FlameGame with PanDetector {
     }
     // Swipe right = resume wheels
     else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-      robot.resume();
+      robot.resume(lagWorld: true);
     }
 
     dragStart = null;
