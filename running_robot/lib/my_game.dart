@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flame/events.dart';
 import 'package:running_robot/background.dart';
+import 'package:running_robot/game_state.dart';
 import 'package:running_robot/ground.dart';
 import 'package:running_robot/obstacle.dart';
 import 'package:running_robot/robot.dart';
@@ -16,6 +17,7 @@ class MyGame extends FlameGame with PanDetector {
   late Ground ground;
   int failCount = 0;
   late TextComponent failText;
+  final GameState gameState = GameState(); // NEW
 
   bool collied = false;
   Vector2? dragStart;
@@ -24,10 +26,19 @@ class MyGame extends FlameGame with PanDetector {
   @override
   FutureOr<void> onLoad() async {
     background = Background(backgroundSize: Vector2(size.x, size.y));
-    ground = Ground(dimensions: Vector2(size.x, size.y));
+    ground = Ground(
+      dimensions: Vector2(size.x, size.y),
+      gameState: gameState,
+    );
 
-    robot = Robot(initialPosition: Vector2(size.x / 2, size.y / 2));
-    obstacle1 = Obstacle(initialPosition: Vector2(size.x, size.y / 3));
+    robot = Robot(
+      initialPosition: Vector2(size.x / 2, size.y / 2),
+      gameState: gameState,
+    );
+    obstacle1 = Obstacle(
+      initialPosition: Vector2(size.x, size.y / 3),
+      gameState: gameState,
+    );
 
     failText = TextComponent(
       text: "Fail Count: $failCount",
@@ -56,6 +67,7 @@ class MyGame extends FlameGame with PanDetector {
   void update(double dt) {
     super.update(dt);
 
+    if (gameState.isStopped) return;
     // Simple collision detection
     if (robot.toRect().overlaps(obstacle1.toRect())) {
       collied = true;
@@ -99,6 +111,14 @@ class MyGame extends FlameGame with PanDetector {
     // Swipe down = duck
     else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
       robot.duck();
+    }
+    // Swipe left = stop wheels
+    else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
+      robot.stop();
+    }
+    // Swipe right = resume wheels
+    else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+      robot.resume();
     }
 
     dragStart = null;

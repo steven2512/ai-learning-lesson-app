@@ -1,12 +1,14 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:running_robot/game_state.dart';
 
 class Ground extends PositionComponent {
   Vector2 dimensions;
   double scroll = 0; // horizontal offset for motion
+  GameState gameState;
 
-  Ground({required this.dimensions}) {
+  Ground({required this.dimensions, required this.gameState}) {
     size = dimensions;
     anchor = Anchor.center;
 
@@ -16,6 +18,10 @@ class Ground extends PositionComponent {
 
   @override
   void update(double dt) {
+    //Stop the background if stop
+    if (gameState.isStopped) {
+      return;
+    }
     super.update(dt);
     scroll += dt * 50; // subtle horizontal motion
   }

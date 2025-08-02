@@ -1,28 +1,32 @@
+// Robot.dart
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:running_robot/game_state.dart';
 
 class Robot extends PositionComponent {
-  Vector2 velocity = Vector2.zero();
-  Vector2 initialPosition;
+  // ──────────────────────────────────────────────────────────────────────────────
+  // BASIC FIELDS (unchanged)
+  // ──────────────────────────────────────────────────────────────────────────────
+  final Vector2 initialPosition;
   final double gravity = 800;
+  final GameState gameState;
+
+  Vector2 velocity = Vector2.zero();
 
   bool isTriping = false;
   bool isJumping = false;
-  double angleChange = 0;
-
-  late SpriteComponent body;
-  late SpriteComponent leftTrack;
-  late SpriteComponent rightTrack;
-
-  // Ducking
+  bool isStopping = false;
   bool isDucking = false;
+
+  double angleChange = 0;
   double duckTimer = 0.0;
 
-  final double stopPause = 1.0; // 1 second pause between phases
-  final double duckDuration = 1.0; // time to move down/up
-  final double holdTime = 2.7; // time staying low
+  // Ducking parameters
+  final double stopPause = 1.0;
+  final double duckDuration = 1.0;
+  final double holdTime = 2.7;
 
   // Track animation
   bool pauseTracks = false;
@@ -31,14 +35,24 @@ class Robot extends PositionComponent {
   late Sprite track1;
   late Sprite track2;
 
-  Robot({required this.initialPosition})
-    : super(
-        size: Vector2.all(50),
-        anchor: Anchor.center,
-      ) {
+  late SpriteComponent body;
+  late SpriteComponent leftTrack;
+  late SpriteComponent rightTrack;
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // NEW: world-resume delay
+  // ──────────────────────────────────────────────────────────────────────────────
+  static const double _worldLag = 0.09; // 50 ms
+  double _worldLagTimer = 0.0; // counts down each frame
+
+  Robot({required this.initialPosition, required this.gameState})
+    : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
   }
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Asset loading (unchanged)
+  // ──────────────────────────────────────────────────────────────────────────────
   @override
   Future<void> onLoad() async {
     track1 = await Sprite.load('tracks_long1.png');
@@ -67,11 +81,17 @@ class Robot extends PositionComponent {
     add(leftTrack);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // PUBLIC API – jump / trip / duck / stop / resume
+  // ──────────────────────────────────────────────────────────────────────────────
   void reset() {
     isJumping = false;
     isTriping = false;
     position.setFrom(initialPosition);
     body.position.y = 42;
+    velocity.setZero();
+    angle = 0;
+    angleChange = 0;
   }
 
   void trip() {
@@ -85,12 +105,15 @@ class Robot extends PositionComponent {
     isJumping = true;
   }
 
+  /// Called from `MyGame` on swipe-down
   void duck() {
     if (isDucking) return;
+
     isDucking = true;
 
-    // Total phases:
-    // stopPause -> move down -> stopPause -> hold -> stopPause -> move up -> stopPause
+    // Stop everything *immediately*
+    _stopWorldAndWheels();
+
     duckTimer =
         stopPause +
         duckDuration +
@@ -101,22 +124,65 @@ class Robot extends PositionComponent {
         stopPause;
   }
 
+  /// Wheels + world stop together
+  void _stopWorldAndWheels() {
+    isStopping = true;
+    pauseTracks = true;
+    gameState.isStopped = true;
+    _worldLagTimer = 0.0; // cancel any pending resume
+  }
+
+  /// Wheels start now – world resumes after a short lag
+  void _resumeWheelsThenWorld() {
+    pauseTracks = false;
+    isStopping = false;
+    _worldLagTimer = _worldLag; // keep world frozen for 50 ms longer
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // MAIN UPDATE LOOP
+  // ──────────────────────────────────────────────────────────────────────────────
   @override
   void update(double dt) {
     super.update(dt);
 
-    // Gravity & trip physics
+    // Handle “world catches up” delay
+    if (_worldLagTimer > 0) {
+      _worldLagTimer -= dt;
+      if (_worldLagTimer <= 0) {
+        gameState.isStopped = false; // let the scenery move
+      }
+    }
+
+    // If the world is frozen AND we’re not in a duck-sequence AND no lag pending,
+    // skip physics/animation work this frame.
+    if (gameState.isStopped && !isDucking && _worldLagTimer <= 0) return;
+
+    _updatePhysics(dt);
+    _updateDucking(dt);
+    _updateTrackAnimation(dt);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // PHYSICS (unchanged from your version)
+  // ──────────────────────────────────────────────────────────────────────────────
+  void _updatePhysics(double dt) {
     if (isJumping || isTriping) {
       velocity.y += gravity * dt;
       position += velocity * dt;
     }
+
     if (isTriping) {
       angle += angleChange * dt;
       angleChange *= 0.99;
     }
+
+    // Land on ground
     if (position.y >= initialPosition.y) {
       position.y = initialPosition.y;
+
       if (isTriping) {
+        // Bounce a bit when tripping
         if (velocity.y.abs() > 100) {
           velocity.y = -velocity.y * 0.6;
           angleChange *= 0.9;
@@ -127,81 +193,118 @@ class Robot extends PositionComponent {
         reset();
       }
     }
+  }
+  // ──────────────────────────────────────────────────────────────────────────────
+  // COMPATIBILITY HELPERS (restore old API)
+  // ──────────────────────────────────────────────────────────────────────────────
 
-    // Ducking phases
-    if (isDucking) {
-      duckTimer -= dt;
-      double total =
-          stopPause +
-          duckDuration +
-          stopPause +
-          holdTime +
-          stopPause +
-          duckDuration +
-          stopPause;
-      double t = total - duckTimer;
+  /// Freeze wheels **and** scenery immediately (same as the old stop()).
+  void stop() => _stopWorldAndWheels();
 
-      // Phase boundaries
-      final p1 = stopPause; // stop before going down
-      final p2 = p1 + duckDuration; // going down
-      final p3 = p2 + stopPause; // pause after down
-      final p4 = p3 + holdTime; // hold low
-      final p5 = p4 + stopPause; // pause before going up
-      final p6 = p5 + duckDuration; // going up
-      final p7 = p6 + stopPause; // pause after up
+  /// Spin the wheels again.
+  /// By default the scenery un-freezes **immediately** (no lag), which is
+  /// what you want for the normal swipe-right gesture.
+  /// If you need the 50 ms delayed resume (only used inside the duck
+  /// animation) call: `robot.resume(lagWorld: true)`.
+  void resume({bool lagWorld = false}) {
+    pauseTracks = false;
+    isStopping = false;
+    if (lagWorld) {
+      _worldLagTimer = _worldLag; // wheels now, world after 50 ms
+    } else {
+      gameState.isStopped = false; // wheels + world right away
+      _worldLagTimer = 0.0;
+    }
+  }
 
-      if (t <= p1) {
-        // Stop before moving down
-        body.position.y = 42;
-        pauseTracks = true;
-      } else if (t <= p2) {
-        // Moving down
-        pauseTracks = true;
-        double progress = (t - p1) / duckDuration;
-        double eased = 1 - math.pow(1 - progress, 3).toDouble();
-        body.position.y = 42 + 20 * eased;
-      } else if (t <= p3) {
-        // Pause after reaching bottom
-        body.position.y = 62;
-        pauseTracks = true;
-      } else if (t <= p4) {
-        // Wheels run while low
-        body.position.y = 62;
-        pauseTracks = false;
-      } else if (t <= p5) {
-        // Pause before going up
-        body.position.y = 62;
-        pauseTracks = true;
-      } else if (t <= p6) {
-        // Moving up
-        pauseTracks = true;
-        double progress = (t - p5) / duckDuration;
-        double eased = 1 - math.pow(1 - progress, 3).toDouble();
-        body.position.y = 62 - 20 * eased;
-      } else if (t <= p7) {
-        // Pause after fully up
-        body.position.y = 42;
-        pauseTracks = true;
-      }
+  // ──────────────────────────────────────────────────────────────────────────────
+  // DUCK-SEQUENCE, now with the exact timing requested
+  // ──────────────────────────────────────────────────────────────────────────────
+  void _updateDucking(double dt) {
+    if (!isDucking) return;
 
-      if (duckTimer <= 0) {
-        // Finished full cycle
-        isDucking = false;
-        pauseTracks = false;
-        body.position.y = 42;
-      }
+    duckTimer -= dt;
+
+    final total =
+        stopPause +
+        duckDuration +
+        stopPause +
+        holdTime +
+        stopPause +
+        duckDuration +
+        stopPause;
+    final t = total - duckTimer;
+
+    // Phase markers
+    final p1 = stopPause; // wheels & world STOP
+    final p2 = p1 + duckDuration; // move down (still stopped)
+    final p3 = p2 + stopPause; // low pause  (still stopped)
+    final p4 = p3 + holdTime; // wheels RUN – world resumes after 50 ms
+    final p5 = p4 + stopPause; // wheels stop again – world STOP
+    final p6 = p5 + duckDuration; // move back up (still stopped)
+    final p7 = p6 + stopPause; // pause fully up (still stopped)
+
+    // ────── 1) PRE-DUCK PAUSE (STOP) ──────
+    if (t <= p1) {
+      _stopWorldAndWheels();
+      body.position.y = 42;
+    }
+    // ────── 2) MOVE DOWN (STOP) ──────
+    else if (t <= p2) {
+      final prog = (t - p1) / duckDuration;
+      final eased = 1 - math.pow(1 - prog, 3).toDouble();
+      body.position.y = 42 + 20 * eased; // slide down 20 px
+      // wheels & world remain stopped
+    }
+    // ────── 3) LOW PAUSE (STOP) ──────
+    else if (t <= p3) {
+      _stopWorldAndWheels();
+      body.position.y = 62;
+    }
+    // ────── 4) HOLD LOW – WHEELS RUN, WORLD LAGS 50 ms ──────
+    else if (t <= p4) {
+      body.position.y = 62;
+      if (pauseTracks) _resumeWheelsThenWorld(); // only once
+    }
+    // ────── 5) SECOND STOP BEFORE RISE ──────
+    else if (t <= p5) {
+      _stopWorldAndWheels();
+      body.position.y = 62;
+    }
+    // ────── 6) MOVE BACK UP (STOP) ──────
+    else if (t <= p6) {
+      final prog = (t - p5) / duckDuration;
+      final eased = 1 - math.pow(1 - prog, 3).toDouble();
+      body.position.y = 62 - 20 * eased; // slide back up
+      // wheels & world remain stopped
+    }
+    // ────── 7) TOP PAUSE (STOP) ──────
+    else if (t <= p7) {
+      _stopWorldAndWheels();
+      body.position.y = 42;
     }
 
-    // Track animation
-    if (!isTriping && !isJumping && !pauseTracks) {
-      trackAnimationTimer += dt;
-      if (trackAnimationTimer > 0.1) {
-        trackAnimationTimer = 0;
-        trackFrame = (trackFrame + 1) % 2;
-        final currentSprite = (trackFrame == 0) ? track1 : track2;
-        leftTrack.sprite = currentSprite;
-        rightTrack.sprite = currentSprite;
-      }
+    // ────── 8) SEQUENCE COMPLETE – WHEELS RUN, WORLD LAGS 50 ms ──────
+    if (duckTimer <= 0) {
+      isDucking = false;
+      _resumeWheelsThenWorld(); // wheels first, world 50 ms later
+      body.position.y = 42;
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // TRACK ANIMATION (unchanged)
+  // ──────────────────────────────────────────────────────────────────────────────
+  void _updateTrackAnimation(double dt) {
+    if (isTriping || isJumping || pauseTracks) return;
+
+    trackAnimationTimer += dt;
+    if (trackAnimationTimer > 0.1) {
+      trackAnimationTimer = 0;
+      trackFrame = (trackFrame + 1) % 2;
+      final currentSprite = (trackFrame == 0) ? track1 : track2;
+      leftTrack.sprite = currentSprite;
+      rightTrack.sprite = currentSprite;
     }
   }
 }
