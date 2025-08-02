@@ -18,7 +18,7 @@ class Ground extends PositionComponent {
 
   @override
   void update(double dt) {
-    //Stop the background if stop
+    //Stop the background
     if (gameState.isStopped) {
       return;
     }

@@ -3,8 +3,9 @@ import 'package:flame/events.dart';
 import 'package:running_robot/background.dart';
 import 'package:running_robot/game_state.dart';
 import 'package:running_robot/ground.dart';
-import 'package:running_robot/obstacle.dart';
-import 'package:running_robot/robot.dart';
+import 'package:running_robot/obstacles/bird.dart';
+import 'package:running_robot/obstacles/jump_obstacle.dart';
+import 'package:running_robot/characters/robot.dart';
 import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/game.dart';
@@ -12,13 +13,17 @@ import 'package:flutter/material.dart';
 
 class MyGame extends FlameGame with PanDetector {
   late Background background;
+
+  //Character and obstcles
   late Robot robot;
   late JumpObstacle smallFence;
+  late Bird bird;
   late Ground ground;
   int failCount = 0;
   late TextComponent failText;
   final GameState gameState = GameState(); // NEW
   late JumpObstacle currentColliedJumpObstacles;
+  bool useFancyDuck = false;
 
   //Check collisons flags
   bool colliedJumpObstacles = false;
@@ -44,14 +49,20 @@ class MyGame extends FlameGame with PanDetector {
       gameState: gameState,
     );
 
-    //Fence (to jump over)
+    //Fence Obstacle (to jump over)
     smallFence = JumpObstacle(
-      initialPosition: Vector2(size.x, size.y / 2.5),
+      initialPosition: Vector2(size.x + 200, size.y / 1.797),
       gameState: gameState,
       picturePath: 'fence.png',
-      obstacleSize: Vector2.all(70),
+      obstacleSize: Vector2.all(75),
     );
     allJumpObstacles.add(smallFence);
+
+    //Bird Obstacle
+    bird = Bird(
+      initialPosition: Vector2(size.x + 1000, size.y / 2.5),
+      gameState: gameState,
+    );
 
     //Text
     failText = TextComponent(
@@ -69,6 +80,7 @@ class MyGame extends FlameGame with PanDetector {
     add(background);
     add(ground);
     add(robot);
+    add(bird);
     allJumpObstacles.forEach((x) => add(x));
     add(failText);
   }
@@ -82,30 +94,30 @@ class MyGame extends FlameGame with PanDetector {
   void update(double dt) {
     super.update(dt);
 
-    if (gameState.isStopped) return;
+    // if (gameState.isStopped) return;
 
     // Jump Obstacle detection
-    for (var i = 0; i < allJumpObstacles.length; i++) {
-      if (robot.toRect().overlaps(allJumpObstacles[i].toRect())) {
-        currentColliedJumpObstacles = allJumpObstacles[i];
-        colliedJumpObstacles = true;
-        if (robot.isJumping) {
-          robot.trip();
-          break;
-        }
-      }
-    }
+    // for (var i = 0; i < allJumpObstacles.length; i++) {
+    //   if (robot.toRect().overlaps(allJumpObstacles[i].toRect())) {
+    //     currentColliedJumpObstacles = allJumpObstacles[i];
+    //     colliedJumpObstacles = true;
+    //     if (robot.isJumping) {
+    //       robot.trip();
+    //       break;
+    //     }
+    //   }
+    // }
 
-    // Handle fail conditions
-    if (colliedJumpObstacles && !robot.isTriping) {
-      incrementFail();
-      pauseEngine();
-    } else if (colliedJumpObstacles &&
-        robot.isTriping &&
-        currentColliedJumpObstacles.x <= -50) {
-      incrementFail();
-      pauseEngine();
-    }
+    // // Handle fail conditions
+    // if (colliedJumpObstacles && !robot.isTriping) {
+    //   incrementFail();
+    //   pauseEngine();
+    // } else if (colliedJumpObstacles &&
+    //     robot.isTriping &&
+    //     currentColliedJumpObstacles.x <= -50) {
+    //   incrementFail();
+    //   pauseEngine();
+    // }
   }
 
   @override
@@ -124,22 +136,22 @@ class MyGame extends FlameGame with PanDetector {
     if (dragStart == null || dragLast == null) return;
     final delta = dragLast! - dragStart!;
 
-    // Swipe up = jump (only if not ducking)
+    // Swipe up = jump
     if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
-      if (!robot.isDucking) {
-        robot.jump();
+      if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
+    }
+    // Swipe down = duck (choose normal or fancy)
+    else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
+      if (useFancyDuck) {
+        robot.fancyDuck();
+      } else {
+        robot.normalDuck();
       }
     }
-    // Swipe down = duck
-    else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
-      robot.duck();
-    }
-    // Swipe left = stop wheels
+    // Swipe left / right — unchanged …
     else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
       robot.stop();
-    }
-    // Swipe right = resume wheels
-    else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+    } else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
       robot.resume(lagWorld: true);
     }
 

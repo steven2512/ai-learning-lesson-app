@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
 import 'package:running_robot/game_state.dart';
 
 class JumpObstacle extends SpriteComponent {
@@ -35,7 +36,7 @@ class JumpObstacle extends SpriteComponent {
     if (gameState.isStopped) return;
 
     position.x += velocity.x * dt;
-    if (position.x <= -100) {
+    if (position.x <= -50) {
       position.setFrom(initialPosition);
     }
   }
