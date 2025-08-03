@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/background.dart';
@@ -11,7 +12,9 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/text_objects/1/main_text.dart';
+import 'package:running_robot/text_objects/fadable_component.dart';
+import 'package:running_robot/text_objects/main_text.dart';
+import 'package:running_robot/text_objects/lessons/lesson1_text.dart';
 
 enum GamePhase {
   intro, // showing text and gestures
@@ -45,55 +48,47 @@ class MyGame extends FlameGame with PanDetector {
 
   List<JumpObstacle> allJumpObstacles = [];
   List<DuckObstacle> allDuckObstacles = [];
-  // List<FallObstacles> allFallObstacles = [];
 
   Vector2? dragStart;
   Vector2? dragLast;
 
   @override
   FutureOr<void> onLoad() async {
+    // ─── world ────────────────────────────────────────────────────
     background = Background(backgroundSize: Vector2(size.x, size.y));
-    ground = Ground(
-      dimensions: Vector2(size.x, size.y),
-    );
-
-    // Robot no longer takes gameState
+    ground = Ground(dimensions: Vector2(size.x, size.y));
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
       gamePhase: phase,
     );
 
-    // Jump obstacle
-    smallFence = JumpObstacle(
+    // sample obstacles
+    final fence = JumpObstacle(
       initialPosition: Vector2(size.x + 200, size.y / 1.797),
       picturePath: 'fence.png',
       obstacleSize: Vector2.all(75),
       gamePhase: phase,
     );
-    allJumpObstacles.add(smallFence);
-
-    // Duck obstacle
-    bird = DuckObstacle(
+    final bird = DuckObstacle(
       initialPosition: Vector2(size.x + 1000, size.y / 2.5),
       gamePhase: phase,
     );
+    allJumpObstacles.add(fence);
     allDuckObstacles.add(bird);
 
-    //Main Text on top of Level
-    mainText = MainText(
+    // ─── text ─────────────────────────────────────────────────────
+    final mainText = MainText(
       dimensions: Vector2(size.x, size.y),
+      sequence: introText,
     );
 
+    // ─── add to game (order) ──────────────────────────────────────
     add(background);
     add(ground);
     add(robot);
-    add(mainText);
-    for (var obstacle in allJumpObstacles) {
-      add(obstacle);
-    }
-    for (var obstacle in allDuckObstacles) {
-      add(obstacle);
-    }
+    addAll(allJumpObstacles);
+    addAll(allDuckObstacles);
+    add(mainText); // last (also highest priority)
   }
 
   // ---- Pause & Resume methods ----
@@ -104,9 +99,6 @@ class MyGame extends FlameGame with PanDetector {
     for (var x in allDuckObstacles) {
       x.isPaused = true;
     }
-    // for (var x in allFallObstacles) {
-    //   x.isPaused = true;
-    // }
   }
 
   void resumeAllObstacles() {
@@ -116,9 +108,6 @@ class MyGame extends FlameGame with PanDetector {
     for (var x in allDuckObstacles) {
       x.isPaused = false;
     }
-    // for (var x in allFallObstacles) {
-    //   x.isPaused = false;
-    // }
   }
 
   void pauseAllJumpObstacles() {
@@ -132,12 +121,6 @@ class MyGame extends FlameGame with PanDetector {
       obstacle.isPaused = true;
     }
   }
-
-  // void pauseAllFallObstacles() {
-  //   for (var obstacle in allFallObstacles) {
-  //     obstacle.isPaused = true;
-  //   }
-  // }
 
   @override
   void onPanStart(DragStartInfo info) {
@@ -157,36 +140,29 @@ class MyGame extends FlameGame with PanDetector {
 
     switch (phase) {
       case GamePhase.intro:
-        // TODO: Handle intro swipes (currently do nothing)
         break;
 
       case GamePhase.waitingForSwipe:
-        // TODO: Handle waiting for swipe to start
         if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
           resumeAllObstacles();
           robot.resume();
-          phase = GamePhase.fisrtRun; // move into first run when swipe right
+          phase = GamePhase.fisrtRun;
         }
         break;
 
       case GamePhase.fisrtRun:
-        // TODO: Handle swipes during the first run
         break;
 
       case GamePhase.firstTutorial:
-        // TODO: Handle swipes during the first tutorial
         break;
 
       case GamePhase.secondRun:
-        // TODO: Handle swipes during the second run
         break;
 
       case GamePhase.secondTutorial:
-        // TODO: Handle swipes during the second tutorial
         break;
 
       case GamePhase.thirdRun:
-        // TODO: Normal gameplay swipe logic
         if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
           if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
         } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
@@ -205,7 +181,6 @@ class MyGame extends FlameGame with PanDetector {
         break;
 
       case GamePhase.paused:
-        // TODO: Maybe handle unpausing
         break;
     }
 

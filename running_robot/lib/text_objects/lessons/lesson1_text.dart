@@ -1,7 +1,3 @@
-import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 final List<String> introText = [
   'Welcome to your first lesson',
   "It's great to have you here",
@@ -67,50 +63,3 @@ final List<String> finalContemplation = [
       "This allows him to make the right decisions even with unseen challenges that is similar to what he has learnt!"
       "Learn More",
 ];
-
-class MainText extends TextBoxComponent {
-  final Vector2 dimensions;
-
-  // Text sequence and timing
-  final List<String> sequence = introText;
-  int currentIndex = 0;
-  double timer = 0.0; // seconds
-  final double interval = 5.0; // show a new line every 10 seconds
-
-  MainText({required this.dimensions})
-    : super(
-        align: Anchor.center,
-        text: introText[0],
-        anchor: Anchor.center,
-        boxConfig: const TextBoxConfig(
-          maxWidth: 350,
-          timePerChar: 0.0,
-        ),
-        position: Vector2(dimensions.x / 2, dimensions.y / 3.5),
-        textRenderer: TextPaint(
-          style: GoogleFonts.lato(
-            fontSize: 25,
-            letterSpacing: 0.5,
-            color: Colors.black,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-
-    // Increment timer
-    timer += dt;
-
-    // Every 10 seconds, move to the next text if available
-    if (timer >= interval) {
-      timer = 0;
-      if (currentIndex < sequence.length - 1) {
-        currentIndex++;
-        text = sequence[currentIndex];
-      }
-    }
-  }
-}
