@@ -1,34 +1,32 @@
 import 'dart:async';
-import 'package:flame/effects.dart';
+import 'dart:math';
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flame/game.dart';
+import 'package:flame/input.dart';
 import 'package:running_robot/background.dart';
 import 'package:running_robot/game_state.dart';
 import 'package:running_robot/ground.dart';
 import 'package:running_robot/obstacles/duck_obstacle.dart';
+import 'package:running_robot/obstacles/fall_obstacle.dart';
 import 'package:running_robot/obstacles/jump_obstacle.dart';
 import 'package:running_robot/characters/robot.dart';
-import 'package:flame/components.dart';
-import 'package:flame/input.dart';
-import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
-import 'package:running_robot/text_objects/fadable_component.dart';
 import 'package:running_robot/text_objects/main_text.dart';
 import 'package:running_robot/text_objects/lessons/lesson1_text.dart';
+import 'package:running_robot/obstacles/rain.dart'; // new import
 
 enum GamePhase {
-  intro, // showing text and gestures
+  intro,
   waitingForSwipe,
   fisrtRun,
   firstTutorial,
   secondRun,
   secondTutorial,
-  thirdRun, // normal gameplay
+  thirdRun,
   paused,
 }
 
 class MyGame extends FlameGame with PanDetector {
-  //current phase
   GamePhase phase = GamePhase.intro;
 
   late Background background;
@@ -48,13 +46,13 @@ class MyGame extends FlameGame with PanDetector {
 
   List<JumpObstacle> allJumpObstacles = [];
   List<DuckObstacle> allDuckObstacles = [];
+  List<FallObstacle> allFallObstacles = [];
 
   Vector2? dragStart;
   Vector2? dragLast;
 
   @override
   FutureOr<void> onLoad() async {
-    // ─── world ────────────────────────────────────────────────────
     background = Background(backgroundSize: Vector2(size.x, size.y));
     ground = Ground(dimensions: Vector2(size.x, size.y));
     robot = Robot(
@@ -62,7 +60,6 @@ class MyGame extends FlameGame with PanDetector {
       gamePhase: phase,
     );
 
-    // sample obstacles
     final fence = JumpObstacle(
       initialPosition: Vector2(size.x + 200, size.y / 1.797),
       picturePath: 'fence.png',
@@ -76,38 +73,36 @@ class MyGame extends FlameGame with PanDetector {
     allJumpObstacles.add(fence);
     allDuckObstacles.add(bird);
 
-    // ─── text ─────────────────────────────────────────────────────
     final mainText = MainText(
       dimensions: Vector2(size.x, size.y),
       sequence: introText,
     );
 
-    // ─── add to game (order) ──────────────────────────────────────
+    //Generate Rain drops
+    allFallObstacles = RainSpawner.generateRain(
+      screenSize: size,
+      phase: phase,
+    );
+
     add(background);
     add(ground);
     add(robot);
     addAll(allJumpObstacles);
     addAll(allDuckObstacles);
-    add(mainText); // last (also highest priority)
+    addAll(allFallObstacles);
+    add(mainText);
   }
 
-  // ---- Pause & Resume methods ----
   void pauseAllObstacles() {
-    for (var x in allJumpObstacles) {
-      x.isPaused = true;
-    }
-    for (var x in allDuckObstacles) {
-      x.isPaused = true;
-    }
+    for (var x in allJumpObstacles) x.isPaused = true;
+    for (var x in allDuckObstacles) x.isPaused = true;
+    for (var x in allFallObstacles) x.isPaused = true;
   }
 
   void resumeAllObstacles() {
-    for (var x in allJumpObstacles) {
-      x.isPaused = false;
-    }
-    for (var x in allDuckObstacles) {
-      x.isPaused = false;
-    }
+    for (var x in allJumpObstacles) x.isPaused = false;
+    for (var x in allDuckObstacles) x.isPaused = false;
+    for (var x in allFallObstacles) x.isPaused = false;
   }
 
   void pauseAllJumpObstacles() {
@@ -119,6 +114,18 @@ class MyGame extends FlameGame with PanDetector {
   void pauseAllDuckObstacles() {
     for (var obstacle in allDuckObstacles) {
       obstacle.isPaused = true;
+    }
+  }
+
+  void pauseAllFallObstacles() {
+    for (var obstacle in allFallObstacles) {
+      obstacle.isPaused = true;
+    }
+  }
+
+  void resumeAllFallObstacles() {
+    for (var obstacle in allFallObstacles) {
+      obstacle.isPaused = false;
     }
   }
 
@@ -141,7 +148,6 @@ class MyGame extends FlameGame with PanDetector {
     switch (phase) {
       case GamePhase.intro:
         break;
-
       case GamePhase.waitingForSwipe:
         if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
           resumeAllObstacles();
@@ -149,19 +155,11 @@ class MyGame extends FlameGame with PanDetector {
           phase = GamePhase.fisrtRun;
         }
         break;
-
       case GamePhase.fisrtRun:
-        break;
-
       case GamePhase.firstTutorial:
-        break;
-
       case GamePhase.secondRun:
-        break;
-
       case GamePhase.secondTutorial:
         break;
-
       case GamePhase.thirdRun:
         if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
           if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
@@ -179,7 +177,6 @@ class MyGame extends FlameGame with PanDetector {
           resumeAllObstacles();
         }
         break;
-
       case GamePhase.paused:
         break;
     }
