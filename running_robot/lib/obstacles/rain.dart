@@ -14,10 +14,12 @@ class RainSpawner {
     final double rainAreaWidth = screenSize.x / 3;
     final double rainStartX = (screenSize.x - rainAreaWidth) / 2;
 
+    final double rainStartY = 250; // << Start just below the cloud
+
     for (int i = 0; i < count; i++) {
       final double x = rainStartX + Random().nextDouble() * rainAreaWidth;
       final rain = FallObstacle(
-        initialPosition: Vector2(x, 0),
+        initialPosition: Vector2(x, rainStartY),
         gamePhase: phase,
       );
       obstacles.add(rain);

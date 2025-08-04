@@ -4,9 +4,11 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flutter/material.dart';
 import 'package:running_robot/background.dart';
 import 'package:running_robot/game_state.dart';
 import 'package:running_robot/ground.dart';
+import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/obstacles/duck_obstacle.dart';
 import 'package:running_robot/obstacles/fall_obstacle.dart';
 import 'package:running_robot/obstacles/jump_obstacle.dart';
@@ -90,6 +92,11 @@ class MyGame extends FlameGame with PanDetector {
     addAll(allJumpObstacles);
     addAll(allDuckObstacles);
     addAll(allFallObstacles);
+    add(
+      CloudComponent(
+        position: Vector2(size.x / 2, 220), // top-center of screen
+      ),
+    );
     add(mainText);
   }
 
