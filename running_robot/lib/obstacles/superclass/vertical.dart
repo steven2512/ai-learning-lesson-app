@@ -3,19 +3,21 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:running_robot/my_game.dart';
 
-class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
+class VerticalObstacle extends PositionComponent with HasGameRef<MyGame> {
   final Vector2 initialPosition;
-  bool isPaused = false;
-  late final Vector2 velocity;
   double topY;
+  late Vector2 velocity;
+  bool isPaused = false;
 
-  FallObstacle({
+  VerticalObstacle({
     required this.initialPosition,
     required this.topY,
+    Vector2? customVelocity,
+    Vector2? sizeOverride,
   }) {
-    velocity = Vector2(0, Random().nextDouble() * 100 + 200);
+    velocity = customVelocity ?? Vector2(0, Random().nextDouble() * 100 + 200);
     position = initialPosition.clone();
-    size = Vector2(8, 16);
+    size = sizeOverride ?? Vector2(8, 16);
     anchor = Anchor.center;
   }
 
@@ -23,21 +25,15 @@ class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
   void render(Canvas canvas) {
     super.render(canvas);
 
+    // Default fallback shape — subclasses should override this
     final paint = Paint()..color = const Color(0xFF2196F3);
-
-    final path = Path()
-      ..moveTo(size.x / 2, 0)
-      ..quadraticBezierTo(size.x, size.y * 0.6, size.x / 2, size.y)
-      ..quadraticBezierTo(0, size.y * 0.6, size.x / 2, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
+    canvas.drawRect(size.toRect(), paint);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    // if (isPaused || gamePhase == GamePhase.paused) return;
+    if (isPaused) return;
 
     position += velocity * dt;
 

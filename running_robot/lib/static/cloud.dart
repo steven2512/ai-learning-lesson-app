@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
 
-class CloudComponent extends SpriteComponent {
-  CloudComponent({
+class Cloud extends SpriteComponent {
+  Cloud({
     required Vector2 position,
     double scale = 2.5,
   }) : super(

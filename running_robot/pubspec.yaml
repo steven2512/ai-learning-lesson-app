@@ -73,6 +73,7 @@ flutter:
     - assets/images/bird4.png
     - assets/images/cloud_white.png
     - assets/images/cloud_grey.png
+    - assets/images/transparent.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

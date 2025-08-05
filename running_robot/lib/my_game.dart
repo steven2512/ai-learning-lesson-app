@@ -3,12 +3,14 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:running_robot/obstacles/bird.dart';
+import 'package:running_robot/obstacles/fence.dart';
+import 'package:running_robot/obstacles/superclass/animated_horizontal.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/static/cloud.dart';
-import 'package:running_robot/obstacles/duck_obstacle.dart';
-import 'package:running_robot/obstacles/fall_obstacle.dart';
-import 'package:running_robot/obstacles/jump_obstacle.dart';
+import 'package:running_robot/obstacles/superclass/vertical.dart';
+import 'package:running_robot/obstacles/superclass/horizontal.dart';
 import 'package:running_robot/characters/robot.dart';
 import 'package:running_robot/texts/main_text.dart';
 import 'package:running_robot/texts/lessons/lesson1_text.dart';
@@ -30,108 +32,122 @@ class MyGame extends FlameGame with PanDetector {
 
   late Background background;
   late Robot robot;
-  late JumpObstacle smallFence;
-  late DuckObstacle bird;
+  late Bird bird;
   late Ground ground;
   late List<Rain> rainFall;
+  late Cloud cloud;
   int failCount = 0;
   late TextComponent mainText;
-  late JumpObstacle currentColliedJumpObstacles;
+  late HorizontalObstacle currentColliedJumpObstacles;
   bool useFancyDuck = false;
+  late double groundY;
 
   bool colliedJumpObstacles = false;
-  bool colliedDuckObstacles = false;
   bool colliedRainObstacles = false;
 
-  List<JumpObstacle> allJumpObstacles = [];
-  List<DuckObstacle> allDuckObstacles = [];
-  List<FallObstacle> allFallObstacles = [];
+  List<HorizontalObstacle> allHorizontalObstacles = [];
+  List<AnimatedHorizontalObstacle> allAnimatedHorizontalObstacles = [];
+  List<VerticalObstacle> allVerticalObstacles = [];
 
   Vector2? dragStart;
   Vector2? dragLast;
 
   @override
   FutureOr<void> onLoad() async {
+    //Background
     background = Background(backgroundSize: Vector2(size.x, size.y));
+
+    //Ground
     ground = Ground(dimensions: Vector2(size.x, size.y));
+
+    //Set absolute ground
+    groundY = ground.topY;
+
+    //Robot
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
     );
 
-    final fence = JumpObstacle(
-      initialPosition: Vector2(size.x + 200, size.y / 1.797),
+    //Fence
+    final fence = Fence(
+      initialPosition: Vector2(size.x + 200, groundY - 36),
       picturePath: 'fence.png',
-      obstacleSize: Vector2.all(75),
+      size: Vector2(70, 70),
     );
-    final bird = DuckObstacle(
+
+    // Bird
+    // Bird
+    bird = Bird(
       initialPosition: Vector2(size.x + 1000, size.y / 2.5),
     );
-    allJumpObstacles.add(fence);
-    allDuckObstacles.add(bird);
+    allHorizontalObstacles.add(fence);
+    allAnimatedHorizontalObstacles.add(bird);
 
+    //Text
     final mainText = MainText(
       dimensions: Vector2(size.x, size.y),
       sequence: introText,
     );
 
-    //Generate Rain drops
+    //Cloud
+    cloud = Cloud(
+      position: Vector2(size.x / 2, 220), // top-center of screen
+    );
 
+    //Rain
     rainFall = Rain.generateRain(
       screenSize: size,
-      topY: ground.topY,
+      topY: groundY,
     );
 
     //Add all objects
     add(background);
     add(ground);
     add(robot);
-    addAll(allJumpObstacles);
-    addAll(allDuckObstacles);
-    addAll(allFallObstacles);
-    add(
-      CloudComponent(
-        position: Vector2(size.x / 2, 220), // top-center of screen
-      ),
-    );
-    addAll(rainFall);
+    // add(bird);
+    addAll(allHorizontalObstacles);
+    addAll(allVerticalObstacles);
+    addAll(allAnimatedHorizontalObstacles);
+    add(cloud);
+    addAll(rainFall as Iterable<Component>);
     add(mainText);
   }
 
-  void pauseAllObstacles() {
-    for (var x in allJumpObstacles) x.isPaused = true;
-    for (var x in allDuckObstacles) x.isPaused = true;
-    for (var x in allFallObstacles) x.isPaused = true;
-  }
+  // void pauseAllObstacles() {
+  //   for (var x in allJumpObstacles) x.isPaused = true;
+  //   for (var x in allDuckObstacles) x.isPaused = true;
+  //   for (var x in allFallObstacles) x.isPaused = true;
+  // }
 
-  void resumeAllObstacles() {
-    for (var x in allJumpObstacles) x.isPaused = false;
-    for (var x in allDuckObstacles) x.isPaused = false;
-    for (var x in allFallObstacles) x.isPaused = false;
-  }
+  // void resumeAllObstacles() {
+  //   for (var x in allJumpObstacles) x.isPaused = false;
+  //   for (var x in allDuckObstacles) x.isPaused = false;
+  //   for (var x in allFallObstacles) x.isPaused = false;
+  // }
 
-  void pauseAllJumpObstacles() {
-    for (var obstacle in allJumpObstacles) {
-      obstacle.isPaused = true;
-    }
-  }
+  // void pauseAllJumpObstacles() {
+  //   for (var obstacle in allJumpObstacles) {
+  //     obstacle.isPaused = true;
+  //   }
+  // }
 
-  void pauseAllDuckObstacles() {
-    for (var obstacle in allDuckObstacles) {
-      obstacle.isPaused = true;
-    }
-  }
+  // void pauseAllDuckObstacles() {
+  //   for (var obstacle in allDuckObstacles) {
+  //     obstacle.isPaused = true;
+  //   }
+  // }
 
-  void pauseAllFallObstacles() {
-    for (var obstacle in allFallObstacles) {
-      obstacle.isPaused = true;
-    }
-  }
+  // void pauseAllFallObstacles() {
+  //   for (var obstacle in allFallObstacles) {
+  //     obstacle.isPaused = true;
+  //   }
+  // }
 
-  void resumeAllFallObstacles() {
-    for (var obstacle in allFallObstacles) {
-      obstacle.isPaused = false;
-    }
-  }
+  // void resumeAllFallObstacles() {
+  //   for (var obstacle in allFallObstacles) {
+  //     obstacle.isPaused = false;
+  //   }
+  // }
 
   @override
   void onPanStart(DragStartInfo info) {
