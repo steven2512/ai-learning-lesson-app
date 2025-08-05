@@ -1,20 +1,17 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flutter/material.dart';
-import 'package:running_robot/background.dart';
-import 'package:running_robot/game_state.dart';
-import 'package:running_robot/ground.dart';
-import 'package:running_robot/obstacles/cloud.dart';
+import 'package:running_robot/static/background.dart';
+import 'package:running_robot/static/ground.dart';
+import 'package:running_robot/static/cloud.dart';
 import 'package:running_robot/obstacles/duck_obstacle.dart';
 import 'package:running_robot/obstacles/fall_obstacle.dart';
 import 'package:running_robot/obstacles/jump_obstacle.dart';
 import 'package:running_robot/characters/robot.dart';
-import 'package:running_robot/text_objects/main_text.dart';
-import 'package:running_robot/text_objects/lessons/lesson1_text.dart';
+import 'package:running_robot/texts/main_text.dart';
+import 'package:running_robot/texts/lessons/lesson1_text.dart';
 import 'package:running_robot/obstacles/rain.dart'; // new import
 
 enum GamePhase {
@@ -36,9 +33,9 @@ class MyGame extends FlameGame with PanDetector {
   late JumpObstacle smallFence;
   late DuckObstacle bird;
   late Ground ground;
+  late List<Rain> rainFall;
   int failCount = 0;
   late TextComponent mainText;
-  final GameState gameState = GameState();
   late JumpObstacle currentColliedJumpObstacles;
   bool useFancyDuck = false;
 
@@ -59,18 +56,15 @@ class MyGame extends FlameGame with PanDetector {
     ground = Ground(dimensions: Vector2(size.x, size.y));
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
-      gamePhase: phase,
     );
 
     final fence = JumpObstacle(
       initialPosition: Vector2(size.x + 200, size.y / 1.797),
       picturePath: 'fence.png',
       obstacleSize: Vector2.all(75),
-      gamePhase: phase,
     );
     final bird = DuckObstacle(
       initialPosition: Vector2(size.x + 1000, size.y / 2.5),
-      gamePhase: phase,
     );
     allJumpObstacles.add(fence);
     allDuckObstacles.add(bird);
@@ -81,12 +75,13 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     //Generate Rain drops
-    allFallObstacles = RainSpawner.generateRain(
+
+    rainFall = Rain.generateRain(
       screenSize: size,
-      topY: ground.topY - 20,
-      phase: phase,
+      topY: ground.topY,
     );
 
+    //Add all objects
     add(background);
     add(ground);
     add(robot);
@@ -98,6 +93,7 @@ class MyGame extends FlameGame with PanDetector {
         position: Vector2(size.x / 2, 220), // top-center of screen
       ),
     );
+    addAll(rainFall);
     add(mainText);
   }
 
@@ -150,46 +146,46 @@ class MyGame extends FlameGame with PanDetector {
 
   @override
   void onPanEnd(DragEndInfo info) {
-    if (dragStart == null || dragLast == null) return;
-    final delta = dragLast! - dragStart!;
+    // if (dragStart == null || dragLast == null) return;
+    // final delta = dragLast! - dragStart!;
 
-    switch (phase) {
-      case GamePhase.intro:
-        break;
-      case GamePhase.waitingForSwipe:
-        if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-          resumeAllObstacles();
-          robot.resume();
-          phase = GamePhase.fisrtRun;
-        }
-        break;
-      case GamePhase.fisrtRun:
-      case GamePhase.firstTutorial:
-      case GamePhase.secondRun:
-      case GamePhase.secondTutorial:
-        break;
-      case GamePhase.thirdRun:
-        if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
-          if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
-        } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
-          if (useFancyDuck) {
-            robot.fancyDuck();
-          } else {
-            robot.normalDuck();
-          }
-        } else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
-          robot.stop();
-          pauseAllJumpObstacles();
-        } else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-          robot.resume();
-          resumeAllObstacles();
-        }
-        break;
-      case GamePhase.paused:
-        break;
-    }
+    // switch (phase) {
+    //   case GamePhase.intro:
+    //     break;
+    //   case GamePhase.waitingForSwipe:
+    //     if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+    //       resumeAllObstacles();
+    //       robot.resume();
+    //       phase = GamePhase.fisrtRun;
+    //     }
+    //     break;
+    //   case GamePhase.fisrtRun:
+    //   case GamePhase.firstTutorial:
+    //   case GamePhase.secondRun:
+    //   case GamePhase.secondTutorial:
+    //     break;
+    //   case GamePhase.thirdRun:
+    //     if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
+    //       if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
+    //     } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
+    //       if (useFancyDuck) {
+    //         robot.fancyDuck();
+    //       } else {
+    //         robot.normalDuck();
+    //       }
+    //     } else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
+    //       robot.stop();
+    //       pauseAllJumpObstacles();
+    //     } else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
+    //       robot.resume();
+    //       resumeAllObstacles();
+    //     }
+    //     break;
+    //   case GamePhase.paused:
+    //     break;
+    // }
 
-    dragStart = null;
-    dragLast = null;
+    // dragStart = null;
+    // dragLast = null;
   }
 }

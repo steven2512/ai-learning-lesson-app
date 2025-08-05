@@ -8,13 +8,11 @@ class JumpObstacle extends SpriteComponent {
   final String picturePath;
   bool isPaused = false;
   Vector2 velocity = Vector2(-200, 0);
-  GamePhase gamePhase;
 
   JumpObstacle({
     required this.initialPosition,
     required this.picturePath,
     required this.obstacleSize,
-    required this.gamePhase,
   }) : super(
          position: initialPosition.clone(),
          size: obstacleSize, // give it a size up-front
@@ -34,7 +32,7 @@ class JumpObstacle extends SpriteComponent {
     super.update(dt);
 
     //intro -everything freezes
-    if (gamePhase == GamePhase.intro) return;
+    // if (gamePhase == GamePhase.intro) return;
 
     if (isPaused) return;
 

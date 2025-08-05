@@ -4,8 +4,6 @@ import 'package:flame/components.dart';
 import 'package:running_robot/my_game.dart';
 
 class Robot extends PositionComponent {
-  GamePhase gamePhase;
-
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
   static const double _duckOffset = 20;
@@ -49,7 +47,6 @@ class Robot extends PositionComponent {
 
   Robot({
     required this.initialPosition,
-    required this.gamePhase,
   }) : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
   }
@@ -128,7 +125,7 @@ class Robot extends PositionComponent {
     super.update(dt);
 
     //intro -everything freezes
-    if (gamePhase == GamePhase.intro) return;
+    // if (gamePhase == GamePhase.intro) return;
 
     _updateFancyDuck(dt);
     _updateNormalDuck(dt);

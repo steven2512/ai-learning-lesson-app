@@ -5,7 +5,6 @@ import 'package:running_robot/my_game.dart';
 
 class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
   final Vector2 initialPosition;
-  GamePhase gamePhase;
   bool isPaused = false;
   late final Vector2 velocity;
   double topY;
@@ -13,7 +12,6 @@ class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
   FallObstacle({
     required this.initialPosition,
     required this.topY,
-    required this.gamePhase,
   }) {
     velocity = Vector2(0, Random().nextDouble() * 100 + 200);
     position = initialPosition.clone();
@@ -39,7 +37,7 @@ class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    if (isPaused || gamePhase == GamePhase.paused) return;
+    // if (isPaused || gamePhase == GamePhase.paused) return;
 
     position += velocity * dt;
 
