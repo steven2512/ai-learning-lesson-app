@@ -6,6 +6,7 @@ import 'package:running_robot/my_game.dart';
 class RainSpawner {
   static List<FallObstacle> generateRain({
     required Vector2 screenSize,
+    required double topY,
     required GamePhase phase,
     int count = 20,
   }) {
@@ -13,13 +14,13 @@ class RainSpawner {
 
     final double rainAreaWidth = screenSize.x / 3;
     final double rainStartX = (screenSize.x - rainAreaWidth) / 2;
-
-    final double rainStartY = 250; // << Start just below the cloud
+    final double rainStartY = 270; // << Start just below the cloud
 
     for (int i = 0; i < count; i++) {
       final double x = rainStartX + Random().nextDouble() * rainAreaWidth;
       final rain = FallObstacle(
         initialPosition: Vector2(x, rainStartY),
+        topY: topY,
         gamePhase: phase,
       );
       obstacles.add(rain);

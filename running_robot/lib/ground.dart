@@ -16,6 +16,7 @@ class Ground extends PositionComponent {
     position = Vector2(dimensions.x / 2, dimensions.y / 2 + 90);
   }
 
+  double get topY => absolutePosition.y;
   @override
   void update(double dt) {
     // Pause everything when the game is stopped

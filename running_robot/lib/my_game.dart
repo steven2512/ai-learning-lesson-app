@@ -83,6 +83,7 @@ class MyGame extends FlameGame with PanDetector {
     //Generate Rain drops
     allFallObstacles = RainSpawner.generateRain(
       screenSize: size,
+      topY: ground.topY - 20,
       phase: phase,
     );
 

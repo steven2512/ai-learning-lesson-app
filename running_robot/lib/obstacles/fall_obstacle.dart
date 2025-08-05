@@ -8,9 +8,11 @@ class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
   GamePhase gamePhase;
   bool isPaused = false;
   late final Vector2 velocity;
+  double topY;
 
   FallObstacle({
     required this.initialPosition,
+    required this.topY,
     required this.gamePhase,
   }) {
     velocity = Vector2(0, Random().nextDouble() * 100 + 200);
@@ -41,7 +43,7 @@ class FallObstacle extends PositionComponent with HasGameRef<MyGame> {
 
     position += velocity * dt;
 
-    if (position.y > gameRef.size.y) {
+    if (position.y > topY) {
       position.setFrom(initialPosition);
     }
   }
