@@ -3,7 +3,7 @@ import 'package:running_robot/Events/event_type.dart';
 import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 
 class Bird extends AnimatedMover {
-  String currentEvent = EventHorizontalObstacle.startMoving;
+  String currentEvent = EventHorizontalObstacle.stopMoving;
 
   Bird({
     required List<String> framePaths,
@@ -20,6 +20,14 @@ class Bird extends AnimatedMover {
          customSize: customSize,
          stepTime: stepTime,
        );
+
+  void move() {
+    currentEvent = EventHorizontalObstacle.startMoving;
+  }
+
+  void stop() {
+    currentEvent = EventHorizontalObstacle.stopMoving;
+  }
 
   @override
   void update(double dt) {

@@ -5,7 +5,7 @@ import 'package:running_robot/Events/event_type.dart';
 class Fence extends HorizontalObstacle {
   String currentEvent = EventHorizontalObstacle.stopMoving;
 
-  final Vector2 velocity = Vector2(-200, 0);
+  final Vector2 velocity;
   final double resetXThreshold = -50;
   bool isPaused = false;
 
@@ -13,6 +13,7 @@ class Fence extends HorizontalObstacle {
     required super.initialPosition,
     required super.picturePath,
     required super.size,
+    required this.velocity, // ✅ Now injected
   });
 
   void move() {

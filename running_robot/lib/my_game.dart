@@ -58,6 +58,7 @@ class MyGame extends FlameGame with PanDetector {
       initialPosition: Vector2(size.x + 200, groundY - 36),
       picturePath: 'fence.png',
       size: Vector2(70, 70),
+      velocity: Vector2(-200, 0),
     );
 
     // Bird
@@ -87,9 +88,15 @@ class MyGame extends FlameGame with PanDetector {
 
     //Rain
     final rainFall = Rain.generateRain(
-      screenSize: size,
-      topY: groundY,
+      count: 30,
+      startAreaTopLeft: Vector2(size.x / 3, 200),
+      startAreaBottomRight: Vector2(size.x * 2 / 3, 280),
+      endPosition: Vector2(size.x / 2, groundY),
+      minSpeed: 100,
+      maxSpeed: 250,
     );
+
+    addAll(rainFall);
 
     //Add all objects
     add(background);

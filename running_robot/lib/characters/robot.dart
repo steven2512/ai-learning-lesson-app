@@ -3,7 +3,7 @@ import 'package:flame/components.dart';
 import 'package:running_robot/Events/event_type.dart';
 
 class Robot extends PositionComponent {
-  late EventRobot currentEvent;
+  late String currentEvent = EventRobot.idle;
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
   static const double _duckOffset = 20;
@@ -15,11 +15,7 @@ class Robot extends PositionComponent {
   final double gravity = 800;
   Vector2 velocity = Vector2.zero();
 
-  bool isJumping = false;
-  bool isTriping = false;
-
   // Ducking
-  bool isDucking = false;
   double duckTimer = 0;
 
   // Track animation
@@ -68,13 +64,11 @@ class Robot extends PositionComponent {
   }
 
   void jump() {
-    if (isDucking) return;
     velocity.y = -500;
     isJumping = true;
   }
 
   void duck() {
-    if (isDucking) return;
     isDucking = true;
     duckTimer = _duckDown + _duckHold + _duckUp;
   }
@@ -83,8 +77,6 @@ class Robot extends PositionComponent {
   void resume() => pauseTracks = false;
 
   void trip() {
-    isJumping = false;
-    isTriping = true;
     _angleDelta = 3;
   }
 
