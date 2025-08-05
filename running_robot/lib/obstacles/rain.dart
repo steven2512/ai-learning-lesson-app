@@ -1,11 +1,11 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/Events/event_type.dart';
-import 'package:running_robot/obstacles/superclass/vertical.dart';
+import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/obstacles/superclass/drawn_mover.dart';
 
-class Rain extends VerticalObstacle {
-  String currentEvent = EventVerticalObstacle.stopFalling;
+class Rain extends DrawnMover {
+  EventVerticalObstacle currentEvent = EventVerticalObstacle.stopFalling;
 
   final Vector2 originalStartPosition;
 

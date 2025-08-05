@@ -1,35 +1,41 @@
-class EventRobot {
-  static const String jump = 'robot_jump';
-  static const String duck = 'robot_duck';
-  static const String idle = 'robot_idle';
-  static const String stop = 'robot_stop';
-  static const String resume = 'robot_resume';
-  static const String trip = 'robot_trip';
+// ────────── ROBOT EVENTS ──────────
+enum EventRobot {
+  jump,
+  duck,
+  idle,
+  stop,
+  resume,
+  trip,
 }
 
-class EventHorizontalObstacle {
-  static const String startMoving = 'jumpObstacle_startMoving';
-  static const String stopMoving = 'jumpObstacle_stopMoving';
+// ────────── HORIZONTAL OBSTACLE EVENTS ──────────
+enum EventHorizontalObstacle {
+  startMoving,
+  stopMoving,
 }
 
-class EventVerticalObstacle {
-  static const String startFalling = 'fallObstacle_startFalling';
-  static const String stopFalling = 'fallObstacle_stopFalling';
-  static const String pause = "pause";
+// ────────── VERTICAL OBSTACLE EVENTS ──────────
+enum EventVerticalObstacle {
+  startFalling,
+  stopFalling,
+  pause,
 }
 
-class CloudEvent {
-  static const String startCloud = 'cloud_startCloud';
-  static const String stopCloud = 'cloud_stopCloud';
+// ────────── CLOUD EVENTS ──────────
+enum CloudEvent {
+  startCloud,
+  stopCloud,
 }
 
-class EventRain {
-  static const String startRain = 'rain_startRain';
-  static const String stopRain = 'rain_stopRain';
+// ────────── RAIN EVENTS ──────────
+enum EventRain {
+  startRain,
+  stopRain,
 }
 
-class EventTextObject {
-  static const String showText = 'text_show';
-  static const String hideText = 'text_hide';
-  static const String nextSequence = 'text_next';
+// ────────── TEXT EVENTS ──────────
+enum EventText {
+  showText,
+  hideText,
+  nextSequence,
 }

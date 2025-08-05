@@ -1,9 +1,9 @@
 import 'package:flame/components.dart';
-import 'package:running_robot/Events/event_type.dart';
-import 'package:running_robot/obstacles/superclass/horizontal.dart';
+import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/obstacles/superclass/simple_mover.dart';
 
-class Cloud extends HorizontalObstacle {
-  String currentEvent = EventHorizontalObstacle.stopMoving;
+class Cloud extends SimpleMover {
+  EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
 
   final Vector2 velocity;
   final double resetXThreshold = -50;

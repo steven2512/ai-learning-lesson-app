@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:running_robot/obstacles/superclass/horizontal.dart';
-import 'package:running_robot/Events/event_type.dart';
+import 'package:running_robot/obstacles/superclass/simple_mover.dart';
+import 'package:running_robot/events/event_type.dart';
 
-class Fence extends HorizontalObstacle {
-  String currentEvent = EventHorizontalObstacle.stopMoving;
+class Fence extends SimpleMover {
+  EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
 
   final Vector2 velocity;
   final double resetXThreshold = -50;
@@ -13,32 +14,48 @@ class Fence extends HorizontalObstacle {
     required super.initialPosition,
     required super.picturePath,
     required super.size,
-    required this.velocity, // ✅ Now injected
+    required this.velocity,
   });
 
-  void move() {
-    currentEvent = EventHorizontalObstacle.startMoving;
-  }
-
-  void stop() {
-    currentEvent = EventHorizontalObstacle.stopMoving;
-  }
-
   @override
-  void update(double dt) {
-    super.update(dt);
+  Future<void> onLoad() async {
+    super.onLoad();
 
-    switch (currentEvent) {
-      case EventHorizontalObstacle.startMoving:
-        position += velocity * dt;
-        if (position.x <= resetXThreshold) {
-          resetPosition();
-        }
-        break;
+    void move() {
+      currentEvent = EventHorizontalObstacle.startMoving;
+    }
 
-      case EventHorizontalObstacle.stopMoving:
-        // Do nothing
-        break;
+    void stop() {
+      currentEvent = EventHorizontalObstacle.stopMoving;
+    }
+
+    void onEvent(EventHorizontalObstacle event) {
+      switch (event) {
+        case EventHorizontalObstacle.startMoving:
+          move();
+          break;
+        case EventHorizontalObstacle.stopMoving:
+          stop();
+          break;
+      }
+    }
+
+    @override
+    void update(double dt) {
+      super.update(dt);
+
+      switch (currentEvent) {
+        case EventHorizontalObstacle.startMoving:
+          position += velocity * dt;
+          if (position.x <= resetXThreshold) {
+            resetPosition();
+          }
+          break;
+
+        case EventHorizontalObstacle.stopMoving:
+          // Do nothing
+          break;
+      }
     }
   }
 }

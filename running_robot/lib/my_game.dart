@@ -1,29 +1,26 @@
 import 'dart:async';
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flutter/material.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/obstacles/cloud.dart';
-import 'package:running_robot/obstacles/superclass/vertical.dart';
-import 'package:running_robot/obstacles/superclass/horizontal.dart';
 import 'package:running_robot/characters/robot.dart';
-import 'package:running_robot/texts/main_text.dart';
+import 'package:running_robot/texts/text_box.dart';
 import 'package:running_robot/texts/lessons/lesson1_text.dart';
 import 'package:running_robot/obstacles/rain.dart';
-import 'package:running_robot/Events/event_bus.dart';
 
 enum GamePhase {
   intro,
-  waitingForSwipe,
   fisrtRun,
+  contemplation,
   firstTutorial,
   secondRun,
-  secondTutorial,
-  thirdRun,
+  finalExplanation,
   paused,
 }
 
@@ -76,9 +73,16 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     //Text
-    final mainText = MainText(
-      dimensions: Vector2(size.x, size.y),
+    final mainText = FancyTextBox(
       sequence: introText,
+      interval: 5.0,
+      fadeDuration: 0.5,
+      position: Vector2(size.x / 2, size.y / 3.5),
+      anchor: Anchor.center,
+      fontSize: 25,
+      letterSpacing: 0.5,
+      fontWeight: FontWeight.w800,
+      maxWidth: 350,
     );
 
     //Cloud
@@ -98,9 +102,8 @@ class MyGame extends FlameGame with PanDetector {
       maxSpeed: 250,
     );
 
-    addAll(rainFall);
-
     //Add all objects
+    addAll(rainFall);
     add(background);
     add(ground);
     add(robot);
@@ -111,41 +114,37 @@ class MyGame extends FlameGame with PanDetector {
     add(mainText);
   }
 
-  // void pauseAllObstacles() {
-  //   for (var x in allJumpObstacles) x.isPaused = true;
-  //   for (var x in allDuckObstacles) x.isPaused = true;
-  //   for (var x in allFallObstacles) x.isPaused = true;
-  // }
+  Future<void> handlePhase() async {
+    switch (phase) {
+      case GamePhase.intro:
+        // TODO: Instructions for intro phase
+        break;
 
-  // void resumeAllObstacles() {
-  //   for (var x in allJumpObstacles) x.isPaused = false;
-  //   for (var x in allDuckObstacles) x.isPaused = false;
-  //   for (var x in allFallObstacles) x.isPaused = false;
-  // }
+      case GamePhase.fisrtRun:
+        // TODO: Instructions for firstRun phase
+        break;
 
-  // void pauseAllJumpObstacles() {
-  //   for (var obstacle in allJumpObstacles) {
-  //     obstacle.isPaused = true;
-  //   }
-  // }
+      case GamePhase.contemplation:
+        // TODO: Instructions for contemplation phase
+        break;
 
-  // void pauseAllDuckObstacles() {
-  //   for (var obstacle in allDuckObstacles) {
-  //     obstacle.isPaused = true;
-  //   }
-  // }
+      case GamePhase.firstTutorial:
+        // TODO: Instructions for firstTutorial phase
+        break;
 
-  // void pauseAllFallObstacles() {
-  //   for (var obstacle in allFallObstacles) {
-  //     obstacle.isPaused = true;
-  //   }
-  // }
+      case GamePhase.secondRun:
+        // TODO: Instructions for secondRun phase
+        break;
 
-  // void resumeAllFallObstacles() {
-  //   for (var obstacle in allFallObstacles) {
-  //     obstacle.isPaused = false;
-  //   }
-  // }
+      case GamePhase.finalExplanation:
+        // TODO: Instructions for finalExplanation phase
+        break;
+
+      case GamePhase.paused:
+        // TODO: Instructions for paused phase (optional)
+        break;
+    }
+  }
 
   @override
   void onPanStart(DragStartInfo info) {
@@ -159,47 +158,5 @@ class MyGame extends FlameGame with PanDetector {
   }
 
   @override
-  void onPanEnd(DragEndInfo info) {
-    // if (dragStart == null || dragLast == null) return;
-    // final delta = dragLast! - dragStart!;
-
-    // switch (phase) {
-    //   case GamePhase.intro:
-    //     break;
-    //   case GamePhase.waitingForSwipe:
-    //     if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-    //       resumeAllObstacles();
-    //       robot.resume();
-    //       phase = GamePhase.fisrtRun;
-    //     }
-    //     break;
-    //   case GamePhase.fisrtRun:
-    //   case GamePhase.firstTutorial:
-    //   case GamePhase.secondRun:
-    //   case GamePhase.secondTutorial:
-    //     break;
-    //   case GamePhase.thirdRun:
-    //     if (delta.y < -20 && delta.y.abs() > delta.x.abs()) {
-    //       if (!robot.isDucking && !robot.isNormalDucking) robot.jump();
-    //     } else if (delta.y > 20 && delta.y.abs() > delta.x.abs()) {
-    //       if (useFancyDuck) {
-    //         robot.fancyDuck();
-    //       } else {
-    //         robot.normalDuck();
-    //       }
-    //     } else if (delta.x < -20 && delta.x.abs() > delta.y.abs()) {
-    //       robot.stop();
-    //       pauseAllJumpObstacles();
-    //     } else if (delta.x > 20 && delta.x.abs() > delta.y.abs()) {
-    //       robot.resume();
-    //       resumeAllObstacles();
-    //     }
-    //     break;
-    //   case GamePhase.paused:
-    //     break;
-    // }
-
-    // dragStart = null;
-    // dragLast = null;
-  }
+  void onPanEnd(DragEndInfo info) {}
 }

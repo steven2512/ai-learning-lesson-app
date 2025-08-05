@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:running_robot/Events/event_type.dart';
+import 'package:running_robot/events/event_type.dart';
 
 class Robot extends PositionComponent {
-  String currentEvent = EventRobot.idle;
+  EventRobot currentEvent = EventRobot.idle;
 
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
@@ -112,6 +112,9 @@ class Robot extends PositionComponent {
       case EventRobot.resume:
         resume();
         _resetAll();
+        break;
+      case EventRobot.stop:
+        // 🚫 Do nothing — paused or manually stopped
         break;
     }
   }

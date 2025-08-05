@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:running_robot/my_game.dart';
 
-class VerticalObstacle extends PositionComponent with HasGameRef<MyGame> {
+class DrawnMover extends PositionComponent with HasGameRef<MyGame> {
   final Vector2 startPosition;
   final Vector2 endPosition;
   final Vector2 velocity;
@@ -10,7 +10,7 @@ class VerticalObstacle extends PositionComponent with HasGameRef<MyGame> {
 
   final void Function(Canvas canvas, Size size)? customDraw;
 
-  VerticalObstacle({
+  DrawnMover({
     required this.startPosition,
     required this.endPosition,
     required this.velocity,

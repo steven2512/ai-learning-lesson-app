@@ -1,9 +1,9 @@
 import 'package:flame/components.dart';
-import 'package:running_robot/Events/event_type.dart';
+import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 
 class Bird extends AnimatedMover {
-  String currentEvent = EventHorizontalObstacle.stopMoving;
+  EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
 
   Bird({
     required List<String> framePaths,

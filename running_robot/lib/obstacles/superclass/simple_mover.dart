@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flame/components.dart';
 
-class HorizontalObstacle extends SpriteComponent {
+class SimpleMover extends SpriteComponent {
   final Vector2 initialPosition;
   final String picturePath;
 
-  HorizontalObstacle({
+  SimpleMover({
     required this.initialPosition,
     required this.picturePath,
     required Vector2 size,
