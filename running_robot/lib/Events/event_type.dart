@@ -4,6 +4,7 @@ class EventRobot {
   static const String idle = 'robot_idle';
   static const String stop = 'robot_stop';
   static const String resume = 'robot_resume';
+  static const String trip = 'robot_trip';
 }
 
 class EventHorizontalObstacle {
@@ -15,6 +16,11 @@ class EventVerticalObstacle {
   static const String startFalling = 'fallObstacle_startFalling';
   static const String stopFalling = 'fallObstacle_stopFalling';
   static const String pause = "pause";
+}
+
+class CloudEvent {
+  static const String startCloud = 'cloud_startCloud';
+  static const String stopCloud = 'cloud_stopCloud';
 }
 
 class EventRain {

@@ -7,7 +7,7 @@ import 'package:running_robot/obstacles/fence.dart';
 import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
-import 'package:running_robot/static/cloud.dart';
+import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/obstacles/superclass/vertical.dart';
 import 'package:running_robot/obstacles/superclass/horizontal.dart';
 import 'package:running_robot/characters/robot.dart';
@@ -83,7 +83,9 @@ class MyGame extends FlameGame with PanDetector {
 
     //Cloud
     final cloud = Cloud(
-      position: Vector2(size.x / 2, 220), // top-center of screen
+      initialPosition: Vector2(size.x + 300, 220),
+      scale: 1.5,
+      velocity: Vector2(-30, 0),
     );
 
     //Rain

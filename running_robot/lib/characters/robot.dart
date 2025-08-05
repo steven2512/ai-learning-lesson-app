@@ -3,7 +3,8 @@ import 'package:flame/components.dart';
 import 'package:running_robot/Events/event_type.dart';
 
 class Robot extends PositionComponent {
-  late String currentEvent = EventRobot.idle;
+  String currentEvent = EventRobot.idle;
+
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
   static const double _duckOffset = 20;
@@ -15,20 +16,18 @@ class Robot extends PositionComponent {
   final double gravity = 800;
   Vector2 velocity = Vector2.zero();
 
-  // Ducking
+  // Timers
   double duckTimer = 0;
-
-  // Track animation
-  bool pauseTracks = false;
   double trackTimer = 0;
   int trackFrame = 0;
-  late Sprite _track1, _track2;
 
   // Sprites
+  late Sprite _track1, _track2;
   late SpriteComponent body, leftTrack, rightTrack;
 
   // Misc
   double _angleDelta = 0;
+  bool pauseTracks = true;
 
   Robot({required this.initialPosition})
     : super(size: Vector2.all(50), anchor: Anchor.center) {
@@ -64,33 +63,83 @@ class Robot extends PositionComponent {
   }
 
   void jump() {
+    currentEvent = EventRobot.jump;
     velocity.y = -500;
-    isJumping = true;
   }
 
   void duck() {
-    isDucking = true;
+    currentEvent = EventRobot.duck;
     duckTimer = _duckDown + _duckHold + _duckUp;
+  }
+
+  void trip() {
+    currentEvent = EventRobot.trip;
+    _angleDelta = 3;
   }
 
   void stop() => pauseTracks = true;
   void resume() => pauseTracks = false;
 
-  void trip() {
-    _angleDelta = 3;
-  }
-
   @override
   void update(double dt) {
     super.update(dt);
-    _updateDuck(dt);
-    _updatePhysics(dt);
-    _updateTracks(dt);
+
+    switch (currentEvent) {
+      case EventRobot.idle:
+        _updateTracks(dt);
+        _resetBodyIfNeeded();
+        break;
+
+      case EventRobot.duck:
+        _updateDuckMotion(dt);
+        _updateTracks(dt);
+        break;
+
+      case EventRobot.jump:
+        _applyGravity(dt);
+        _moveRobot(dt);
+        _checkLanding(resetOnLand: true);
+        break;
+
+      case EventRobot.trip:
+        _applyGravity(dt);
+        _moveRobot(dt);
+        angle += _angleDelta * dt;
+        _angleDelta *= 0.99;
+        _checkLanding(bounceOnLand: true);
+        break;
+
+      case EventRobot.resume:
+        resume();
+        _resetAll();
+        break;
+    }
   }
 
-  void _updateDuck(double dt) {
-    if (!isDucking) return;
+  void _applyGravity(double dt) {
+    velocity.y += gravity * dt;
+  }
 
+  void _moveRobot(double dt) {
+    position += velocity * dt;
+  }
+
+  void _checkLanding({bool resetOnLand = false, bool bounceOnLand = false}) {
+    if (position.y >= initialPosition.y) {
+      position.y = initialPosition.y;
+
+      if (bounceOnLand && velocity.y.abs() > 100) {
+        velocity.y = -velocity.y * 0.6;
+        _angleDelta *= 0.9;
+      } else if (resetOnLand || bounceOnLand) {
+        _resetAll();
+      } else {
+        velocity.y = 0;
+      }
+    }
+  }
+
+  void _updateDuckMotion(double dt) {
     duckTimer -= dt;
     final total = _duckDown + _duckHold + _duckUp;
     final t = total - duckTimer;
@@ -111,41 +160,13 @@ class Robot extends PositionComponent {
     }
 
     if (duckTimer <= 0) {
-      isDucking = false;
+      currentEvent = EventRobot.idle;
       body.position.y = _bodyBaseY;
     }
   }
 
-  void _updatePhysics(double dt) {
-    if (isJumping || isTriping) {
-      velocity.y += gravity * dt;
-      position += velocity * dt;
-    }
-
-    if (isTriping) {
-      angle += _angleDelta * dt;
-      _angleDelta *= 0.99;
-    }
-
-    final bool airborne = isJumping || isTriping || velocity.y != 0;
-
-    if (position.y >= initialPosition.y) {
-      position.y = initialPosition.y;
-      if (airborne) {
-        if (isTriping && velocity.y.abs() > 100) {
-          velocity.y = -velocity.y * 0.6;
-          _angleDelta *= 0.9;
-        } else {
-          _resetAll();
-        }
-      } else {
-        velocity.y = 0;
-      }
-    }
-  }
-
   void _updateTracks(double dt) {
-    if (isTriping || isJumping || pauseTracks) return;
+    if (pauseTracks) return;
 
     trackTimer += dt;
     if (trackTimer > 0.1) {
@@ -157,10 +178,14 @@ class Robot extends PositionComponent {
     }
   }
 
+  void _resetBodyIfNeeded() {
+    if (body.position.y != _bodyBaseY) {
+      body.position.y = _bodyBaseY;
+    }
+  }
+
   void _resetAll() {
-    isJumping = false;
-    isTriping = false;
-    isDucking = false;
+    currentEvent = EventRobot.idle;
     velocity.setZero();
     angle = 0;
     body.position.y = _bodyBaseY;
