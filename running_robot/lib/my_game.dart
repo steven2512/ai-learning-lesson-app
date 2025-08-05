@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/obstacles/superclass/animated_horizontal.dart';
+import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/static/cloud.dart';
@@ -14,7 +13,8 @@ import 'package:running_robot/obstacles/superclass/horizontal.dart';
 import 'package:running_robot/characters/robot.dart';
 import 'package:running_robot/texts/main_text.dart';
 import 'package:running_robot/texts/lessons/lesson1_text.dart';
-import 'package:running_robot/obstacles/rain.dart'; // new import
+import 'package:running_robot/obstacles/rain.dart';
+import 'package:running_robot/Events/event_bus.dart';
 
 enum GamePhase {
   intro,
@@ -29,25 +29,10 @@ enum GamePhase {
 
 class MyGame extends FlameGame with PanDetector {
   GamePhase phase = GamePhase.intro;
-
-  late Background background;
-  late Robot robot;
-  late Bird bird;
-  late Ground ground;
-  late List<Rain> rainFall;
-  late Cloud cloud;
   int failCount = 0;
-  late TextComponent mainText;
-  late HorizontalObstacle currentColliedJumpObstacles;
-  bool useFancyDuck = false;
-  late double groundY;
 
   bool colliedJumpObstacles = false;
   bool colliedRainObstacles = false;
-
-  List<HorizontalObstacle> allHorizontalObstacles = [];
-  List<AnimatedHorizontalObstacle> allAnimatedHorizontalObstacles = [];
-  List<VerticalObstacle> allVerticalObstacles = [];
 
   Vector2? dragStart;
   Vector2? dragLast;
@@ -55,16 +40,16 @@ class MyGame extends FlameGame with PanDetector {
   @override
   FutureOr<void> onLoad() async {
     //Background
-    background = Background(backgroundSize: Vector2(size.x, size.y));
+    final background = Background(backgroundSize: Vector2(size.x, size.y));
 
     //Ground
-    ground = Ground(dimensions: Vector2(size.x, size.y));
+    final ground = Ground(dimensions: Vector2(size.x, size.y));
 
     //Set absolute ground
-    groundY = ground.topY;
+    final groundY = ground.topY;
 
     //Robot
-    robot = Robot(
+    final robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
     );
 
@@ -76,12 +61,18 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     // Bird
-    // Bird
-    bird = Bird(
-      initialPosition: Vector2(size.x + 1000, size.y / 2.5),
+    final bird = Bird(
+      framePaths: [
+        'bird1.png',
+        'bird2.png',
+        'bird3.png',
+        'bird4.png',
+      ],
+      startPosition: Vector2(800, 350),
+      endPosition: Vector2(-100, 350),
+      velocity: Vector2(-150, 0),
+      customSize: Vector2.all(50), // make it a big bird
     );
-    allHorizontalObstacles.add(fence);
-    allAnimatedHorizontalObstacles.add(bird);
 
     //Text
     final mainText = MainText(
@@ -90,12 +81,12 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     //Cloud
-    cloud = Cloud(
+    final cloud = Cloud(
       position: Vector2(size.x / 2, 220), // top-center of screen
     );
 
     //Rain
-    rainFall = Rain.generateRain(
+    final rainFall = Rain.generateRain(
       screenSize: size,
       topY: groundY,
     );
@@ -104,12 +95,10 @@ class MyGame extends FlameGame with PanDetector {
     add(background);
     add(ground);
     add(robot);
-    // add(bird);
-    addAll(allHorizontalObstacles);
-    addAll(allVerticalObstacles);
-    addAll(allAnimatedHorizontalObstacles);
     add(cloud);
-    addAll(rainFall as Iterable<Component>);
+    add(fence);
+    add(bird);
+    addAll(rainFall);
     add(mainText);
   }
 

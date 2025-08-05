@@ -1,31 +1,43 @@
 import 'package:flame/components.dart';
 import 'package:running_robot/obstacles/superclass/horizontal.dart';
+import 'package:running_robot/Events/event_type.dart';
 
 class Fence extends HorizontalObstacle {
+  String currentEvent = EventHorizontalObstacle.stopMoving;
+
   final Vector2 velocity = Vector2(-200, 0);
   final double resetXThreshold = -50;
   bool isPaused = false;
 
   Fence({
-    required Vector2 initialPosition,
-    required String picturePath,
-    required Vector2 size,
-  }) : super(
-         initialPosition: initialPosition,
-         picturePath: picturePath,
-         size: size,
-       );
+    required super.initialPosition,
+    required super.picturePath,
+    required super.size,
+  });
+
+  void move() {
+    currentEvent = EventHorizontalObstacle.startMoving;
+  }
+
+  void stop() {
+    currentEvent = EventHorizontalObstacle.stopMoving;
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    // if (isPaused) return;
+    switch (currentEvent) {
+      case EventHorizontalObstacle.startMoving:
+        position += velocity * dt;
+        if (position.x <= resetXThreshold) {
+          resetPosition();
+        }
+        break;
 
-    position += velocity * dt;
-
-    if (position.x <= resetXThreshold) {
-      resetPosition();
+      case EventHorizontalObstacle.stopMoving:
+        // Do nothing
+        break;
     }
   }
 }

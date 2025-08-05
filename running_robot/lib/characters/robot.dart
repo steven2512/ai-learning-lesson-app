@@ -1,39 +1,28 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:running_robot/my_game.dart';
+import 'package:running_robot/Events/event_type.dart';
 
 class Robot extends PositionComponent {
+  late EventRobot currentEvent;
   // ────────── CONFIG ──────────
   static const double _bodyBaseY = 42;
   static const double _duckOffset = 20;
-  static const double _normalDown = 0.25;
-  static const double _normalHold = 1.60;
-  static const double _normalUp = 0.25;
+  static const double _duckDown = 0.2;
+  static const double _duckHold = 1.0;
+  static const double _duckUp = 0.2;
 
-  // Fancy-duck timings
-  final double stopPause = 1.0;
-  final double duckDur = 1.0;
-  final double holdFancy = 2.7;
-
-  // ────────── STATE ──────────
   final Vector2 initialPosition;
   final double gravity = 800;
-
   Vector2 velocity = Vector2.zero();
 
   bool isJumping = false;
   bool isTriping = false;
 
-  // Fancy duck
+  // Ducking
   bool isDucking = false;
   double duckTimer = 0;
 
-  // Normal duck
-  bool isNormalDucking = false;
-  double normalDuckTimer = 0;
-
-  // Track animation (robot-only)
+  // Track animation
   bool pauseTracks = false;
   double trackTimer = 0;
   int trackFrame = 0;
@@ -45,9 +34,8 @@ class Robot extends PositionComponent {
   // Misc
   double _angleDelta = 0;
 
-  Robot({
-    required this.initialPosition,
-  }) : super(size: Vector2.all(50), anchor: Anchor.center) {
+  Robot({required this.initialPosition})
+    : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
   }
 
@@ -79,40 +67,20 @@ class Robot extends PositionComponent {
     add(leftTrack);
   }
 
-  // ────────── PUBLIC ACTIONS ──────────
   void jump() {
-    if (isDucking || isNormalDucking) return;
+    if (isDucking) return;
     velocity.y = -500;
     isJumping = true;
   }
 
-  void fancyDuck() {
-    if (isDucking || isNormalDucking) return;
+  void duck() {
+    if (isDucking) return;
     isDucking = true;
-    duckTimer =
-        stopPause +
-        duckDur +
-        stopPause +
-        holdFancy +
-        stopPause +
-        duckDur +
-        stopPause;
+    duckTimer = _duckDown + _duckHold + _duckUp;
   }
 
-  void normalDuck() {
-    if (isDucking || isNormalDucking) return;
-    isNormalDucking = true;
-    normalDuckTimer = _normalDown + _normalHold + _normalUp;
-  }
-
-  void stop() {
-    // No world stop – you may still choose to pause track animation
-    pauseTracks = true;
-  }
-
-  void resume() {
-    pauseTracks = false;
-  }
+  void stop() => pauseTracks = true;
+  void resume() => pauseTracks = false;
 
   void trip() {
     isJumping = false;
@@ -123,60 +91,31 @@ class Robot extends PositionComponent {
   @override
   void update(double dt) {
     super.update(dt);
-
-    //intro -everything freezes
-    // if (gamePhase == GamePhase.intro) return;
-
-    _updateFancyDuck(dt);
-    _updateNormalDuck(dt);
+    _updateDuck(dt);
     _updatePhysics(dt);
     _updateTracks(dt);
   }
 
-  /* ---------------- Fancy duck ---------------- */
-  void _updateFancyDuck(double dt) {
+  void _updateDuck(double dt) {
     if (!isDucking) return;
 
     duckTimer -= dt;
-    final total =
-        stopPause +
-        duckDur +
-        stopPause +
-        holdFancy +
-        stopPause +
-        duckDur +
-        stopPause;
+    final total = _duckDown + _duckHold + _duckUp;
     final t = total - duckTimer;
 
-    final p1 = stopPause;
-    final p2 = p1 + duckDur;
-    final p3 = p2 + stopPause;
-    final p4 = p3 + holdFancy;
-    final p5 = p4 + stopPause;
-    final p6 = p5 + duckDur;
-    final p7 = p6 + stopPause;
+    final p1 = _duckDown;
+    final p2 = p1 + _duckHold;
+    final p3 = p2 + _duckUp;
 
     if (t <= p1) {
-      body.position.y = _bodyBaseY;
+      final prog = (t / _duckDown);
+      body.position.y = _bodyBaseY + _duckOffset * math.pow(prog, 2).toDouble();
     } else if (t <= p2) {
-      final prog = (t - p1) / duckDur;
-      body.position.y =
-          _bodyBaseY + _duckOffset * (1 - math.pow(1 - prog, 3)).toDouble();
+      body.position.y = _bodyBaseY + _duckOffset;
     } else if (t <= p3) {
-      body.position.y = _bodyBaseY + _duckOffset;
-    } else if (t <= p4) {
-      body.position.y = _bodyBaseY + _duckOffset;
-      pauseTracks = false; // allow tracks to resume during hold
-    } else if (t <= p5) {
-      body.position.y = _bodyBaseY + _duckOffset;
-    } else if (t <= p6) {
-      final prog = (t - p5) / duckDur;
+      final prog = (t - p2) / _duckUp;
       body.position.y =
-          _bodyBaseY +
-          _duckOffset -
-          _duckOffset * (1 - math.pow(1 - prog, 3)).toDouble();
-    } else if (t <= p7) {
-      body.position.y = _bodyBaseY;
+          _bodyBaseY + _duckOffset * (1 - math.pow(prog, 2)).toDouble();
     }
 
     if (duckTimer <= 0) {
@@ -185,34 +124,6 @@ class Robot extends PositionComponent {
     }
   }
 
-  /* ---------------- Normal duck ---------------- */
-  void _updateNormalDuck(double dt) {
-    if (!isNormalDucking) return;
-
-    normalDuckTimer -= dt;
-    final total = _normalDown + _normalHold + _normalUp;
-    final t = total - normalDuckTimer;
-
-    final p1 = _normalDown;
-    final p2 = p1 + _normalHold;
-    final p3 = p2 + _normalUp;
-
-    if (t <= p1) {
-      body.position.y = _bodyBaseY + _duckOffset * (t / _normalDown);
-    } else if (t <= p2) {
-      body.position.y = _bodyBaseY + _duckOffset;
-    } else if (t <= p3) {
-      body.position.y =
-          _bodyBaseY + _duckOffset - _duckOffset * ((t - p2) / _normalUp);
-    }
-
-    if (normalDuckTimer <= 0) {
-      isNormalDucking = false;
-      body.position.y = _bodyBaseY;
-    }
-  }
-
-  /* ---------------- Physics / landing ---------------- */
   void _updatePhysics(double dt) {
     if (isJumping || isTriping) {
       velocity.y += gravity * dt;
@@ -228,15 +139,10 @@ class Robot extends PositionComponent {
 
     if (position.y >= initialPosition.y) {
       position.y = initialPosition.y;
-
       if (airborne) {
-        if (isTriping) {
-          if (velocity.y.abs() > 100) {
-            velocity.y = -velocity.y * 0.6;
-            _angleDelta *= 0.9;
-          } else {
-            _resetAll();
-          }
+        if (isTriping && velocity.y.abs() > 100) {
+          velocity.y = -velocity.y * 0.6;
+          _angleDelta *= 0.9;
         } else {
           _resetAll();
         }
@@ -246,7 +152,6 @@ class Robot extends PositionComponent {
     }
   }
 
-  /* ---------------- Tracks animation ---------------- */
   void _updateTracks(double dt) {
     if (isTriping || isJumping || pauseTracks) return;
 
@@ -264,7 +169,6 @@ class Robot extends PositionComponent {
     isJumping = false;
     isTriping = false;
     isDucking = false;
-    isNormalDucking = false;
     velocity.setZero();
     angle = 0;
     body.position.y = _bodyBaseY;

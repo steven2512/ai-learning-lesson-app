@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/Events/event_type.dart';
 
 class MainText extends TextBoxComponent implements OpacityProvider {
   final Vector2 dimensions;

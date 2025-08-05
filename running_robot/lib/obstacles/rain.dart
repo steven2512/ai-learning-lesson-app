@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:running_robot/obstacles/superclass/vertical.dart';
+import 'package:running_robot/Events/event_type.dart';
 
 class Rain extends VerticalObstacle {
   Rain({
