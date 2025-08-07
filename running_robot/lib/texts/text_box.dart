@@ -18,7 +18,7 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
   @override
   set opacity(double value) => _opacity = value.clamp(0.0, 1.0);
 
-  Enum currentEvent = EventText.showText;
+  EventText currentEvent = EventText.hideText;
 
   FancyTextBox({
     required Vector2 position,
@@ -49,6 +49,31 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
          ),
        );
 
+  // ───── Phase Dispatcher ─────
+  void switchPhase(EventText phase) {
+    switch (phase) {
+      case EventText.showText:
+        showText();
+        break;
+      case EventText.hideText:
+        hideText();
+        break;
+      case EventText.nextSequence:
+        // internal use only
+        break;
+    }
+  }
+
+  // ───── Public Controls ─────
+  void showText() {
+    currentEvent = EventText.showText;
+  }
+
+  void hideText() {
+    currentEvent = EventText.hideText;
+  }
+
+  // ───── Frame Updates ─────
   @override
   void update(double dt) {
     super.update(dt);
@@ -64,15 +89,16 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
 
       case EventText.nextSequence:
         _fadeToNext();
-        currentEvent = EventText.hideText; // temporarily pause updates
+        currentEvent = EventText.hideText;
         break;
 
       case EventText.hideText:
-        // waiting for fade effect to finish
+        // idle
         break;
     }
   }
 
+  // ───── Transition Effects ─────
   void _fadeToNext() {
     add(
       OpacityEffect.to(
@@ -95,6 +121,7 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
     );
   }
 
+  // ───── Custom Rendering ─────
   @override
   void render(Canvas canvas) {
     canvas.save();
@@ -106,7 +133,7 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
     canvas.restore();
   }
 
-  /// Optional manual controls
+  // ───── Optional Manual Resets ─────
   void resetText() {
     currentIndex = 0;
     text = sequence[0];

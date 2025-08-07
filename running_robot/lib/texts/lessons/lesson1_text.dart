@@ -1,11 +1,10 @@
 final List<String> introText = [
   'Welcome to your first lesson',
-  "It's great to have you here",
   'We will now learn how AI really "learns"',
-  "Let's meet our little friend Robo",
-  "Robo is a young yet ambitious AI",
-  "For the purpose of deep understanding, we now ask you to sit back, relax, and observe this First Run",
-  "Don't worry, it will all make sense soon!",
+  "This yellow robot you see here is Robo",
+  "To see how AI learns, we must see how they perform without any guidance",
+  "So Robo will now go through some new obstacles he has never seen before",
+  "Swipe right to activate Robo",
 ];
 
 final List<String> firstRunText = [
