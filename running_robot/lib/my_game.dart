@@ -112,6 +112,7 @@ class MyGame extends FlameGame with PanDetector {
     add(bird);
     add(mainText);
 
+    //Start chain of Event
     handlePhase();
   }
 
