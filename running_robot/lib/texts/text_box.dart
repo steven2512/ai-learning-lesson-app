@@ -105,8 +105,10 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
         0,
         EffectController(duration: fadeDuration),
         onComplete: () {
+          opacity = 0; // Force-set to fully invisible before changing text
           currentIndex++;
           text = sequence[currentIndex];
+
           add(
             OpacityEffect.to(
               1,
