@@ -29,15 +29,14 @@ class Fence extends SimpleMover {
       currentEvent = EventHorizontalObstacle.stopMoving;
     }
 
-    void onEvent(EventHorizontalObstacle event) {
-      switch (event) {
-        case EventHorizontalObstacle.startMoving:
-          move();
-          break;
+    void switchPhase(EventHorizontalObstacle phase) {
+      switch (phase) {
         case EventHorizontalObstacle.stopMoving:
           stop();
-          break;
+        case EventHorizontalObstacle.startMoving:
+          move();
       }
+      ;
     }
 
     @override

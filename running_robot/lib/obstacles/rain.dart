@@ -37,6 +37,18 @@ class Rain extends DrawnMover {
     canvas.drawPath(path, paint);
   }
 
+  void switchPhase(EventVerticalObstacle phase) {
+    switch (phase) {
+      case EventVerticalObstacle.stopFalling:
+        stop();
+        break;
+
+      case EventVerticalObstacle.startFalling:
+        start();
+        break;
+    }
+  }
+
   @override
   void update(double dt) {
     super.update(dt);

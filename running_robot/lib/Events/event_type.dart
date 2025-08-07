@@ -18,7 +18,6 @@ enum EventHorizontalObstacle {
 enum EventVerticalObstacle {
   startFalling,
   stopFalling,
-  pause,
 }
 
 // ────────── CLOUD EVENTS ──────────

@@ -29,6 +29,15 @@ class Bird extends AnimatedMover {
     currentEvent = EventHorizontalObstacle.stopMoving;
   }
 
+  void switchPhase(EventHorizontalObstacle phase) {
+    switch (phase) {
+      case EventHorizontalObstacle.stopMoving:
+        stop();
+      case EventHorizontalObstacle.startMoving:
+        move();
+    }
+  }
+
   @override
   void update(double dt) {
     updateAnimation(dt);
