@@ -158,11 +158,11 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     progressBar = LessonProgressBar(
-      position: Vector2(size.x / 2, 70),
+      position: Vector2(size.x / 2, 85),
       stages: 3,
     );
 
-    pauseButton = PauseButton(position: Vector2(size.x - 30, 35));
+    pauseButton = PauseButton(position: Vector2(size.x - 28, 35));
     add(background);
     add(ground);
     add(progressBar);

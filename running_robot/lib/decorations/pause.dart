@@ -11,7 +11,7 @@ class PauseButton extends PositionComponent
   // ───────── Transparent interior ─────────
   static const double _defaultDiameter = 34;
   static const double _borderAlpha = 0.03;
-  static const double _shadowAlpha = 0.02; // CHANGED: use with drawShadow
+  static const double _shadowAlpha = 0.00; // CHANGED: use with drawShadow
   static const double _haloAlpha = 0.035;
 
   static const Color _border = Color(0xFF0F172A);
