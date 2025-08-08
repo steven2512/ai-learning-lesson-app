@@ -200,7 +200,7 @@ class Robot extends PositionComponent {
     if (pauseTracks) return;
 
     trackTimer += dt;
-    if (trackTimer > 0.095) {
+    if (trackTimer > 0.097) {
       trackTimer = 0;
       trackFrame = 1 - trackFrame;
       final sprite = (trackFrame == 0) ? _track1 : _track2;

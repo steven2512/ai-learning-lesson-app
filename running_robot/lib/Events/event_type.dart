@@ -37,3 +37,9 @@ enum EventText {
   hideText,
   nextSequence,
 }
+
+enum EventProgressBar {
+  initial,
+  proceed,
+  finish,
+}

@@ -4,7 +4,7 @@ final List<String> introText = [
   "Do they learn differently to us humans?",
   "Or the same way?",
   "To see how AI learns, we must see how they perform without any guidance",
-  "This our untrained AI Robo",
+  "This is our untrained AI, Robo",
   "Robo will now go through some new obstacles he has never seen before",
   "Let see how he does!",
   "Swipe right to activate Robo",

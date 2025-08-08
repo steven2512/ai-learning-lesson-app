@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
+import 'package:running_robot/progress_bar.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/obstacles/cloud.dart';
@@ -17,6 +18,7 @@ import 'package:running_robot/obstacles/rain.dart';
 
 enum GamePhase {
   intro,
+  waitingForSwipe,
   fisrtRun,
   contemplation,
   firstTutorial,
@@ -45,6 +47,7 @@ class MyGame extends FlameGame with PanDetector {
   late final Cloud cloudRain;
   late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
+  late final LessonProgressBar progressBar;
 
   @override
   FutureOr<void> onLoad() async {
@@ -58,7 +61,7 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     fence = Fence(
-      initialPosition: Vector2(size.x + 200, groundY - 36),
+      initialPosition: Vector2(size.x + 200, groundY - 40),
       picturePath: 'fence.png',
       size: Vector2(80, 80),
       velocity: Vector2(-80, 0),
@@ -94,7 +97,7 @@ class MyGame extends FlameGame with PanDetector {
       picturePath: 'cloud_grey.png',
       stretchY: 1.5,
       stretchX: 1.5,
-      velocity: Vector2(-50, 0),
+      velocity: Vector2(-70, 0),
       // randomizeRest: false, // (default) keep stable for rain anchor
     );
 
@@ -103,7 +106,7 @@ class MyGame extends FlameGame with PanDetector {
         initialPosition: Vector2(size.x + 150, 320),
         picturePath: 'cloud_shape4_4.png',
         stretchY: 0.7,
-        velocity: Vector2(-80, 0),
+        velocity: Vector2(-100, 0),
         randomizeRest: true, // ✅ parallax
         opacity: 0.2,
       ),
@@ -152,12 +155,17 @@ class MyGame extends FlameGame with PanDetector {
       cloud: cloudRain, // <—
     );
 
+    progressBar = LessonProgressBar(
+      position: Vector2(size.x / 2, 70),
+      stages: 3,
+    );
+
     add(background);
     add(ground);
+    add(progressBar);
     addAll(clouds);
     add(robot);
     add(cloudRain);
-
     addAll(rainFall);
     add(fence);
     add(bird);
@@ -171,16 +179,21 @@ class MyGame extends FlameGame with PanDetector {
     switch (phase) {
       case GamePhase.intro:
         mainText.switchPhase(EventText.showText);
+        await Future.delayed(const Duration(seconds: 40));
+        phase = GamePhase.waitingForSwipe;
         break;
-
+      case GamePhase.waitingForSwipe:
+        break;
       case GamePhase.fisrtRun:
         //Robot starts running
+        mainText.switchPhase(EventText.hideText);
         robot.switchPhase(EventRobot.resume);
         ground.switchPhase(EventHorizontalObstacle.startMoving);
         clouds.forEach(
           (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
         );
 
+        await Future.delayed(const Duration(seconds: 5));
         //Cloud and rain starts moving
         cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
         rainFall.forEach(
@@ -188,7 +201,7 @@ class MyGame extends FlameGame with PanDetector {
         );
 
         //CLoud and rain disappear
-        await Future.delayed(const Duration(seconds: 32));
+        await Future.delayed(const Duration(seconds: 12));
         cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
@@ -248,7 +261,7 @@ class MyGame extends FlameGame with PanDetector {
 
   @override
   void onPanEnd(DragEndInfo info) {
-    if (phase == GamePhase.intro) {
+    if (phase == GamePhase.waitingForSwipe) {
       if (dragStart != null && dragLast != null) {
         if (dragLast!.x - dragStart!.x > 50) {
           phase = GamePhase.fisrtRun;
