@@ -17,44 +17,39 @@ class Fence extends SimpleMover {
     required this.velocity,
   });
 
+  void move() {
+    currentEvent = EventHorizontalObstacle.startMoving;
+  }
+
+  void stop() {
+    currentEvent = EventHorizontalObstacle.stopMoving;
+  }
+
+  void switchPhase(EventHorizontalObstacle phase) {
+    switch (phase) {
+      case EventHorizontalObstacle.stopMoving:
+        stop();
+      case EventHorizontalObstacle.startMoving:
+        move();
+    }
+    ;
+  }
+
   @override
-  Future<void> onLoad() async {
-    super.onLoad();
+  void update(double dt) {
+    super.update(dt);
 
-    void move() {
-      currentEvent = EventHorizontalObstacle.startMoving;
-    }
+    switch (currentEvent) {
+      case EventHorizontalObstacle.startMoving:
+        position += velocity * dt;
+        if (position.x <= resetXThreshold) {
+          resetPosition();
+        }
+        break;
 
-    void stop() {
-      currentEvent = EventHorizontalObstacle.stopMoving;
-    }
-
-    void switchPhase(EventHorizontalObstacle phase) {
-      switch (phase) {
-        case EventHorizontalObstacle.stopMoving:
-          stop();
-        case EventHorizontalObstacle.startMoving:
-          move();
-      }
-      ;
-    }
-
-    @override
-    void update(double dt) {
-      super.update(dt);
-
-      switch (currentEvent) {
-        case EventHorizontalObstacle.startMoving:
-          position += velocity * dt;
-          if (position.x <= resetXThreshold) {
-            resetPosition();
-          }
-          break;
-
-        case EventHorizontalObstacle.stopMoving:
-          // Do nothing
-          break;
-      }
+      case EventHorizontalObstacle.stopMoving:
+        // Do nothing
+        break;
     }
   }
 }

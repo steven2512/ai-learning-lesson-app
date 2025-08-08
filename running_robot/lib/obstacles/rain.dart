@@ -8,11 +8,9 @@ import 'package:running_robot/obstacles/superclass/drawn_mover.dart';
 class Rain extends DrawnMover {
   EventVerticalObstacle currentEvent = EventVerticalObstacle.stopFalling;
 
-  // Per-drop variety
+  final Cloud cloud; // <— follow THIS cloud only
   final double offsetX;
   final double offsetY;
-
-  // Fallback if no cloud found
   final Vector2 originalStartPosition;
 
   static const double _spawnYOffset = 30;
@@ -20,9 +18,10 @@ class Rain extends DrawnMover {
   Rain({
     required Vector2 startPosition,
     required Vector2 endPosition,
-    required Vector2 velocity, // (0, fallSpeed)
+    required Vector2 velocity,
     required this.offsetX,
     required this.offsetY,
+    required this.cloud, // <— required
   }) : originalStartPosition = startPosition.clone(),
        super(
          startPosition: startPosition,
@@ -47,18 +46,9 @@ class Rain extends DrawnMover {
     canvas.drawPath(path, paint);
   }
 
-  Cloud? get _cloud {
-    final p = parent;
-    if (p == null) return null;
-    for (final c in p.children.whereType<Cloud>()) {
-      return c;
-    }
-    return null;
-  }
-
   void _snapToCloudTop() {
-    final c = _cloud;
-    if (c != null) {
+    final c = cloud;
+    if (!c.isRemoved) {
       position
         ..x = c.position.x + offsetX
         ..y = c.position.y + _spawnYOffset + offsetY;
@@ -81,7 +71,6 @@ class Rain extends DrawnMover {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    // Hide off-screen during intro so nothing shows until startFalling
     if (currentEvent == EventVerticalObstacle.stopFalling) {
       position.setValues(-200, -200);
     }
@@ -89,7 +78,6 @@ class Rain extends DrawnMover {
 
   @override
   void render(Canvas canvas) {
-    // Don’t draw when stopped (prevents intro artifacts)
     if (currentEvent == EventVerticalObstacle.stopFalling) return;
     super.render(canvas);
   }
@@ -99,17 +87,11 @@ class Rain extends DrawnMover {
     super.update(dt);
 
     if (currentEvent == EventVerticalObstacle.startFalling) {
-      final c = _cloud;
-      if (c != null) {
-        // Lock horizontally under the cloud, preserving per-drop offset
-        position.x = c.position.x + offsetX;
-      }
-      // Fall vertically
-      position.y += velocity.y * dt;
+      // lock under its own cloud only
+      position.x = cloud.position.x + offsetX;
 
-      if (_hasPassedEnd()) {
-        _snapToCloudTop(); // respawn under cloud with same offset
-      }
+      position.y += velocity.y * dt;
+      if (_hasPassedEnd()) _snapToCloudTop();
     }
   }
 
@@ -118,35 +100,31 @@ class Rain extends DrawnMover {
     required Vector2 startAreaTopLeft,
     required Vector2 startAreaBottomRight,
     required Vector2 endPosition,
+    required Cloud cloud, // <— bind to this cloud
     double minSpeed = 100,
     double maxSpeed = 300,
-    double xSpread = 62, // slightly more sparse
-    double yJitter = 14, // tiny vertical jitter
+    double xSpread = 62,
+    double yJitter = 14,
   }) {
     final rng = Random();
     double r(double a, double b) => rng.nextDouble() * (b - a) + a;
-
     final height = (startAreaBottomRight.y - startAreaTopLeft.y).clamp(0, 30);
 
-    final drops = <Rain>[];
-    for (int i = 0; i < count; i++) {
+    return List.generate(count, (_) {
       final start = Vector2(
         r(startAreaTopLeft.x, startAreaBottomRight.x),
         r(startAreaTopLeft.y, startAreaBottomRight.y),
       );
       final fallSpeed = r(minSpeed, maxSpeed);
-
-      drops.add(
-        Rain(
-          startPosition: start,
-          endPosition: endPosition,
-          velocity: Vector2(0, fallSpeed),
-          offsetX: r(-xSpread / 2, xSpread / 2),
-          offsetY: r(0, min<double>(height.toDouble(), yJitter)),
-        ),
+      return Rain(
+        startPosition: start,
+        endPosition: endPosition,
+        velocity: Vector2(0, fallSpeed),
+        offsetX: r(-xSpread / 2, xSpread / 2),
+        offsetY: r(0, min<double>(height.toDouble(), yJitter)),
+        cloud: cloud, // <— tie each drop to that cloud
       );
-    }
-    return drops;
+    });
   }
 
   void start() {
@@ -156,7 +134,7 @@ class Rain extends DrawnMover {
 
   void stop() {
     currentEvent = EventVerticalObstacle.stopFalling;
-    position.setFrom(Vector2(-200, -200)); // hide off-screen
+    position.setFrom(Vector2(-200, -200));
   }
 
   bool _hasPassedEnd() => position.y > endPosition.y;

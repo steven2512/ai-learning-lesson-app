@@ -42,7 +42,8 @@ class MyGame extends FlameGame with PanDetector {
   late final Fence fence;
   late final Bird bird;
   late final FancyTextBox mainText;
-  late final Cloud cloud;
+  late final Cloud cloudRain;
+  late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
 
   @override
@@ -59,8 +60,8 @@ class MyGame extends FlameGame with PanDetector {
     fence = Fence(
       initialPosition: Vector2(size.x + 200, groundY - 36),
       picturePath: 'fence.png',
-      size: Vector2(70, 70),
-      velocity: Vector2(-200, 0),
+      size: Vector2(80, 80),
+      velocity: Vector2(-80, 0),
     );
 
     bird = Bird(
@@ -78,9 +79,9 @@ class MyGame extends FlameGame with PanDetector {
 
     mainText = FancyTextBox(
       sequence: introText,
-      interval: 5.0,
+      interval: 4.8,
       fadeDuration: 0.5,
-      position: Vector2(size.x / 2, size.y / 3.5),
+      position: Vector2(size.x / 2, size.y / 3),
       anchor: Anchor.center,
       fontSize: 25,
       letterSpacing: 0.5,
@@ -88,11 +89,58 @@ class MyGame extends FlameGame with PanDetector {
       maxWidth: 350,
     );
 
-    cloud = Cloud(
+    cloudRain = Cloud(
       initialPosition: Vector2(size.x + 300, 220),
-      scale: 1.5,
-      velocity: Vector2(-30, 0),
+      picturePath: 'cloud_grey.png',
+      stretchY: 1.5,
+      stretchX: 1.5,
+      velocity: Vector2(-50, 0),
+      // randomizeRest: false, // (default) keep stable for rain anchor
     );
+
+    clouds.add(
+      Cloud(
+        initialPosition: Vector2(size.x + 150, 320),
+        picturePath: 'cloud_shape4_4.png',
+        stretchY: 0.7,
+        velocity: Vector2(-80, 0),
+        randomizeRest: true, // ✅ parallax
+        opacity: 0.2,
+      ),
+    );
+
+    clouds.add(
+      Cloud(
+        initialPosition: Vector2(size.x + 300, 360),
+        picturePath: 'cloud_shape3_5.png',
+        stretchY: 0.7,
+        velocity: Vector2(-90, 0),
+        randomizeRest: true, // ✅ parallax
+        opacity: 0.2,
+      ),
+    );
+
+    // clouds.add(
+    //   Cloud(
+    //     initialPosition: Vector2(size.x + 150, 320),
+    //     picturePath: 'cloud_shape4_4.png',
+    //     stretchY: 0.7,
+    //     velocity: Vector2(-30, 0),
+    //     randomizeRest: true, // ✅ parallax
+    //     opacity: 0.2,
+    //   ),
+    // );
+
+    // clouds.add(
+    //   Cloud(
+    //     initialPosition: Vector2(size.x + 300, 360),
+    //     picturePath: 'cloud_shape3_5.png',
+    //     stretchY: 0.7,
+    //     velocity: Vector2(-30, 0),
+    //     randomizeRest: true, // ✅ parallax
+    //     opacity: 0.2,
+    //   ),
+    // );
 
     rainFall = Rain.generateRain(
       count: 70,
@@ -101,12 +149,15 @@ class MyGame extends FlameGame with PanDetector {
       endPosition: Vector2(size.x / 2, groundY),
       minSpeed: 150,
       maxSpeed: 300,
+      cloud: cloudRain, // <—
     );
 
     add(background);
     add(ground);
+    addAll(clouds);
     add(robot);
-    add(cloud);
+    add(cloudRain);
+
     addAll(rainFall);
     add(fence);
     add(bird);
@@ -125,16 +176,20 @@ class MyGame extends FlameGame with PanDetector {
       case GamePhase.fisrtRun:
         //Robot starts running
         robot.switchPhase(EventRobot.resume);
+        ground.switchPhase(EventHorizontalObstacle.startMoving);
+        clouds.forEach(
+          (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
+        );
 
         //Cloud and rain starts moving
-        cloud.switchPhase(EventHorizontalObstacle.startMoving);
+        cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.startFalling),
         );
 
         //CLoud and rain disappear
         await Future.delayed(const Duration(seconds: 32));
-        cloud.switchPhase(EventHorizontalObstacle.stopMoving);
+        cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
         );
@@ -145,11 +200,22 @@ class MyGame extends FlameGame with PanDetector {
         //Bird now starts moving
         bird.switchPhase(EventHorizontalObstacle.startMoving);
 
-        //Wait 5 seconds
+        //Wait 8 seconds
         await Future.delayed(const Duration(seconds: 8));
 
         //Bird now stops moving
         bird.switchPhase(EventHorizontalObstacle.stopMoving);
+
+        //Wait 3 seconds
+        await Future.delayed(const Duration(seconds: 3));
+
+        //Bird now stops moving
+        fence.switchPhase(EventHorizontalObstacle.startMoving);
+
+        //Wait 10 seconds
+        await Future.delayed(const Duration(seconds: 10));
+
+        fence.switchPhase(EventHorizontalObstacle.stopMoving);
 
         break;
       case GamePhase.contemplation:
