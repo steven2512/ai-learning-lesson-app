@@ -21,11 +21,6 @@ class Robot extends PositionComponent {
   double trackTimer = 0;
   int trackFrame = 0;
 
-  // Idle animation
-  double _stoppedTimer = 0;
-  double _idleAnimTime = 0;
-  bool _doingIdleAnim = false;
-
   // Sprites
   late Sprite _track1, _track2;
   late SpriteComponent body, leftTrack, rightTrack;
@@ -70,19 +65,16 @@ class Robot extends PositionComponent {
   void jump() {
     currentEvent = EventRobot.jump;
     velocity.y = -500;
-    _resetIdleTimer();
   }
 
   void duck() {
     currentEvent = EventRobot.duck;
     duckTimer = _duckDown + _duckHold + _duckUp;
-    _resetIdleTimer();
   }
 
   void trip() {
     currentEvent = EventRobot.trip;
     _angleDelta = 3;
-    _resetIdleTimer();
   }
 
   void stop() {
@@ -93,7 +85,26 @@ class Robot extends PositionComponent {
   void resume() {
     pauseTracks = false;
     currentEvent = EventRobot.resume;
-    _resetIdleTimer();
+  }
+
+  void switchPhase(EventRobot phase) {
+    switch (phase) {
+      case EventRobot.jump:
+        jump();
+        break;
+      case EventRobot.duck:
+        duck();
+        break;
+      case EventRobot.idle:
+        stop(); // idle merges with stop in your current logic
+        break;
+      case EventRobot.resume:
+        resume();
+        break;
+      case EventRobot.trip:
+        trip();
+        break;
+    }
   }
 
   @override
@@ -103,16 +114,6 @@ class Robot extends PositionComponent {
     switch (currentEvent) {
       case EventRobot.idle:
         _updateTracks(dt);
-        _stoppedTimer += dt;
-
-        if (_stoppedTimer >= 10 && _stoppedTimer < 15) {
-          _updateIdleAnimation(dt);
-        } else {
-          if (_doingIdleAnim) {
-            _resetIdleAnimation();
-          }
-          _resetBodyIfNeeded();
-        }
         break;
 
       case EventRobot.duck:
@@ -135,11 +136,7 @@ class Robot extends PositionComponent {
         break;
 
       case EventRobot.resume:
-        resume();
         _resetAll();
-        break;
-
-      case EventRobot.stop:
         break;
     }
   }
@@ -212,58 +209,13 @@ class Robot extends PositionComponent {
     }
   }
 
-  // ────────── Idle Animation ──────────
-
-  void _updateIdleAnimation(double dt) {
-    if (!_doingIdleAnim) {
-      _doingIdleAnim = true;
-      _idleAnimTime = 0;
-    }
-
-    _idleAnimTime += dt;
-
-    // Bobbing
-    body.position.y = _bodyBaseY + 5 * math.sin(_idleAnimTime * 4 * math.pi);
-
-    // Wheels animation
-    if (_idleAnimTime % 0.2 < dt) {
-      trackFrame = 1 - trackFrame;
-      final sprite = (trackFrame == 0) ? _track1 : _track2;
-      leftTrack.sprite = sprite;
-      rightTrack.sprite = sprite;
-    }
-
-    // Rotate left and right
-    angle = math.pi * math.sin(_idleAnimTime * 2);
-  }
-
-  void _resetIdleAnimation() {
-    _doingIdleAnim = false;
-    _idleAnimTime = 0;
-    angle = 0;
-    body.position.y = _bodyBaseY;
-  }
-
   // ────────── Reset Utilities ──────────
-
-  void _resetBodyIfNeeded() {
-    if (!_doingIdleAnim && body.position.y != _bodyBaseY) {
-      body.position.y = _bodyBaseY;
-    }
-  }
 
   void _resetAll() {
     currentEvent = EventRobot.idle;
     velocity.setZero();
-    angle = 0;
-    _resetIdleTimer();
+    angle = 0; // whole robot rotation only for trip
     body.position.y = _bodyBaseY;
-  }
-
-  void _resetIdleTimer() {
-    _stoppedTimer = 0;
-    _idleAnimTime = 0;
-    _doingIdleAnim = false;
-    body.position.y = _bodyBaseY;
+    body.angle = 0;
   }
 }

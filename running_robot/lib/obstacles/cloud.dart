@@ -6,7 +6,7 @@ class Cloud extends SimpleMover {
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
 
   final Vector2 velocity;
-  final double resetXThreshold = -50;
+  final double resetXThreshold = -100;
   bool isPaused = false;
 
   Cloud({

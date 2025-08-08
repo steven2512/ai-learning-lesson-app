@@ -2,20 +2,30 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/obstacles/superclass/drawn_mover.dart';
 
 class Rain extends DrawnMover {
   EventVerticalObstacle currentEvent = EventVerticalObstacle.stopFalling;
 
+  // Per-drop variety
+  final double offsetX;
+  final double offsetY;
+
+  // Fallback if no cloud found
   final Vector2 originalStartPosition;
+
+  static const double _spawnYOffset = 30;
 
   Rain({
     required Vector2 startPosition,
     required Vector2 endPosition,
-    required Vector2 velocity,
+    required Vector2 velocity, // (0, fallSpeed)
+    required this.offsetX,
+    required this.offsetY,
   }) : originalStartPosition = startPosition.clone(),
        super(
-         startPosition: Vector2(0, -200),
+         startPosition: startPosition,
          endPosition: endPosition,
          velocity: velocity,
          customSize: Vector2(4, 14),
@@ -37,12 +47,31 @@ class Rain extends DrawnMover {
     canvas.drawPath(path, paint);
   }
 
+  Cloud? get _cloud {
+    final p = parent;
+    if (p == null) return null;
+    for (final c in p.children.whereType<Cloud>()) {
+      return c;
+    }
+    return null;
+  }
+
+  void _snapToCloudTop() {
+    final c = _cloud;
+    if (c != null) {
+      position
+        ..x = c.position.x + offsetX
+        ..y = c.position.y + _spawnYOffset + offsetY;
+    } else {
+      position.setFrom(originalStartPosition);
+    }
+  }
+
   void switchPhase(EventVerticalObstacle phase) {
     switch (phase) {
       case EventVerticalObstacle.stopFalling:
         stop();
         break;
-
       case EventVerticalObstacle.startFalling:
         start();
         break;
@@ -50,12 +79,37 @@ class Rain extends DrawnMover {
   }
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    // Hide off-screen during intro so nothing shows until startFalling
+    if (currentEvent == EventVerticalObstacle.stopFalling) {
+      position.setValues(-200, -200);
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Don’t draw when stopped (prevents intro artifacts)
+    if (currentEvent == EventVerticalObstacle.stopFalling) return;
+    super.render(canvas);
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
 
     if (currentEvent == EventVerticalObstacle.startFalling) {
-      position += velocity * dt;
-      if (_hasPassedEnd()) resetPosition();
+      final c = _cloud;
+      if (c != null) {
+        // Lock horizontally under the cloud, preserving per-drop offset
+        position.x = c.position.x + offsetX;
+      }
+      // Fall vertically
+      position.y += velocity.y * dt;
+
+      if (_hasPassedEnd()) {
+        _snapToCloudTop(); // respawn under cloud with same offset
+      }
     }
   }
 
@@ -66,48 +120,44 @@ class Rain extends DrawnMover {
     required Vector2 endPosition,
     double minSpeed = 100,
     double maxSpeed = 300,
+    double xSpread = 62, // slightly more sparse
+    double yJitter = 14, // tiny vertical jitter
   }) {
-    final List<Rain> droplets = [];
+    final rng = Random();
+    double r(double a, double b) => rng.nextDouble() * (b - a) + a;
+
+    final height = (startAreaBottomRight.y - startAreaTopLeft.y).clamp(0, 30);
+
+    final drops = <Rain>[];
     for (int i = 0; i < count; i++) {
-      final double x = _randomInRange(
-        startAreaTopLeft.x,
-        startAreaBottomRight.x,
+      final start = Vector2(
+        r(startAreaTopLeft.x, startAreaBottomRight.x),
+        r(startAreaTopLeft.y, startAreaBottomRight.y),
       );
-      final double y = _randomInRange(
-        startAreaTopLeft.y,
-        startAreaBottomRight.y,
-      );
-      final double speed = _randomInRange(minSpeed, maxSpeed);
+      final fallSpeed = r(minSpeed, maxSpeed);
 
-      final Vector2 start = Vector2(x, y);
-      final Vector2 velocity = Vector2(0, speed);
-
-      droplets.add(
+      drops.add(
         Rain(
           startPosition: start,
           endPosition: endPosition,
-          velocity: velocity,
+          velocity: Vector2(0, fallSpeed),
+          offsetX: r(-xSpread / 2, xSpread / 2),
+          offsetY: r(0, min<double>(height.toDouble(), yJitter)),
         ),
       );
     }
-    return droplets;
+    return drops;
   }
 
   void start() {
     currentEvent = EventVerticalObstacle.startFalling;
-    position.setFrom(originalStartPosition);
+    _snapToCloudTop();
   }
 
   void stop() {
     currentEvent = EventVerticalObstacle.stopFalling;
-    position.setFrom(Vector2(-200, -200));
+    position.setFrom(Vector2(-200, -200)); // hide off-screen
   }
 
   bool _hasPassedEnd() => position.y > endPosition.y;
-
-  void resetPosition() => position.setFrom(originalStartPosition);
-
-  static double _randomInRange(double min, double max) {
-    return Random().nextDouble() * (max - min) + min;
-  }
 }

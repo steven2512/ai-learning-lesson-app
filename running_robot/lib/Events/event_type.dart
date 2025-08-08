@@ -3,7 +3,6 @@ enum EventRobot {
   jump,
   duck,
   idle,
-  stop,
   resume,
   trip,
 }

@@ -70,10 +70,10 @@ class MyGame extends FlameGame with PanDetector {
         'bird3.png',
         'bird4.png',
       ],
-      startPosition: Vector2(800, 350),
-      endPosition: Vector2(-100, 350),
-      velocity: Vector2(-150, 0),
-      customSize: Vector2.all(50),
+      startPosition: Vector2(size.x + 100, 450),
+      endPosition: Vector2(-100, 450),
+      velocity: Vector2(-80, 0),
+      customSize: Vector2.all(70),
     );
 
     mainText = FancyTextBox(
@@ -95,19 +95,19 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     rainFall = Rain.generateRain(
-      count: 30,
+      count: 70,
       startAreaTopLeft: Vector2(size.x / 3, 200),
       startAreaBottomRight: Vector2(size.x * 2 / 3, 280),
       endPosition: Vector2(size.x / 2, groundY),
-      minSpeed: 100,
-      maxSpeed: 250,
+      minSpeed: 150,
+      maxSpeed: 300,
     );
 
-    addAll(rainFall);
     add(background);
     add(ground);
     add(robot);
     add(cloud);
+    addAll(rainFall);
     add(fence);
     add(bird);
     add(mainText);
@@ -123,8 +123,35 @@ class MyGame extends FlameGame with PanDetector {
         break;
 
       case GamePhase.fisrtRun:
-        break;
+        //Robot starts running
+        robot.switchPhase(EventRobot.resume);
 
+        //Cloud and rain starts moving
+        cloud.switchPhase(EventHorizontalObstacle.startMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.startFalling),
+        );
+
+        //CLoud and rain disappear
+        await Future.delayed(const Duration(seconds: 32));
+        cloud.switchPhase(EventHorizontalObstacle.stopMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
+        );
+
+        //Wait 5 seconds
+        await Future.delayed(const Duration(seconds: 5));
+
+        //Bird now starts moving
+        bird.switchPhase(EventHorizontalObstacle.startMoving);
+
+        //Wait 5 seconds
+        await Future.delayed(const Duration(seconds: 8));
+
+        //Bird now stops moving
+        bird.switchPhase(EventHorizontalObstacle.stopMoving);
+
+        break;
       case GamePhase.contemplation:
         break;
 
@@ -154,5 +181,16 @@ class MyGame extends FlameGame with PanDetector {
   }
 
   @override
-  void onPanEnd(DragEndInfo info) {}
+  void onPanEnd(DragEndInfo info) {
+    if (phase == GamePhase.intro) {
+      if (dragStart != null && dragLast != null) {
+        if (dragLast!.x - dragStart!.x > 50) {
+          phase = GamePhase.fisrtRun;
+          handlePhase();
+        }
+      }
+    }
+    dragStart = null;
+    dragLast = null;
+  }
 }
