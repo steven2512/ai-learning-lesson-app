@@ -4,10 +4,11 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
+import 'package:running_robot/decorations/pause.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/progress_bar.dart';
+import 'package:running_robot/decorations/progress_bar.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/obstacles/cloud.dart';
@@ -44,10 +45,11 @@ class MyGame extends FlameGame with PanDetector {
   late final Fence fence;
   late final Bird bird;
   late final FancyTextBox mainText;
+  late final LessonProgressBar progressBar;
+  late final PauseButton pauseButton;
   late final Cloud cloudRain;
   late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
-  late final LessonProgressBar progressBar;
 
   @override
   FutureOr<void> onLoad() async {
@@ -160,9 +162,11 @@ class MyGame extends FlameGame with PanDetector {
       stages: 3,
     );
 
+    pauseButton = PauseButton(position: Vector2(size.x - 30, 35));
     add(background);
     add(ground);
     add(progressBar);
+    add(pauseButton);
     addAll(clouds);
     add(robot);
     add(cloudRain);

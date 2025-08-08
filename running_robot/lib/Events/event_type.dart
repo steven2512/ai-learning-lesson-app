@@ -43,3 +43,9 @@ enum EventProgressBar {
   proceed,
   finish,
 }
+
+enum EventButton {
+  unpressed,
+  pressed,
+  hold,
+}
