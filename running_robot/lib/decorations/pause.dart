@@ -8,15 +8,22 @@ import 'package:running_robot/events/event_type.dart';
 
 class PauseButton extends PositionComponent
     with TapCallbacks, HasGameRef<FlameGame> {
-  // ───────── Transparent interior ─────────
-  static const double _defaultDiameter = 34;
-  static const double _borderAlpha = 0.03;
-  static const double _shadowAlpha = 0.00; // CHANGED: use with drawShadow
-  static const double _haloAlpha = 0.035;
+  // ───────── Ultra-subtle style (but whiter inside) ─────────
+  static const double _defaultDiameter = 30;
+  static const double _borderAlpha =
+      0.03; // CHANGED: lighter border (less grey cast)
+  static const double _glassAlpha =
+      0.16; // CHANGED: higher base opacity = whiter
+  static const double _glassPressedBoost = 0.06; // CHANGED: a bit more on press
+  static const double _shadowAlpha = 0.01; // CHANGED: slightly lighter shadow
+  static const double _haloAlpha = 0.035; // CHANGED: lighter halo
 
   static const Color _border = Color(0xFF0F172A);
+  static const Color _glassTop = Colors.white; // CHANGED: pure white
+  static const Color _glassBottom = Colors.white; // CHANGED: pure white
   static const Color _iconColor = Color(0xFF111827);
 
+  // ───────── State ─────────
   bool _paused;
   bool _pressed = false;
   bool _visible = true;
@@ -45,6 +52,7 @@ class PauseButton extends PositionComponent
     if (_paused) onPause?.call();
   }
 
+  // Official enum only
   void switchPhase(EventButton event) {
     currentEvent = event;
     switch (event) {
@@ -58,6 +66,7 @@ class PauseButton extends PositionComponent
     }
   }
 
+  // External toggle
   void trigger() => _toggle();
 
   void setPaused(bool v) {
@@ -99,21 +108,43 @@ class PauseButton extends PositionComponent
     final r = size.x / 2;
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(r));
 
-    // ✅ SHADOW WITHOUT FILL: drawShadow paints only outside the shape
-    // (Your previous blurred fill was tinting the inside.)
-    final path = Path()..addRRect(rrect); // CHANGED
-    canvas.save(); // CHANGED
-    canvas.translate(0, 1); // CHANGED
-    canvas.drawShadow(
-      // CHANGED
-      path,
-      Colors.black.withOpacity(_shadowAlpha),
-      2.5, // elevation; tweak to taste
-      false,
-    );
-    canvas.restore(); // CHANGED
+    // Very faint shadow
+    final shadow = Paint()
+      ..color = Colors.black.withOpacity(_shadowAlpha)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.save();
+    canvas.translate(0, 1);
+    canvas.drawRRect(rrect, shadow);
+    canvas.restore();
 
-    // NO FILL: keep interior fully transparent
+    final double fillOpacity =
+        (_glassAlpha + (_pressed ? _glassPressedBoost : 0)).clamp(0.0, 1.0);
+
+    // Frosted glass (pure white, higher opacity)
+    final glass = Paint()
+      ..blendMode = BlendMode
+          .screen // CHANGED: lighten what’s underneath
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [_glassTop, _glassBottom],
+      ).createShader(rect)
+      ..color = Colors.white.withOpacity(
+        fillOpacity,
+      ); // CHANGED: stronger white
+    canvas.drawRRect(rrect, glass);
+
+    // NEW: subtle central white glow to kill remaining greyness
+    final glowPaint = Paint()
+      ..blendMode = BlendMode.screen
+      ..shader = const RadialGradient(
+        center: Alignment(0, -0.15),
+        radius: 0.85,
+        colors: [Colors.white, Colors.transparent],
+        stops: [0.0, 1.0],
+      ).createShader(rect)
+      ..color = Colors.white.withOpacity(fillOpacity * 0.65); // NEW
+    canvas.drawRRect(rrect.deflate(1.0), glowPaint); // NEW
 
     // Whisper-thin border
     final border = Paint()
@@ -129,16 +160,16 @@ class PauseButton extends PositionComponent
       ..color = _border.withOpacity(_haloAlpha);
     canvas.drawRRect(rrect.inflate(1.0), halo);
 
-    // Icon on transparent background
+    // Softer icons
     _paused ? _drawPlayIcon(canvas, 0.58) : _drawPauseIcon(canvas, 0.56);
   }
 
   void _drawPauseIcon(Canvas canvas, double alpha) {
     final paint = Paint()..color = _iconColor.withOpacity(alpha);
     final w = size.x, h = size.y;
-    final barW = w * 0.10;
-    final gap = w * 0.10;
-    final barH = h * 0.40;
+    final barW = w * 0.09;
+    final gap = w * 0.11;
+    final barH = h * 0.39;
     final top = (h - barH) / 2;
     final left1 = (w - (barW * 2 + gap)) / 2;
     final left2 = left1 + barW + gap;

@@ -7,7 +7,7 @@ import 'package:running_robot/events/event_type.dart';
 class LessonProgressBar extends PositionComponent {
   // ───────── VISUAL TUNING (Duolingo/Brilliant vibe) ─────────
   // Smaller length, thicker height, full pill radius
-  static const double _width = 200; // CHANGED: shorter
+  static const double _width = 279; // CHANGED: shorter
   static const double _height = 20; // CHANGED: thicker
   static const double _radius = _height / 2; // CHANGED: pill
 

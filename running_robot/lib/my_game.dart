@@ -121,7 +121,7 @@ class MyGame extends FlameGame with PanDetector {
         stretchY: 0.7,
         velocity: Vector2(-90, 0),
         randomizeRest: true, // ✅ parallax
-        opacity: 0.2,
+        opacity: 0.3,
       ),
     );
 
@@ -158,11 +158,11 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     progressBar = LessonProgressBar(
-      position: Vector2(size.x / 2, 85),
+      position: Vector2(size.x / 2, 80),
       stages: 3,
     );
 
-    pauseButton = PauseButton(position: Vector2(size.x - 28, 35));
+    pauseButton = PauseButton(position: Vector2(size.x - 18, 75.5));
     add(background);
     add(ground);
     add(progressBar);
