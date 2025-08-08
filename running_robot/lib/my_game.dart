@@ -63,28 +63,27 @@ class MyGame extends FlameGame with PanDetector {
     );
 
     fence = Fence(
-      initialPosition: Vector2(size.x + 200, groundY - 40),
-      picturePath: 'fence.png',
-      size: Vector2(80, 80),
+      initialPosition: Vector2(size.x + 200, groundY - 45),
+      picturePath: 'barrell_red.png',
+      size: Vector2(90, 90),
       velocity: Vector2(-80, 0),
     );
 
     bird = Bird(
       framePaths: [
-        'bird1.png',
-        'bird2.png',
-        'bird3.png',
-        'bird4.png',
+        'bat.png',
+        'bat_hang.png',
+        'bat_fly.png',
       ],
-      startPosition: Vector2(size.x + 100, 450),
-      endPosition: Vector2(-100, 450),
+      startPosition: Vector2(size.x + 100, 440),
+      endPosition: Vector2(-100, 440),
       velocity: Vector2(-80, 0),
-      customSize: Vector2.all(70),
+      customSize: Vector2(80, 50),
     );
 
     mainText = FancyTextBox(
       sequence: introText,
-      interval: 4.8,
+      interval: 4.5,
       fadeDuration: 0.5,
       position: Vector2(size.x / 2, size.y / 3),
       anchor: Anchor.center,
@@ -183,7 +182,7 @@ class MyGame extends FlameGame with PanDetector {
     switch (phase) {
       case GamePhase.intro:
         mainText.switchPhase(EventText.showText);
-        await Future.delayed(const Duration(seconds: 40));
+        // await Future.delayed(const Duration(seconds: 40));
         phase = GamePhase.waitingForSwipe;
         break;
       case GamePhase.waitingForSwipe:
@@ -218,7 +217,7 @@ class MyGame extends FlameGame with PanDetector {
         bird.switchPhase(EventHorizontalObstacle.startMoving);
 
         //Wait 8 seconds
-        await Future.delayed(const Duration(seconds: 8));
+        await Future.delayed(const Duration(seconds: 7));
 
         //Bird now stops moving
         bird.switchPhase(EventHorizontalObstacle.stopMoving);

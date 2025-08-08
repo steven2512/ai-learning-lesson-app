@@ -11,7 +11,7 @@ class Bird extends AnimatedMover {
     required Vector2 endPosition,
     required Vector2 velocity,
     required Vector2 customSize,
-    double stepTime = 0.14,
+    double stepTime = 0.25,
   }) : super(
          framePaths: framePaths,
          startPosition: startPosition,

@@ -79,6 +79,16 @@ flutter:
     - assets/images/cloud_shape3_5.png
     - assets/images/cloud_shape4_4.png
     - assets/images/cloud_shape5_3.png
+    - assets/images/barrell_red.png
+    - assets/images/bee.png
+    - assets/images/bee_move.png
+    - assets/images/planeGreen1.png
+    - assets/images/planeGreen2.png
+    - assets/images/planeGreen3.png
+    - assets/images/bat_fly.png
+    - assets/images/bat_hang.png
+    - assets/images/bat.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
