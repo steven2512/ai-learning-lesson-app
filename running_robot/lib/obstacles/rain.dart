@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/obstacles/superclass/drawn_mover.dart';
+import 'package:flame/collisions.dart'; // + add this
 
-class Rain extends DrawnMover {
+class Rain extends DrawnMover with CollisionCallbacks {
   EventVerticalObstacle currentEvent = EventVerticalObstacle.stopFalling;
 
   final Cloud cloud; // <— follow THIS cloud only
@@ -74,6 +75,7 @@ class Rain extends DrawnMover {
     if (currentEvent == EventVerticalObstacle.stopFalling) {
       position.setValues(-200, -200);
     }
+    add(RectangleHitbox()..collisionType = CollisionType.passive);
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:running_robot/characters/electric.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/my_game.dart';
 import 'package:running_robot/obstacles/fence.dart';
+import 'package:running_robot/obstacles/rain.dart';
 
 class Robot extends PositionComponent
     with CollisionCallbacks, HasGameRef<MyGame> {
@@ -69,6 +70,8 @@ class Robot extends PositionComponent
   // Trip state
   bool _settling = false;
 
+  bool electrocuted = false;
+
   // Contact points (center-relative)
   late final List<Vector2> _contactPts;
 
@@ -80,7 +83,7 @@ class Robot extends PositionComponent
 
   // ────────── Electrocute state (NEW) ──────────
   double _electroElapsed = 0.0; // NEW
-  final double _electroDuration = 1.1; // NEW (seconds)
+  final double _electroDuration = 2; // NEW (seconds)
 
   Robot({required this.initialPosition, required this.groundY})
     : super(size: Vector2.all(50), anchor: Anchor.center) {
@@ -200,6 +203,7 @@ class Robot extends PositionComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Fence) trip();
+    if (other is Rain) if (!electrocuted) electrocute();
   }
 
   // ────────── Actions ──────────
@@ -240,6 +244,9 @@ class Robot extends PositionComponent
   Electric? electric1;
 
   void electrocute() {
+    if (!electrocuted) {
+      electrocuted = true;
+    }
     currentEvent = EventRobot.electrocute;
     _electroElapsed = 0.0; // NEW: reset timer
 

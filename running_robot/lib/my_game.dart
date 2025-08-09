@@ -197,51 +197,49 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         clouds.forEach(
           (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
         );
-        robot.switchPhase(EventRobot.electrocute);
-        // await Future.delayed(const Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 5));
 
-        // await Future.delayed(const Duration(seconds: 6));
+        await Future.delayed(const Duration(seconds: 5));
 
-        // barell.switchPhase(EventHorizontalObstacle.stopMoving);
+        //Bird
+        bird.switchPhase(EventHorizontalObstacle.startMoving);
 
-        // await Future.delayed(const Duration(seconds: 5));
+        //Wait 8 seconds
+        await Future.delayed(const Duration(seconds: 7));
 
-        // //Bird
-        // bird.switchPhase(EventHorizontalObstacle.startMoving);
+        //Bird now stops moving
+        bird.switchPhase(EventHorizontalObstacle.stopMoving);
 
-        // //Wait 8 seconds
-        // await Future.delayed(const Duration(seconds: 7));
+        await Future.delayed(const Duration(seconds: 5));
+        //Cloud and rain starts moving
+        cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.startFalling),
+        );
 
-        // //Bird now stops moving
-        // bird.switchPhase(EventHorizontalObstacle.stopMoving);
+        //CLoud and rain disappear
+        await Future.delayed(const Duration(seconds: 12));
+        cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
+        );
 
-        // //Wait 3 seconds
-        // await Future.delayed(const Duration(seconds: 3));
+        //Barrell
+        barell.switchPhase(EventHorizontalObstacle.startMoving);
 
-        // await Future.delayed(const Duration(seconds: 5));
-        // //Cloud and rain starts moving
-        // cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
-        // rainFall.forEach(
-        //   (x) => x.switchPhase(EventVerticalObstacle.startFalling),
-        // );
+        await Future.delayed(const Duration(seconds: 4));
 
-        // //CLoud and rain disappear
-        // await Future.delayed(const Duration(seconds: 12));
-        // cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
-        // rainFall.forEach(
-        //   (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
-        // );
+        //jump and fail
+        robot.switchPhase(EventRobot.jump);
 
-        // //Barrell
-        // barell.switchPhase(EventHorizontalObstacle.startMoving);
+        await Future.delayed(const Duration(seconds: 4));
+        barell.switchPhase(EventHorizontalObstacle.stopMoving);
+        ground.switchPhase(EventHorizontalObstacle.stopMoving);
 
-        // await Future.delayed(const Duration(seconds: 4));
-
-        // //jump and fail
-        // robot.switchPhase(EventRobot.jump);
-
-        // await Future.delayed(const Duration(seconds: 4));
-        // barell.switchPhase(EventHorizontalObstacle.stopMoving);
+        await Future.delayed(const Duration(seconds: 3));
+        clouds.forEach(
+          (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
+        );
         break;
       case GamePhase.contemplation:
         break;
