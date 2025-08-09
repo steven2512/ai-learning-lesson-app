@@ -28,7 +28,7 @@ enum GamePhase {
   paused,
 }
 
-class MyGame extends FlameGame with PanDetector {
+class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   GamePhase phase = GamePhase.intro;
   int failCount = 0;
 
@@ -42,7 +42,7 @@ class MyGame extends FlameGame with PanDetector {
   late final Background background;
   late final Ground ground;
   late final Robot robot;
-  late final Fence fence;
+  late final Fence barell;
   late final Bird bird;
   late final FancyTextBox mainText;
   late final LessonProgressBar progressBar;
@@ -60,13 +60,15 @@ class MyGame extends FlameGame with PanDetector {
 
     robot = Robot(
       initialPosition: Vector2(size.x / 2, size.y / 2),
+      groundY: groundY,
     );
 
-    fence = Fence(
+    barell = Fence(
       initialPosition: Vector2(size.x + 200, groundY - 45),
       picturePath: 'barrell_red.png',
+      groundY: groundY,
       size: Vector2(90, 90),
-      velocity: Vector2(-80, 0),
+      velocity: Vector2(-70, 0),
     );
 
     bird = Bird(
@@ -170,7 +172,7 @@ class MyGame extends FlameGame with PanDetector {
     add(robot);
     add(cloudRain);
     addAll(rainFall);
-    add(fence);
+    add(barell);
     add(bird);
     add(mainText);
 
@@ -197,6 +199,33 @@ class MyGame extends FlameGame with PanDetector {
         );
 
         await Future.delayed(const Duration(seconds: 5));
+        //Barrell
+        barell.switchPhase(EventHorizontalObstacle.startMoving);
+
+        await Future.delayed(const Duration(seconds: 4));
+
+        //jump and fail
+        robot.switchPhase(EventRobot.jump);
+
+        await Future.delayed(const Duration(seconds: 6));
+
+        barell.switchPhase(EventHorizontalObstacle.stopMoving);
+
+        await Future.delayed(const Duration(seconds: 5));
+
+        //Bird
+        bird.switchPhase(EventHorizontalObstacle.startMoving);
+
+        //Wait 8 seconds
+        await Future.delayed(const Duration(seconds: 7));
+
+        //Bird now stops moving
+        bird.switchPhase(EventHorizontalObstacle.stopMoving);
+
+        //Wait 3 seconds
+        await Future.delayed(const Duration(seconds: 3));
+
+        await Future.delayed(const Duration(seconds: 5));
         //Cloud and rain starts moving
         cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
         rainFall.forEach(
@@ -209,29 +238,6 @@ class MyGame extends FlameGame with PanDetector {
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
         );
-
-        //Wait 5 seconds
-        await Future.delayed(const Duration(seconds: 5));
-
-        //Bird now starts moving
-        bird.switchPhase(EventHorizontalObstacle.startMoving);
-
-        //Wait 8 seconds
-        await Future.delayed(const Duration(seconds: 7));
-
-        //Bird now stops moving
-        bird.switchPhase(EventHorizontalObstacle.stopMoving);
-
-        //Wait 3 seconds
-        await Future.delayed(const Duration(seconds: 3));
-
-        //Bird now stops moving
-        fence.switchPhase(EventHorizontalObstacle.startMoving);
-
-        //Wait 10 seconds
-        await Future.delayed(const Duration(seconds: 10));
-
-        fence.switchPhase(EventHorizontalObstacle.stopMoving);
 
         break;
       case GamePhase.contemplation:
