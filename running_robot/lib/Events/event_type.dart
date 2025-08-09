@@ -5,6 +5,8 @@ enum EventRobot {
   idle,
   resume,
   trip,
+  electrocute,
+  hurt,
 }
 
 // ────────── HORIZONTAL OBSTACLE EVENTS ──────────

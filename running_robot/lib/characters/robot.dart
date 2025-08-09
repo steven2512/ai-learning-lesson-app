@@ -1,14 +1,13 @@
-// robot.dart — same start/bounce/spin; smoother right-corner plant (no fidget, no snap).
-// FULL FILE — copy/paste
+// lib/characters/robot.dart — FULL FILE (electric removed; copy/paste)
 
 import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:running_robot/characters/electric.dart';
+// REMOVED: electric import
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/my_game.dart';
-import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/obstacles/rain.dart';
 
 class Robot extends PositionComponent
     with CollisionCallbacks, HasGameRef<MyGame> {
@@ -26,7 +25,7 @@ class Robot extends PositionComponent
 
   // Fall
   final double gravity = 480;
-  final double airDrag = 0.88; // frame-independent
+  final double airDrag = 0.88;
   final double vTerminal = 620;
 
   // Bounce
@@ -41,18 +40,16 @@ class Robot extends PositionComponent
   final double settleBias = 4.1;
   final double angularDampSettle = 0.978;
 
-  // ⬇️ Early right-corner plant + smoothing
-  final double pivotEarlyTouchPx = 6.0; // earlier plant
+  // Right-corner settle helpers
+  final double pivotEarlyTouchPx = 6.0;
   final double _yLockRate = 42.0;
   final double _angleLockRate = 14.0;
 
-  // Softer end-zone behavior (remove micro snap)
-  final double _finalSnapEps = 0.0015; // we never hard-snap
-  final double _pivotFadeBias =
-      0.24; // radians (~13.7°): fade early-offset near goal
-  final double _yEndRate = 18.0; // slower end easing for Y
-  final double _angleEndRate = 10.0; // slower end easing for angle
-  final double _biasStillEps = 0.07; // end-zone threshold
+  final double _finalSnapEps = 0.0015;
+  final double _pivotFadeBias = 0.24;
+  final double _yEndRate = 18.0;
+  final double _angleEndRate = 10.0;
+  final double _biasStillEps = 0.07;
 
   Vector2 velocity = Vector2.zero();
 
@@ -76,11 +73,10 @@ class Robot extends PositionComponent
   late final List<Vector2> _contactPts;
 
   // Pivot (right-most lowest corner) for final settle
-  Vector2? _pivotLocal; // center-relative
+  Vector2? _pivotLocal;
   bool _hasPivot = false;
 
-  // Monotonic target Y during settle → prevents fidget/twitch
-  double _settleFloorY = double.negativeInfinity; // CHANGED
+  double _settleFloorY = double.negativeInfinity;
 
   Robot({required this.initialPosition, required this.groundY})
     : super(size: Vector2.all(50), anchor: Anchor.center) {
@@ -127,7 +123,7 @@ class Robot extends PositionComponent
   }
 
   void _buildContactPoints() {
-    final origin = (anchor.toVector2()..multiply(size)); // = size/2
+    final origin = (anchor.toVector2()..multiply(size));
     List<Vector2> rectCorners(SpriteComponent c) {
       final hw = c.size.x / 2, hh = c.size.y / 2;
       final cx = c.position.x - origin.x;
@@ -187,9 +183,7 @@ class Robot extends PositionComponent
 
   double _ease(double rate, double dt) => 1 - math.exp(-rate * dt);
 
-  // Smoothstep for offset fade (returns strict double) // CHANGED
   double _smoothStep(double edge0, double edge1, double x) {
-    // CHANGED
     final tRaw = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
     final double t = (tRaw is double) ? tRaw : (tRaw as num).toDouble();
     return t * t * (3 - 2 * t);
@@ -209,7 +203,7 @@ class Robot extends PositionComponent
     currentEvent = EventRobot.jump;
     _settling = false;
     _hasPivot = false;
-    _settleFloorY = double.negativeInfinity; // CHANGED
+    _settleFloorY = double.negativeInfinity;
     velocity.y = -400;
   }
 
@@ -220,12 +214,12 @@ class Robot extends PositionComponent
 
   void trip() {
     currentEvent = EventRobot.trip;
-    _angleDelta = 3.6; // perfect start
-    velocity.y = -60; // gentle lift → slower fall
+    _angleDelta = 3.6;
+    velocity.y = -60;
     pauseTracks = true;
     _settling = false;
     _hasPivot = false;
-    _settleFloorY = double.negativeInfinity; // CHANGED
+    _settleFloorY = double.negativeInfinity;
   }
 
   void stop() {
@@ -237,6 +231,27 @@ class Robot extends PositionComponent
     pauseTracks = false;
     currentEvent = EventRobot.resume;
   }
+
+  // CHANGED: keep a ref so you can stop it later if you want
+  Electric? electric1;
+
+  void electrocute() {
+    // optional: reuse if already exists
+    electric1 = Electric(size: Vector2(110, 25), angle: 0.15)
+      ..position =
+          Vector2(20, 75) // around body center; tweak as needed
+      ..anchor = Anchor.center;
+
+    add(electric1 as Component);
+
+    // CHANGED: actually start the sizzle
+    electric1?.switchPhase(EventHorizontalObstacle.startMoving);
+  }
+
+  // To stop later:
+  // _electric?.switchPhase(EventHorizontalObstacle.stopMoving);
+
+  void hurt() {}
 
   void switchPhase(EventRobot phase) {
     switch (phase) {
@@ -254,6 +269,13 @@ class Robot extends PositionComponent
         break;
       case EventRobot.trip:
         trip();
+        break;
+      // REMOVED: EventRobot.electrocute
+      case EventRobot.hurt:
+        hurt();
+        break;
+      case EventRobot.electrocute:
+        electrocute();
         break;
     }
   }
@@ -280,22 +302,24 @@ class Robot extends PositionComponent
       case EventRobot.resume:
         _resetAll();
         break;
+      // REMOVED: EventRobot.electrocute
+      case EventRobot.hurt:
+        break;
+      case EventRobot.electrocute:
+        break;
     }
   }
 
-  // ────────── Trip Motion ──────────
+  // ────────── Trip Motion
   void _updateTripMotion(double dt) {
-    // Angular motion
     angle += _angleDelta * dt;
     _angleDelta *= angularDampAir;
 
-    // Gravity/integration
     _applyGravity(dt);
     _applyAirDrag(dt);
     _clampTerminal();
     _moveRobot(dt);
 
-    // Ground collision using exact lowest point
     final centerAtTouch = groundY - _lowestLocalY(angle);
     if (position.y >= centerAtTouch) {
       position.y = centerAtTouch;
@@ -305,68 +329,54 @@ class Robot extends PositionComponent
         _angleDelta *= angularDampHit;
         _settling = false;
         _hasPivot = false;
-        _settleFloorY = double.negativeInfinity; // CHANGED
+        _settleFloorY = double.negativeInfinity;
       } else {
         velocity.y = 0;
         _settling = true;
-        if (!_hasPivot) _lockPivot(angle); // pick right-corner pivot
+        if (!_hasPivot) _lockPivot(angle);
       }
     }
 
-    // Final settle
     if (_settling) {
       velocity.y = 0;
 
       final goal = _nearestPi(angle);
       final bias = (goal - angle);
 
-      // Base PD-ish rotation towards goal
       _angleDelta += bias * settleBias * dt;
       _angleDelta *= angularDampSettle;
 
-      // Compute touch targets
       final centerTouch = groundY - _lowestLocalY(angle);
       final pivotTouch = (_hasPivot && _pivotLocal != null)
           ? groundY - _rotY(_pivotLocal!, angle)
           : centerTouch;
 
-      // Fade early right-corner offset smoothly as we near goal
       final biasAbs = bias.abs();
       final fade = _smoothStep(0.0, _pivotFadeBias, biasAbs);
-      final dynamicOffset = pivotEarlyTouchPx * fade; // fades to 0 near goal
+      final dynamicOffset = pivotEarlyTouchPx * fade;
 
-      final rawDesiredY = math.max(
-        pivotTouch,
-        centerTouch + dynamicOffset,
-      );
+      final rawDesiredY = math.max(pivotTouch, centerTouch + dynamicOffset);
 
-      // Monotonic settle floor (never moves up) → kills fidget
       if (_settleFloorY == double.negativeInfinity) {
-        // CHANGED
-        _settleFloorY = rawDesiredY; // CHANGED
+        _settleFloorY = rawDesiredY;
       } else {
-        // CHANGED
-        _settleFloorY = math.max(_settleFloorY, rawDesiredY); // CHANGED
+        _settleFloorY = math.max(_settleFloorY, rawDesiredY);
       }
 
-      // End-zone detection (very close to final angle and low angular velocity)
-      final endZone = (biasAbs < _biasStillEps && _angleDelta.abs() < 0.08);
+      final endZone = (bias.abs() < _biasStillEps && _angleDelta.abs() < 0.08);
 
-      // Y easing — faster outside, gentler inside end-zone (no pop)
       final yRate = endZone ? _yEndRate : _yLockRate;
       final aY = _ease(yRate, dt);
       if (_settleFloorY > position.y) {
         position.y += (_settleFloorY - position.y) * aY;
       }
 
-      // Angle easing — blend to goal only in end-zone, never hard snap
       if (endZone) {
         final aAng = _ease(_angleEndRate, dt);
         angle += (goal - angle) * aAng;
-        _angleDelta *= 0.92; // extra calm-down
+        _angleDelta *= 0.92;
       }
 
-      // Finish when both angle & Y are visually settled — no forced snap
       if (endZone &&
           (goal - angle).abs() <= _finalSnapEps &&
           (_settleFloorY - position.y).abs() <= 0.12) {
@@ -377,7 +387,7 @@ class Robot extends PositionComponent
     }
   }
 
-  // ────────── Physics helpers ──────────
+  // ────────── Physics helpers
   void _applyGravity(double dt) {
     velocity.y += gravity * dt;
   }
@@ -395,7 +405,6 @@ class Robot extends PositionComponent
     position += velocity * dt;
   }
 
-  // For jump path only
   void _checkLanding({bool resetOnLand = false, bool bounceOnLand = false}) {
     final targetY = groundY - size.y / 2;
     if (position.y >= targetY) {
@@ -411,7 +420,7 @@ class Robot extends PositionComponent
     }
   }
 
-  // ────────── Duck Motion ──────────
+  // ────────── Duck Motion
   void _updateDuckMotion(double dt) {
     duckTimer -= dt;
     final total = _duckDown + _duckHold + _duckUp;
@@ -438,7 +447,7 @@ class Robot extends PositionComponent
     }
   }
 
-  // ────────── Tracks ──────────
+  // ────────── Tracks
   void _updateTracks(double dt) {
     if (pauseTracks) return;
     trackTimer += dt;
@@ -460,6 +469,6 @@ class Robot extends PositionComponent
     pauseTracks = false;
     _settling = false;
     _hasPivot = false;
-    _settleFloorY = double.negativeInfinity; // CHANGED
+    _settleFloorY = double.negativeInfinity;
   }
 }
