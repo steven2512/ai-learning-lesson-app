@@ -78,6 +78,10 @@ class Robot extends PositionComponent
 
   double _settleFloorY = double.negativeInfinity;
 
+  // ────────── Electrocute state (NEW) ──────────
+  double _electroElapsed = 0.0; // NEW
+  final double _electroDuration = 1.1; // NEW (seconds)
+
   Robot({required this.initialPosition, required this.groundY})
     : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
@@ -166,7 +170,7 @@ class Robot extends PositionComponent
     Vector2? best;
     double bestX = -double.infinity;
     for (final p in _contactPts) {
-      final y = p.x * sinA + p.y * cosA;
+      final y = p.x * sinA + p.y * math.cos(a);
       if (lowest - y <= eps && p.x > bestX) {
         best = p;
         bestX = p.x;
@@ -236,6 +240,9 @@ class Robot extends PositionComponent
   Electric? electric1;
 
   void electrocute() {
+    currentEvent = EventRobot.electrocute;
+    _electroElapsed = 0.0; // NEW: reset timer
+
     // optional: reuse if already exists
     electric1 = Electric(size: Vector2(110, 25), angle: 0.15)
       ..position =
@@ -306,6 +313,7 @@ class Robot extends PositionComponent
       case EventRobot.hurt:
         break;
       case EventRobot.electrocute:
+        _updateElectrocuteMotion(dt); // NEW
         break;
     }
   }
@@ -417,6 +425,47 @@ class Robot extends PositionComponent
       } else {
         velocity.y = 0;
       }
+    }
+  }
+
+  // Gentle electrocute shake that auto-fades and cleans up electricity.
+  void _updateElectrocuteMotion(double dt) {
+    _electroElapsed += dt;
+    final double life = (_electroElapsed / _electroDuration).clamp(0.0, 1.0);
+    final double fade = (life < 0.8) ? 1.0 : (1.0 - (life - 0.8) / 0.2);
+    final double t = _electroElapsed;
+
+    final double ampY = (1.2 + 0.6 * math.sin(t * 9.0)) * fade; // px
+    final double ampAng = (0.008 + 0.004 * math.sin(t * 11.0)) * fade; // rad
+    final double ampScale = (0.0025 + 0.0015 * math.sin(t * 8.0)) * fade;
+
+    final double oy =
+        math.sin(t * 60.0) * ampY + math.sin(t * 37.0) * (ampY * 0.4);
+    final double a = math.sin(t * 41.0) * ampAng;
+    final double s = 1.0 + math.sin(t * 47.0) * ampScale;
+
+    body.position.y = _bodyBaseY + oy;
+    body.angle = a;
+    body.scale = Vector2.all(s);
+
+    leftTrack.position.y = 84 + math.sin(t * 52.0) * (0.5 * fade);
+    rightTrack.position.y = 84 - math.sin(t * 55.0) * (0.5 * fade);
+
+    if (_electroElapsed >= _electroDuration) {
+      // restore base pose
+      body.position.y = _bodyBaseY;
+      body.angle = 0;
+      body.scale = Vector2.all(1);
+      leftTrack.position.y = 84;
+      rightTrack.position.y = 84;
+
+      // stop & remove electricity
+      electric1?.switchPhase(EventHorizontalObstacle.stopMoving);
+      electric1?.removeFromParent();
+      electric1 = null;
+
+      // return to idle
+      currentEvent = EventRobot.idle;
     }
   }
 
