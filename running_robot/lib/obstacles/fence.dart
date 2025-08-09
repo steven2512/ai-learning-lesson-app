@@ -1,12 +1,12 @@
-// fence.dart — FULL FILE (tips forward on robot collision)
+// fence.dart — FULL FILE (tips fully to the ground, grounded while rotating)
 import 'dart:async';
-import 'dart:math' as math; // CHANGED
+import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:running_robot/my_game.dart';
 import 'package:running_robot/obstacles/superclass/simple_mover.dart';
 import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/characters/robot.dart'; // CHANGED
+import 'package:running_robot/characters/robot.dart';
 
 class Fence extends SimpleMover
     with CollisionCallbacks, HasGameReference<MyGame> {
@@ -18,12 +18,17 @@ class Fence extends SimpleMover
   bool isPaused = false;
 
   // ────────── Tip-over state ──────────
-  bool _tipping = false; // CHANGED
-  bool _tipped = false; // CHANGED
-  double _tipT = 0.0; // CHANGED
-  static const double _tipDur = 0.70; // CHANGED: total seconds for tip
-  static const double _tipTarget =
-      1.25; // CHANGED: ~72° forward (flip sign if needed)
+  bool _tipping = false;
+  bool _tipped = false;
+  // angular motion
+  double _ang = 0.0; // radians
+  double _angVel = 0.0; // rad/s
+  double _angAcc = 9.0; // rad/s^2 (gravitational “pull”)
+  double _angVelMax = 5.5; // cap
+  static const double _tipTarget = math.pi / 2 - 0.02; // ~88.9°, lies flat
+  // contact geometry
+  late final List<Vector2> _contactPts; // local corners (anchor-aware)
+  bool _contactsBuilt = false;
 
   Fence({
     required super.initialPosition,
@@ -37,10 +42,11 @@ class Fence extends SimpleMover
   Future<void> onLoad() async {
     await super.onLoad();
     add(RectangleHitbox()..collisionType = CollisionType.passive);
-    // NOTE: keeping existing anchor to avoid layout shifts.
+    // Keep whatever anchor SimpleMover sets (likely center). Geometry uses anchor dynamically.
+    _buildContactPoints();
   }
 
-  // CHANGED: Trigger tip when touching the robot
+  // Trigger tip when touching the robot
   @override
   void onCollisionStart(
     Set<Vector2> intersectionPoints,
@@ -49,7 +55,8 @@ class Fence extends SimpleMover
     super.onCollisionStart(intersectionPoints, other);
     if (!_tipping && !_tipped && other is Robot) {
       _tipping = true;
-      _tipT = 0.0;
+      _ang = angle; // start from current
+      _angVel = 0.0;
     }
   }
 
@@ -65,51 +72,90 @@ class Fence extends SimpleMover
     switch (phase) {
       case EventHorizontalObstacle.stopMoving:
         stop();
+        break;
       case EventHorizontalObstacle.startMoving:
         move();
+        break;
     }
-    ;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    // CHANGED: tip animation overrides angle, but we still let it slide left.
-    if (_tipping && !_tipped) {
-      _tipT += dt;
-      final t = (_tipT / _tipDur).clamp(0.0, 1.0);
-      final eased = _easeOutCubic(t);
-      angle = _lerp(0.0, _tipTarget, eased);
-      if (t >= 1.0) {
-        _tipping = false;
-        _tipped = true; // lock in fallen pose
-      }
+    // Keep sliding horizontally per phase
+    if (currentEvent == EventHorizontalObstacle.startMoving) {
+      position += velocity * dt;
     }
 
-    switch (currentEvent) {
-      case EventHorizontalObstacle.startMoving:
-        position += velocity * dt; // keep sliding even while tipping
-        if (position.x <= resetXThreshold) {
-          resetPosition();
-          // CHANGED: also clear tip state on recycle so next spawn is upright
-          _tipping = false;
-          _tipped = false;
-          _tipT = 0.0;
-          angle = 0.0;
-        }
-        break;
+    if (_tipping && !_tipped) {
+      // basic tip physics
+      _angVel = (_angVel + _angAcc * dt).clamp(-_angVelMax, _angVelMax);
+      _ang += _angVel * dt;
+      if (_ang >= _tipTarget) {
+        _ang = _tipTarget;
+        _tipping = false;
+        _tipped = true;
+        _angVel = 0.0;
+      }
 
-      case EventHorizontalObstacle.stopMoving:
-        // Do nothing
-        break;
+      // set visual angle
+      angle = _ang;
+
+      // solve Y so lowest rotated point sits on ground
+      final centerAtTouch = groundY - _lowestLocalY(angle);
+      position.y = centerAtTouch;
+    } else if (_tipped) {
+      // Locked in fallen pose: ensure it stays perfectly grounded
+      angle = _tipTarget;
+      position.y = groundY - _lowestLocalY(angle);
+    }
+
+    // Recycle off-screen
+    if (position.x <= resetXThreshold) {
+      resetPosition();
+      // reset tip state so next spawn is upright
+      _tipping = false;
+      _tipped = false;
+      _ang = 0.0;
+      _angVel = 0.0;
+      angle = 0.0;
+      // rebuild contacts if size/anchor changed (defensive)
+      _buildContactPoints();
+      // also ensure Y is reasonable after reset (in case caller places us near ground)
+      position.y = groundY - _lowestLocalY(angle);
     }
   }
 
-  // ────────── Helpers ──────────
-  double _lerp(double a, double b, double t) => a + (b - a) * t;
-  double _easeOutCubic(double t) {
-    final u = 1 - t;
-    return 1 - u * u * u;
+  // ────────── Geometry helpers (anchor-aware, like Robot) ──────────
+  void _buildContactPoints() {
+    // Build once (unless size/anchor changes)
+    final origin = (anchor.toVector2()..multiply(size));
+    double hw = size.x / 2, hh = size.y / 2;
+
+    // Build as if center-origin around the sprite's local center, but offset
+    // by the component anchor so it's valid for any anchor.
+    // These are local points relative to the component's origin (0,0).
+    _contactPts = [
+      // body corners in local coords:
+      // (We position corners relative to the sprite's visual center,
+      // then shift them so (0,0) is at the component origin defined by anchor)
+      Vector2(-hw + (size.x / 2 - origin.x), -hh + (size.y / 2 - origin.y)),
+      Vector2(hw + (size.x / 2 - origin.x), -hh + (size.y / 2 - origin.y)),
+      Vector2(hw + (size.x / 2 - origin.x), hh + (size.y / 2 - origin.y)),
+      Vector2(-hw + (size.x / 2 - origin.x), hh + (size.y / 2 - origin.y)),
+    ];
+    _contactsBuilt = true;
+  }
+
+  double _lowestLocalY(double a) {
+    if (!_contactsBuilt) _buildContactPoints();
+    final sinA = math.sin(a), cosA = math.cos(a);
+    double lowest = -double.infinity;
+    for (final p in _contactPts) {
+      final y = p.x * sinA + p.y * cosA; // rotate around component origin
+      if (y > lowest) lowest = y;
+    }
+    return lowest;
   }
 }

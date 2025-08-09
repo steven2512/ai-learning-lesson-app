@@ -1,9 +1,16 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/superclass/animated_mover.dart';
 
-class Bird extends AnimatedMover {
+class Bird extends AnimatedMover with CollisionCallbacks {
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
+  @override
+  Future<void> onLoad() async {
+    // TODO: implement onLoad
+    super.onLoad();
+    add(RectangleHitbox()..collisionType = CollisionType.active);
+  }
 
   Bird({
     required List<String> framePaths,

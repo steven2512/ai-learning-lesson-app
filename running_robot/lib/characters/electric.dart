@@ -106,7 +106,7 @@ class Electric extends PositionComponent {
 
     final flicker = 0.85 + 0.15 * math.sin(_t * 12.0);
     _glowPaint.color = _glowColor.withOpacity(flicker.clamp(0.0, 0.7));
-    _corePaint.color = _coreColor.withOpacity(flicker.clamp(0.0, 1));
+    _corePaint.color = _coreColor.withOpacity(flicker.clamp(0.0, 0.7));
 
     for (int s = 0; s < _strands; s++) {
       final Path p = _buildStrand(s, height: size.y);

@@ -77,8 +77,8 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         'bat_hang.png',
         'bat_fly.png',
       ],
-      startPosition: Vector2(size.x + 100, 440),
-      endPosition: Vector2(-100, 440),
+      startPosition: Vector2(size.x + 100, 450),
+      endPosition: Vector2(-100, 450),
       velocity: Vector2(-80, 0),
       customSize: Vector2(80, 50),
     );

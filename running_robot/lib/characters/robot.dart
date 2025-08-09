@@ -1,12 +1,13 @@
-// lib/characters/robot.dart — FULL FILE (electric removed; copy/paste)
+// lib/characters/robot.dart — FULL FILE (electric kept; copy/paste)
 
 import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:running_robot/characters/diziness.dart';
 import 'package:running_robot/characters/electric.dart';
-// REMOVED: electric import
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/my_game.dart';
+import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
 import 'package:running_robot/obstacles/rain.dart';
 
@@ -72,6 +73,8 @@ class Robot extends PositionComponent
 
   bool electrocuted = false;
 
+  bool isHurt = false;
+
   // Contact points (center-relative)
   late final List<Vector2> _contactPts;
 
@@ -81,9 +84,23 @@ class Robot extends PositionComponent
 
   double _settleFloorY = double.negativeInfinity;
 
-  // ────────── Electrocute state (NEW) ──────────
-  double _electroElapsed = 0.0; // NEW
-  final double _electroDuration = 2; // NEW (seconds)
+  // ────────── Electrocute state ──────────
+  double _electroElapsed = 0.0;
+  final double _electroDuration = 2;
+
+  // ────────── HURT state (NEW) ──────────
+  double _hurtElapsed = 0.0; // NEW
+  int _hurtPhase = 0; // NEW 0:down,1:wiggle,2:hold,3:stand
+  final double _hurtDownOffset = 10.0; // NEW (px)
+  final double _hurtDownDur = 0.35; // NEW
+  final double _hurtMaxRad = math.pi / 36; // NEW (~5° forward)
+  final double _hurtHoldDuration = 3.0; // NEW (seconds)
+  final double _hurtStandDur = 0.6; // NEW ease-up dur
+  final double _hurtWiggleHz = 3.0; // NEW ~3–4 cycles total
+  final double _hurtWiggleCycles = 3.5; // NEW
+  double _hurtHoldElapsed = 0.0; // NEW
+  double _hurtWiggleElapsed = 0.0; // NEW
+  bool _hurtStandingUp = false; // NEW
 
   Robot({required this.initialPosition, required this.groundY})
     : super(size: Vector2.all(50), anchor: Anchor.center) {
@@ -190,11 +207,13 @@ class Robot extends PositionComponent
 
   double _ease(double rate, double dt) => 1 - math.exp(-rate * dt);
 
-  double _smoothStep(double edge0, double edge1, double x) {
-    final tRaw = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
-    final double t = (tRaw is double) ? tRaw : (tRaw as num).toDouble();
+  double _smoothStep01(double x) {
+    final t = x.clamp(0.0, 1.0);
     return t * t * (3 - 2 * t);
   }
+
+  double _smoothStep(double a, double b, double x) =>
+      _smoothStep01(((x - a) / (b - a)).clamp(0.0, 1.0).toDouble());
 
   @override
   void onCollisionStart(
@@ -204,6 +223,7 @@ class Robot extends PositionComponent
     super.onCollisionStart(intersectionPoints, other);
     if (other is Fence) trip();
     if (other is Rain) if (!electrocuted) electrocute();
+    if (other is Bird) if (!isHurt) hurt();
   }
 
   // ────────── Actions ──────────
@@ -240,7 +260,6 @@ class Robot extends PositionComponent
     currentEvent = EventRobot.resume;
   }
 
-  // CHANGED: keep a ref so you can stop it later if you want
   Electric? electric1;
 
   void electrocute() {
@@ -248,24 +267,32 @@ class Robot extends PositionComponent
       electrocuted = true;
     }
     currentEvent = EventRobot.electrocute;
-    _electroElapsed = 0.0; // NEW: reset timer
+    _electroElapsed = 0.0;
 
-    // optional: reuse if already exists
     electric1 = Electric(size: Vector2(110, 25), angle: 0.15)
-      ..position =
-          Vector2(20, 75) // around body center; tweak as needed
+      ..position = Vector2(20, 75)
       ..anchor = Anchor.center;
 
     add(electric1 as Component);
-
-    // CHANGED: actually start the sizzle
     electric1?.switchPhase(EventHorizontalObstacle.startMoving);
   }
 
-  // To stop later:
-  // _electric?.switchPhase(EventHorizontalObstacle.stopMoving);
-
-  void hurt() {}
+  // ────────── HURT (NEW) ──────────
+  void hurt() {
+    // NEW
+    if (!isHurt) isHurt = true;
+    currentEvent = EventRobot.hurt; // NEW
+    pauseTracks = true; // NEW: tracks stop
+    _hurtElapsed = 0.0; // NEW
+    _hurtHoldElapsed = 0.0; // NEW
+    _hurtWiggleElapsed = 0.0; // NEW
+    _hurtStandingUp = false; // NEW
+    _hurtPhase = 0; // NEW
+    add(
+      Diziness(position: Vector2(70, _bodyBaseY - 5), delay: 1.5, duration: 4.0)
+        ..anchor = Anchor.center,
+    );
+  }
 
   void switchPhase(EventRobot phase) {
     switch (phase) {
@@ -284,7 +311,6 @@ class Robot extends PositionComponent
       case EventRobot.trip:
         trip();
         break;
-      // REMOVED: EventRobot.electrocute
       case EventRobot.hurt:
         hurt();
         break;
@@ -316,11 +342,11 @@ class Robot extends PositionComponent
       case EventRobot.resume:
         _resetAll();
         break;
-      // REMOVED: EventRobot.electrocute
       case EventRobot.hurt:
+        _updateHurtMotion(dt); // NEW
         break;
       case EventRobot.electrocute:
-        _updateElectrocuteMotion(dt); // NEW
+        _updateElectrocuteMotion(dt);
         break;
     }
   }
@@ -435,7 +461,7 @@ class Robot extends PositionComponent
     }
   }
 
-  // Gentle electrocute shake that auto-fades and cleans up electricity.
+  // ────────── Electrocute motion
   void _updateElectrocuteMotion(double dt) {
     _electroElapsed += dt;
     final double life = (_electroElapsed / _electroDuration).clamp(0.0, 1.0);
@@ -473,6 +499,69 @@ class Robot extends PositionComponent
 
       // return to idle
       currentEvent = EventRobot.idle;
+    }
+  }
+
+  // ────────── HURT Motion (NEW) ──────────
+  void _updateHurtMotion(double dt) {
+    // NEW
+    // 0) Ease body down by 10px
+    if (_hurtPhase == 0) {
+      _hurtElapsed += dt;
+      final p = (_hurtElapsed / _hurtDownDur).clamp(0.0, 1.0);
+      final e = _smoothStep01(p);
+      body.position.y = _bodyBaseY + _hurtDownOffset * e;
+      if (p >= 1.0) {
+        _hurtPhase = 1;
+        _hurtElapsed = 0.0;
+        _hurtWiggleElapsed = 0.0;
+      }
+      return;
+    }
+
+    // 1) Wiggle head back/forth ~3–4 times, then rest at +5°
+    if (_hurtPhase == 1) {
+      _hurtWiggleElapsed += dt;
+      final wiggleTotal = _hurtWiggleCycles / _hurtWiggleHz;
+      final t = _hurtWiggleElapsed;
+      // Pure ±5° wiggle (no decay for crisp “twitch”)
+      final a = _hurtMaxRad * math.sin(2 * math.pi * _hurtWiggleHz * t);
+      body.angle = a;
+
+      if (t >= wiggleTotal) {
+        body.angle = _hurtMaxRad; // rest at +5° forward
+        _hurtPhase = 2;
+        _hurtHoldElapsed = 0.0;
+      }
+      return;
+    }
+
+    // 2) Hold lowered pose & +5° head tilt ~20s
+    if (_hurtPhase == 2) {
+      _hurtHoldElapsed += dt;
+      if (_hurtHoldElapsed >= _hurtHoldDuration) {
+        _hurtPhase = 3;
+        _hurtElapsed = 0.0;
+        _hurtStandingUp = true;
+      }
+      return;
+    }
+
+    // 3) Stand up smoothly, then resume
+    if (_hurtPhase == 3 && _hurtStandingUp) {
+      _hurtElapsed += dt;
+      final p = (_hurtElapsed / _hurtStandDur).clamp(0.0, 1.0);
+      final e = _smoothStep01(p);
+      // Ease Y back to base; ease angle back to 0
+      body.position.y = _bodyBaseY + _hurtDownOffset * (1.0 - e);
+      body.angle = _hurtMaxRad * (1.0 - e);
+
+      if (p >= 1.0) {
+        body.position.y = _bodyBaseY;
+        body.angle = 0.0;
+        currentEvent = EventRobot.resume; // triggers _resetAll() path
+      }
+      return;
     }
   }
 
@@ -522,7 +611,7 @@ class Robot extends PositionComponent
     angle = 0;
     body.position.y = _bodyBaseY;
     body.angle = 0;
-    pauseTracks = false;
+    pauseTracks = false; // resume tracks
     _settling = false;
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
