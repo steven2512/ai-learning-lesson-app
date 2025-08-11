@@ -54,7 +54,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
   late final Arrow arrowDown;
-  late final McqTextBox mcqFirstRun;
+  late final McqBox mcqFirstRun;
 
   @override
   FutureOr<void> onLoad() async {
@@ -119,29 +119,47 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       maxWidth: 350,
     );
 
-    mcqFirstRun = McqTextBox(
-      question: 'Why do you think Robo failed?',
+    mcqFirstRun = McqBox(
+      questions: ['Why do you think Robo failed?'],
       answers: [
         'Robo is not intelligent enough',
         'Robo has not learned this course',
       ],
       correctAnswerIndex: 1,
-      outerSize: [315, 190], // ← outer W,H
-      optionSizes: [260, 48],
+      outerBoxSize: Vector2(320, 183),
+      innerBoxSize: Vector2(255, 45),
+      alignments: ['center', 'center'], // question, answers
+      padding: [
+        18,
+        17,
+        10,
+        16,
+        16,
+      ], // [top/bottom, q->opts, between, left, right]
       borderRadius: 24,
-      position: Vector2(size.x / 2, 300),
       anchor: Anchor.center,
-      initialOpacity: 1.0,
-      fadeDuration: 0.25,
-      textColors: [Colors.white, Colors.white],
+      opacities: [0.7, 1.0, 1.0], // outer, inner, selected
+      textColors: [Colors.white, Colors.white], // question, answer
       fillColors: [
-        Colors.black,
-        const Color.fromARGB(255, 117, 117, 117),
-        const Color.fromARGB(255, 0, 181, 48),
+        Colors.black, // outer
+        const Color(0xFF757575), // inner
+        const Color(0xFF00B530), // select correct
+        const Color(0xFFE53935), // select wrong
       ],
-      opacities: [0.7, 1, 1], // << outer, option, selected
-      textSizes: [18, 15],
-      callbacks: [() => print('✅ correct'), () => print('❌ wrong')],
+      position: Vector2(size.x / 2, size.y - 600),
+      textSizes: [20, 15], // question, answer
+      callbacks: [
+        // onCorrect
+        () {
+          print('✅ correct');
+        },
+        // onWrong
+        () {
+          print('❌ wrong');
+        },
+      ],
+      showDuration: 3,
+      hideDuration: 3,
     );
 
     cloudRain = Cloud(
@@ -299,6 +317,8 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         clouds.forEach(
           (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
         );
+
+        mcqFirstRun.switchPhase(EventHorizontalObstacle.startMoving);
         break;
       case GamePhase.contemplation:
         break;
