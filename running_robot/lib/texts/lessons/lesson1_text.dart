@@ -12,11 +12,11 @@ final List<String> introText = [
 
 final List<String> firstRunText = [
   "Oh that must have hurt!",
-  "It's okay, Robo can still move. He is stronger than he looks!",
-  "Hmm he doesn't stop there",
-  "Now he is all wet",
-  "Surely he can get over this one now",
-  "And that was just too much for our friend Robo...",
+  "Looks like Robo is okay",
+  "He did not stop for the rain...",
+  "And the jump is too early",
+  "Hmm...even though the course looks simple",
+  "Why did Robo fail these obstacles?",
 ];
 
 final List<String> contemplationText = [

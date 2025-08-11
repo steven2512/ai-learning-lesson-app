@@ -9,6 +9,7 @@ import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
 import 'package:running_robot/decorations/progress_bar.dart';
+import 'package:running_robot/static/arrow.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/obstacles/cloud.dart';
@@ -44,12 +45,14 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final Robot robot;
   late final Fence barell;
   late final Bird bird;
-  late final FancyTextBox mainText;
+  late final FancyTextBox introTextBox;
+  late final FancyTextBox firstRunTextBox;
   late final LessonProgressBar progressBar;
   late final PauseButton pauseButton;
   late final Cloud cloudRain;
   late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
+  late final Arrow arrowDown;
 
   @override
   FutureOr<void> onLoad() async {
@@ -71,6 +74,12 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       velocity: Vector2(-70, 0),
     );
 
+    arrowDown = Arrow(
+      imageFile: 'down_arrow.png',
+      position: Vector2(size.x / 2 - 18, size.y - 560),
+      size: Vector2(35, 54),
+    );
+
     bird = Bird(
       framePaths: [
         'bat.png',
@@ -83,9 +92,22 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       customSize: Vector2(80, 50),
     );
 
-    mainText = FancyTextBox(
+    introTextBox = FancyTextBox(
       sequence: introText,
       interval: 4.5,
+      fadeDuration: 0.5,
+      position: Vector2(size.x / 2, size.y / 3),
+      anchor: Anchor.center,
+      fontSize: 25,
+      letterSpacing: 0.5,
+      fontWeight: FontWeight.w800,
+      maxWidth: 350,
+    );
+
+    firstRunTextBox = FancyTextBox(
+      sequence: firstRunText,
+      durations: [3, 3, 3, 1, 4, 4, 2],
+      intervals: [0, 3, 8, 5, 3, 3],
       fadeDuration: 0.5,
       position: Vector2(size.x / 2, size.y / 3),
       anchor: Anchor.center,
@@ -167,6 +189,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
     add(background);
     add(ground);
     add(progressBar);
+    add(arrowDown);
     add(pauseButton);
     addAll(clouds);
     add(robot);
@@ -174,7 +197,8 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
     addAll(rainFall);
     add(barell);
     add(bird);
-    add(mainText);
+    add(introTextBox);
+    add(firstRunTextBox);
 
     //Start chain of Event
     handlePhase();
@@ -183,29 +207,36 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   Future<void> handlePhase() async {
     switch (phase) {
       case GamePhase.intro:
-        mainText.switchPhase(EventText.showText);
-        // await Future.delayed(const Duration(seconds: 40));
+        introTextBox.switchPhase(EventText.showText);
+        // await Future.delayed(const Duration(seconds: 28));
+
+        // //Arrow for pointing to Robo
+        // arrowDown.switchPhase(EventHorizontalObstacle.startMoving);
+        // await Future.delayed(const Duration(milliseconds: 4500));
+        // arrowDown.switchPhase(EventHorizontalObstacle.stopMoving);
+
         phase = GamePhase.waitingForSwipe;
         break;
       case GamePhase.waitingForSwipe:
         break;
       case GamePhase.fisrtRun:
         //Robot starts running
-        mainText.switchPhase(EventText.hideText);
+        introTextBox.switchPhase(EventText.hideText);
         robot.switchPhase(EventRobot.resume);
         ground.switchPhase(EventHorizontalObstacle.startMoving);
         clouds.forEach(
           (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
         );
-        await Future.delayed(const Duration(seconds: 5));
 
-        await Future.delayed(const Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 4));
 
         //Bird
         bird.switchPhase(EventHorizontalObstacle.startMoving);
 
+        await Future.delayed(const Duration(seconds: 4));
+        firstRunTextBox.switchPhase(EventText.showText);
         //Wait 8 seconds
-        await Future.delayed(const Duration(seconds: 7));
+        await Future.delayed(const Duration(seconds: 3));
 
         //Bird now stops moving
         bird.switchPhase(EventHorizontalObstacle.stopMoving);
