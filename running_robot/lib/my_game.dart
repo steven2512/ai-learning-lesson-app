@@ -9,11 +9,12 @@ import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
 import 'package:running_robot/decorations/progress_bar.dart';
-import 'package:running_robot/static/arrow.dart';
+import 'package:running_robot/texts/arrow.dart';
 import 'package:running_robot/static/background.dart';
 import 'package:running_robot/static/ground.dart';
 import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/characters/robot.dart';
+import 'package:running_robot/texts/mcq.dart';
 import 'package:running_robot/texts/text_box.dart';
 import 'package:running_robot/texts/lessons/lesson1_text.dart';
 import 'package:running_robot/obstacles/rain.dart';
@@ -53,6 +54,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final List<Cloud> clouds = [];
   late final List<Rain> rainFall;
   late final Arrow arrowDown;
+  late final McqTextBox mcqFirstRun;
 
   @override
   FutureOr<void> onLoad() async {
@@ -107,7 +109,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
     firstRunTextBox = FancyTextBox(
       sequence: firstRunText,
       durations: [3, 3, 3, 1, 4, 4, 2],
-      intervals: [0, 3, 8, 5, 3, 3],
+      intervals: [0, 3, 8, 5, 3, 1],
       fadeDuration: 0.5,
       position: Vector2(size.x / 2, size.y / 3),
       anchor: Anchor.center,
@@ -115,6 +117,31 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       letterSpacing: 0.5,
       fontWeight: FontWeight.w800,
       maxWidth: 350,
+    );
+
+    mcqFirstRun = McqTextBox(
+      question: 'Why do you think Robo failed?',
+      answers: [
+        'Robo is not intelligent enough',
+        'Robo has not learned this course',
+      ],
+      correctAnswerIndex: 1,
+      outerSize: [315, 190], // ← outer W,H
+      optionSizes: [260, 48],
+      borderRadius: 24,
+      position: Vector2(size.x / 2, 300),
+      anchor: Anchor.center,
+      initialOpacity: 1.0,
+      fadeDuration: 0.25,
+      textColors: [Colors.white, Colors.white],
+      fillColors: [
+        Colors.black,
+        const Color.fromARGB(255, 117, 117, 117),
+        const Color.fromARGB(255, 0, 181, 48),
+      ],
+      opacities: [0.7, 1, 1], // << outer, option, selected
+      textSizes: [18, 15],
+      callbacks: [() => print('✅ correct'), () => print('❌ wrong')],
     );
 
     cloudRain = Cloud(
@@ -199,6 +226,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
     add(bird);
     add(introTextBox);
     add(firstRunTextBox);
+    add(mcqFirstRun);
 
     //Start chain of Event
     handlePhase();
@@ -207,7 +235,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   Future<void> handlePhase() async {
     switch (phase) {
       case GamePhase.intro:
-        introTextBox.switchPhase(EventText.showText);
+        // introTextBox.switchPhase(EventText.showText);
         // await Future.delayed(const Duration(seconds: 28));
 
         // //Arrow for pointing to Robo
@@ -221,7 +249,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         break;
       case GamePhase.fisrtRun:
         //Robot starts running
-        introTextBox.switchPhase(EventText.hideText);
+        // introTextBox.switchPhase(EventText.hideText);
         robot.switchPhase(EventRobot.resume);
         ground.switchPhase(EventHorizontalObstacle.startMoving);
         clouds.forEach(
