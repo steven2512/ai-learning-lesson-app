@@ -35,6 +35,16 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
 
   EventText currentEvent = EventText.hideText;
 
+  // Background options
+  final Color? boxFill;
+  final double boxRadius;
+  final double boxFillOpacity;
+  final Vector2? boxSize; // when provided, center text inside this area
+
+  // Text & padding
+  final Color textColor;
+  final List<double>? boxPadding; // [top, right, bottom, left]
+
   FancyTextBox({
     required Vector2 position,
     required Anchor anchor,
@@ -47,6 +57,14 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
     required double letterSpacing,
     required FontWeight fontWeight,
     required double maxWidth,
+
+    // Visuals
+    this.boxFill,
+    this.boxRadius = 0.0,
+    this.boxFillOpacity = 1.0,
+    this.boxSize,
+    this.textColor = Colors.black,
+    this.boxPadding,
   }) : assert(
          interval == null || interval > 0,
          '`interval` must be > 0 if provided',
@@ -60,22 +78,29 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
          intervals == null || intervals.every((v) => v >= 0),
          '`intervals` (gaps) must be >= 0',
        ),
+       assert(
+         boxFillOpacity >= 0.0 && boxFillOpacity <= 1.0,
+         '`boxFillOpacity` must be between 0 and 1',
+       ),
+       assert(
+         boxPadding == null ||
+             (boxPadding.length == 4 && boxPadding.every((v) => v >= 0)),
+         '`boxPadding` must be 4 non-negative doubles: [top, right, bottom, left]',
+       ),
        super(
          align: anchor,
          anchor: anchor,
          text: sequence[0],
          position: position,
-         // FIX: use the real maxWidth from the start; no placeholder/override
          boxConfig: TextBoxConfig(
-           // <-- FIX
-           maxWidth: maxWidth, // <-- FIX
+           maxWidth: (boxSize != null ? boxSize.x : maxWidth),
            timePerChar: 0.0,
          ),
          textRenderer: TextPaint(
            style: GoogleFonts.lato(
              fontSize: fontSize,
              letterSpacing: letterSpacing,
-             color: Colors.black,
+             color: textColor,
              fontWeight: fontWeight,
            ),
          ),
@@ -84,6 +109,9 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    if (boxSize != null) {
+      size = boxSize!;
+    }
     if (currentEvent == EventText.hideText) {
       opacity = 0.0;
     }
@@ -104,7 +132,6 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
 
   void showText() {
     currentEvent = EventText.showText;
-
     final gap = _currentGap();
     if (opacity < 1.0 && gap > 0 && !_hasShownCurrent) {
       _fadeEffect?.removeFromParent();
@@ -112,22 +139,27 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
       timer = 0;
       return;
     }
-
     if (opacity < 1.0) {
-      _startFade(
-        1.0,
-        fadeDuration,
-        onComplete: () {
-          _hasShownCurrent = true;
-        },
-      );
+      _startFade(1.0, fadeDuration, onComplete: () => _hasShownCurrent = true);
     }
   }
 
   void hideText() {
+    // FIX: cancel any pending show-after-gap that would re-fade-in
+    _waitingGap = false; // FIX
+    _hasShownCurrent = false; // FIX
+
     currentEvent = EventText.hideText;
     timer = 0;
-    _startFade(0.0, fadeDuration);
+
+    // FIX: ensure we land exactly at 0.0
+    _startFade(
+      0.0,
+      fadeDuration,
+      onComplete: () {
+        opacity = 0.0; // FIX
+      },
+    );
   }
 
   void _startFade(double target, double duration, {VoidCallback? onComplete}) {
@@ -137,6 +169,8 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
       EffectController(duration: duration),
       onComplete: () {
         _fadeEffect = null;
+        // FIX: snap to target to avoid residual alpha (e.g., 0.0001 keeping text visible)
+        opacity = target; // FIX
         onComplete?.call();
       },
     );
@@ -206,7 +240,7 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
       0.0,
       fadeDuration,
       onComplete: () {
-        opacity = 0;
+        opacity = 0.0; // FIX: exact zero after step fade
         currentIndex++;
         text = sequence[currentIndex];
         timer = 0;
@@ -231,11 +265,70 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
 
   @override
   void render(Canvas canvas) {
+    // FIX: if fully transparent, skip drawing entirely
+    if (opacity <= 0.001) {
+      // FIX
+      return;
+    }
+
+    // Padding unpack (top, right, bottom, left)
+    final double pt = boxPadding != null ? boxPadding![0] : 0.0;
+    final double pr = boxPadding != null ? boxPadding![1] : 0.0;
+    final double pb = boxPadding != null ? boxPadding![2] : 0.0;
+    final double pl = boxPadding != null ? boxPadding![3] : 0.0;
+
+    // Inner text area
+    final double innerW = (boxSize?.x ?? size.x);
+    final double innerH = (boxSize?.y ?? size.y);
+
+    // Background expands by padding
+    final double w = innerW + pl + pr;
+    final double h = innerH + pt + pb;
+
+    // Group alpha so background + text fade together
+    final Rect layerBounds = Rect.fromLTWH(-pl, -pt, w, h);
     canvas.saveLayer(
-      null,
-      Paint()..color = Color.fromRGBO(255, 255, 255, opacity),
+      layerBounds,
+      Paint()..color = const Color(0xFFFFFFFF).withOpacity(opacity),
     );
-    super.render(canvas);
+
+    // Background (optional)
+    if (boxFill != null && boxFillOpacity > 0.0) {
+      final rrect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(-pl, -pt, w, h),
+        Radius.circular(boxRadius),
+      );
+      final combinedAlpha = (boxFill!.opacity * boxFillOpacity).clamp(0.0, 1.0);
+      final fillColor = boxFill!.withOpacity(combinedAlpha);
+      canvas.drawRRect(rrect, Paint()..color = fillColor);
+    }
+
+    // ---- TEXT RENDERING ----
+    if (boxSize == null) {
+      // Legacy behavior (left/top aligned by TextBoxComponent)
+      super.render(canvas);
+    } else {
+      // Center horizontally & vertically within inner box, respecting padding.
+      final style = (textRenderer as TextPaint).style;
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      painter.layout(maxWidth: innerW);
+
+      final double contentH = painter.height;
+      final double dy = ((innerH - contentH) * 0.5).clamp(0.0, double.infinity);
+
+      canvas.save();
+      // Clip to inner area so long text doesn't bleed into padding/background
+      canvas.clipRect(Rect.fromLTWH(0, 0, innerW, innerH));
+      canvas.translate(0, dy);
+      // Paint at (0, 0); TextAlign.center + maxWidth=innerW centers horizontally.
+      painter.paint(canvas, const Offset(0, 0));
+      canvas.restore();
+    }
+
     canvas.restore();
   }
 

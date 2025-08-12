@@ -15,7 +15,9 @@ class McqBox extends PositionComponent implements OpacityProvider {
   // layout
   final Vector2 outerBoxSize;
   final Vector2 innerBoxSize;
-  final List<String> alignments; // [question, answers]
+
+  /// alignments: [question, answers, (optional) explanation]
+  final List<String> alignments; // [question, answers, explanation?]
   final List<double> padding; // [topBottom, qToOptions, between, left, right]
   final double borderRadius;
 
@@ -25,16 +27,30 @@ class McqBox extends PositionComponent implements OpacityProvider {
   final List<Color> fillColors; // [outer, inner, correct, wrong]
   final List<double> textSizes; // [question, answer]
 
-  // callbacks
-  final List<VoidCallback> callbacks; // [onCorrect, onWrong]
+  // callbacks (optional)
+  final List<VoidCallback>? callbacks; // [onCorrect, onWrong]
 
   // animation config
   final double showDuration;
   final double hideDuration;
 
+  // optional explanations [0]=correct text, [1]=wrong text
+  final List<String>? answerExplanations;
+
+  // --- NEW: optional styling overrides for explanation text ---
+  final double? explanationFontSize;
+  final FontWeight? explanationFontWeight;
+  final FontStyle? explanationFontStyle; // e.g., FontStyle.italic
+  final double? explanationLetterSpacing;
+  final Color? explanationColor;
+
+  /// If provided, this takes precedence over the fields above.
+  final TextStyle? explanationTextStyle;
+
   // state
   int? _selected;
   bool _acceptInput = false;
+
   double _opacity = 0.0; // start hidden
   @override
   double get opacity => _opacity;
@@ -42,11 +58,15 @@ class McqBox extends PositionComponent implements OpacityProvider {
   set opacity(double v) => _opacity = v.clamp(0.0, 1.0);
 
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
-  double _t = 0.0;
 
-  // CHANGE: single place to decide hidden-ness
+  OpacityEffect? _fadeFx;
+
   bool get _hidden =>
-      currentEvent == EventHorizontalObstacle.stopMoving || opacity <= 0.0001;
+      currentEvent == EventHorizontalObstacle.stopMoving && opacity <= 0.00001;
+
+  // explanation mode
+  bool _showingExplanation = false;
+  String? _explanationText;
 
   McqBox({
     required this.questions,
@@ -54,7 +74,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     required this.correctAnswerIndex,
     required this.outerBoxSize,
     required this.innerBoxSize,
-    required this.alignments,
+    required this.alignments, // [question, answers, explanation?]
     required this.padding,
     required this.borderRadius,
     required Anchor anchor,
@@ -63,16 +83,36 @@ class McqBox extends PositionComponent implements OpacityProvider {
     required this.textColors,
     required this.fillColors,
     required this.textSizes,
-    required this.callbacks,
+    this.callbacks,
     required this.showDuration,
     required this.hideDuration,
-  }) : super(size: outerBoxSize, anchor: anchor, position: position) {
-    opacity = 0.0; // hidden at start
+    this.answerExplanations,
+
+    // NEW: explanation style overrides (all optional)
+    this.explanationFontSize,
+    this.explanationFontWeight,
+    this.explanationFontStyle,
+    this.explanationLetterSpacing,
+    this.explanationColor,
+    this.explanationTextStyle,
+  }) : assert(
+         alignments.length >= 2,
+         '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
+       ),
+       assert(
+         answerExplanations == null ||
+             (answerExplanations.length >= 2 &&
+                 answerExplanations[0].isNotEmpty &&
+                 answerExplanations[1].isNotEmpty),
+         '`answerExplanations` must have 2 non-empty strings [correct, wrong] if provided',
+       ),
+       super(size: outerBoxSize, anchor: anchor, position: position) {
+    opacity = 0.0;
     scale = Vector2.all(1.0);
     currentEvent = EventHorizontalObstacle.stopMoving;
-    _enterStop();
   }
 
+  // Helpers
   Anchor _hAnchor(String a, {bool top = true}) {
     switch (a.toLowerCase()) {
       case 'center':
@@ -95,6 +135,18 @@ class McqBox extends PositionComponent implements OpacityProvider {
     }
   }
 
+  TextAlign _textAlignOf(String a, {TextAlign fallback = TextAlign.center}) {
+    switch (a.toLowerCase()) {
+      case 'left':
+        return TextAlign.left;
+      case 'right':
+        return TextAlign.right;
+      case 'center':
+      default:
+        return fallback;
+    }
+  }
+
   Color _outerColor() => fillColors[0].withOpacity(opacities[0]);
   Color _innerColor() => fillColors[1].withOpacity(opacities[1]);
   Color _correctColor() => fillColors[2].withOpacity(opacities[2]);
@@ -103,11 +155,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
   static const double _lh = 1.25;
   static const double _innerTextPad = 14;
 
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-
-    // Question
+  void _buildQuestionAndOptions() {
+    // Question positioning
     final String qAlign = alignments[0];
     final double contentLeft = padding[3];
     final double contentRight = padding[4];
@@ -183,7 +232,12 @@ class McqBox extends PositionComponent implements OpacityProvider {
     }
   }
 
-  // PHASE ENTRY
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _buildQuestionAndOptions();
+  }
+
   void switchPhase(EventHorizontalObstacle phase) {
     if (phase == currentEvent) return;
     currentEvent = phase;
@@ -194,50 +248,61 @@ class McqBox extends PositionComponent implements OpacityProvider {
     }
   }
 
+  void _killFade() {
+    _fadeFx?.removeFromParent();
+    _fadeFx = null;
+  }
+
   void _enterStart() {
     _acceptInput = false;
     _selected = null;
-    _t = 0.0;
-    opacity = 0.0;
-    scale = Vector2.all(1.06);
+    _showingExplanation = false;
+    _explanationText = null;
+
+    removeAll(children.toList());
+    _buildQuestionAndOptions();
+
+    _killFade();
+    final dur = (showDuration.isFinite && showDuration > 0.05)
+        ? showDuration
+        : 0.35;
+    _fadeFx = OpacityEffect.to(
+      1.0,
+      EffectController(duration: dur, curve: Curves.easeOutCubic),
+      onComplete: () {
+        _acceptInput = true;
+      },
+    );
+    add(_fadeFx!);
   }
 
   void _enterStop() {
     _acceptInput = false;
-    _t = 0.0;
-    opacity = 0.0;
-    scale = Vector2.all(1.0);
+    _killFade();
+    final dur = (hideDuration.isFinite && hideDuration > 0.05)
+        ? hideDuration
+        : 0.20;
+    _fadeFx = OpacityEffect.to(
+      0.0,
+      EffectController(duration: dur, curve: Curves.easeInQuad),
+    );
+    add(_fadeFx!);
   }
 
-  // UPDATE (state machine)
-  @override
-  void update(double dt) {
-    super.update(dt);
-    switch (currentEvent) {
-      case EventHorizontalObstacle.stopMoving:
-        // stay hidden
-        break;
-      case EventHorizontalObstacle.startMoving:
-        // fade + scale in
-        if (opacity < 1.0 || scale.x > 1.0) {
-          _t += dt;
-          final p = (_t / showDuration).clamp(0.0, 1.0);
-          opacity = p;
-          scale = Vector2.all(1.06 - 0.06 * p);
-          if (p >= 1.0) _acceptInput = true;
-        }
-        break;
-    }
-  }
-
-  // CHANGE: block the entire subtree when hidden
   @override
   void renderTree(Canvas canvas) {
-    if (_hidden) return; // nothing, including children
+    if (_hidden) return;
+
+    if (opacity >= 0.999) {
+      super.renderTree(canvas);
+      return;
+    }
+    final paint = Paint()..color = const Color(0xFFFFFFFF).withOpacity(opacity);
+    canvas.saveLayer(null, paint);
     super.renderTree(canvas);
+    canvas.restore();
   }
 
-  // (render draws the card when visible; children draw inside)
   @override
   void render(Canvas canvas) {
     final rrect = RRect.fromRectAndRadius(
@@ -246,6 +311,71 @@ class McqBox extends PositionComponent implements OpacityProvider {
     );
     canvas.drawRRect(rrect, Paint()..color = _outerColor());
     super.render(canvas);
+
+    // Explanation: align using alignments[2] if provided; else center (legacy)
+    if (_showingExplanation &&
+        _explanationText != null &&
+        _explanationText!.isNotEmpty) {
+      final double topBottom = padding[0];
+      final double contentLeft = padding[3];
+      final double contentRight = padding[4];
+
+      final double contentWidth = math.max(
+        0,
+        size.x - contentLeft - contentRight,
+      );
+      final double contentTop = topBottom;
+      final double contentBottom = size.y - topBottom;
+      final double contentHeight = math.max(0, contentBottom - contentTop);
+
+      // Clip to padded content area
+      final Rect clipRect = Rect.fromLTWH(
+        contentLeft,
+        contentTop,
+        contentWidth,
+        contentHeight,
+      );
+      canvas.save();
+      canvas.clipRect(clipRect);
+
+      // Local origin = top-left of the content area
+      canvas.translate(contentLeft, contentTop);
+
+      final String explainAlignStr = (alignments.length >= 3)
+          ? alignments[2]
+          : 'center';
+      final TextAlign explainAlign = _textAlignOf(explainAlignStr);
+
+      // --- Build the explanation TextStyle with overrides (or full override) ---
+      final TextStyle effectiveStyle =
+          explanationTextStyle ??
+          GoogleFonts.lato(
+            fontSize: explanationFontSize ?? textSizes[0],
+            color: explanationColor ?? textColors[0],
+            fontWeight: explanationFontWeight ?? FontWeight.w700,
+            fontStyle:
+                explanationFontStyle ??
+                FontStyle.normal, // set to FontStyle.italic for italics
+            letterSpacing: explanationLetterSpacing,
+          );
+
+      final painter = TextPainter(
+        text: TextSpan(text: _explanationText, style: effectiveStyle),
+        textAlign: explainAlign,
+        textDirection: TextDirection.ltr,
+      );
+
+      // Lock layout width to contentWidth so alignment is exact within the box
+      painter.layout(minWidth: contentWidth, maxWidth: contentWidth);
+
+      final double contentH = painter.height;
+      final double dy = (contentHeight - contentH) / 2.0; // vertical center
+      painter.paint(
+        canvas,
+        Offset(0, dy), // x at 0; TextAlign handles left/center/right
+      );
+      canvas.restore();
+    }
   }
 
   Future<void> dismissAfter(Duration d) async {
@@ -256,13 +386,32 @@ class McqBox extends PositionComponent implements OpacityProvider {
   void _handleTap(int index) {
     if (!_acceptInput || _selected != null) return;
     _selected = index;
-    if (index == correctAnswerIndex) {
-      callbacks[0]();
-    } else {
-      callbacks[1]();
-    }
+
     for (final o in children.whereType<_Option>()) {
       o.updateSelection(index, correctAnswerIndex);
+    }
+
+    final bool isCorrect = index == correctAnswerIndex;
+
+    if (answerExplanations != null && answerExplanations!.length >= 2) {
+      _acceptInput = false;
+      removeAll(children.whereType<_Option>().toList());
+      removeAll(
+        children.whereType<TextComponent>().toList(),
+      ); // remove question
+      _showingExplanation = true;
+      _explanationText = isCorrect
+          ? answerExplanations![0]
+          : answerExplanations![1];
+      return;
+    }
+
+    if (callbacks != null && callbacks!.length >= 2) {
+      if (isCorrect) {
+        callbacks![0]();
+      } else {
+        callbacks![1]();
+      }
     }
   }
 }

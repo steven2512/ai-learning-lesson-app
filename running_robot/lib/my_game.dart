@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flutter/material.dart';
 import 'package:running_robot/decorations/pause.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
@@ -16,8 +15,10 @@ import 'package:running_robot/obstacles/cloud.dart';
 import 'package:running_robot/characters/robot.dart';
 import 'package:running_robot/texts/mcq.dart';
 import 'package:running_robot/texts/text_box.dart';
-import 'package:running_robot/texts/lessons/lesson1_text.dart';
 import 'package:running_robot/obstacles/rain.dart';
+
+// CHANGE: import the builder
+import 'package:running_robot/scene_builder.dart';
 
 enum GamePhase {
   intro,
@@ -48,6 +49,11 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final Bird bird;
   late final FancyTextBox introTextBox;
   late final FancyTextBox firstRunTextBox;
+
+  // CHANGE: feedback boxes (not created here per your current code)
+  late final FancyTextBox resultCorrectBox; // not initialized here
+  late final FancyTextBox resultWrongBox; // not initialized here
+
   late final LessonProgressBar progressBar;
   late final PauseButton pauseButton;
   late final Cloud cloudRain;
@@ -58,193 +64,29 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
 
   @override
   FutureOr<void> onLoad() async {
-    background = Background(backgroundSize: Vector2(size.x, size.y));
+    // CHANGE: delegate creation to SceneBuilder
+    final scene = await SceneBuilder(size).build();
 
-    ground = Ground(dimensions: Vector2(size.x, size.y));
-    final groundY = ground.topY;
+    // Assign references exactly as before
+    background = scene.background;
+    ground = scene.ground;
+    robot = scene.robot;
+    barell = scene.barell;
+    bird = scene.bird;
+    introTextBox = scene.introTextBox;
+    firstRunTextBox = scene.firstRunTextBox;
+    progressBar = scene.progressBar;
+    pauseButton = scene.pauseButton;
+    cloudRain = scene.cloudRain;
+    arrowDown = scene.arrowDown;
+    mcqFirstRun = scene.mcqFirstRun;
 
-    robot = Robot(
-      initialPosition: Vector2(size.x / 2, size.y / 2),
-      groundY: groundY,
-    );
+    // Lists
+    clouds.addAll(scene.clouds); // keep your existing list instance
+    rainFall = scene.rainFall; // late final assignment
 
-    barell = Fence(
-      initialPosition: Vector2(size.x + 200, groundY - 45),
-      picturePath: 'barrell_red.png',
-      groundY: groundY,
-      size: Vector2(90, 90),
-      velocity: Vector2(-70, 0),
-    );
-
-    arrowDown = Arrow(
-      imageFile: 'down_arrow.png',
-      position: Vector2(size.x / 2 - 18, size.y - 560),
-      size: Vector2(35, 54),
-    );
-
-    bird = Bird(
-      framePaths: [
-        'bat.png',
-        'bat_hang.png',
-        'bat_fly.png',
-      ],
-      startPosition: Vector2(size.x + 100, 450),
-      endPosition: Vector2(-100, 450),
-      velocity: Vector2(-80, 0),
-      customSize: Vector2(80, 50),
-    );
-
-    introTextBox = FancyTextBox(
-      sequence: introText,
-      interval: 4.5,
-      fadeDuration: 0.5,
-      position: Vector2(size.x / 2, size.y / 3),
-      anchor: Anchor.center,
-      fontSize: 25,
-      letterSpacing: 0.5,
-      fontWeight: FontWeight.w800,
-      maxWidth: 350,
-    );
-
-    firstRunTextBox = FancyTextBox(
-      sequence: firstRunText,
-      durations: [3, 3, 3, 1, 4, 4, 2],
-      intervals: [0, 3, 8, 5, 3, 1],
-      fadeDuration: 0.5,
-      position: Vector2(size.x / 2, size.y / 3),
-      anchor: Anchor.center,
-      fontSize: 25,
-      letterSpacing: 0.5,
-      fontWeight: FontWeight.w800,
-      maxWidth: 350,
-    );
-
-    mcqFirstRun = McqBox(
-      questions: ['Why do you think Robo failed?'],
-      answers: [
-        'Robo is not intelligent enough',
-        'Robo has not learned this course',
-      ],
-      correctAnswerIndex: 1,
-      outerBoxSize: Vector2(320, 183),
-      innerBoxSize: Vector2(255, 45),
-      alignments: ['center', 'center'], // question, answers
-      padding: [
-        18,
-        17,
-        10,
-        16,
-        16,
-      ], // [top/bottom, q->opts, between, left, right]
-      borderRadius: 24,
-      anchor: Anchor.center,
-      opacities: [0.7, 1.0, 1.0], // outer, inner, selected
-      textColors: [Colors.white, Colors.white], // question, answer
-      fillColors: [
-        Colors.black, // outer
-        const Color(0xFF757575), // inner
-        const Color(0xFF00B530), // select correct
-        const Color(0xFFE53935), // select wrong
-      ],
-      position: Vector2(size.x / 2, size.y - 600),
-      textSizes: [20, 15], // question, answer
-      callbacks: [
-        // onCorrect
-        () {
-          print('✅ correct');
-        },
-        // onWrong
-        () {
-          print('❌ wrong');
-        },
-      ],
-      showDuration: 3,
-      hideDuration: 3,
-    );
-
-    cloudRain = Cloud(
-      initialPosition: Vector2(size.x + 300, 220),
-      picturePath: 'cloud_grey.png',
-      stretchY: 1.5,
-      stretchX: 1.5,
-      velocity: Vector2(-70, 0),
-      // randomizeRest: false, // (default) keep stable for rain anchor
-    );
-
-    clouds.add(
-      Cloud(
-        initialPosition: Vector2(size.x + 150, 320),
-        picturePath: 'cloud_shape4_4.png',
-        stretchY: 0.7,
-        velocity: Vector2(-100, 0),
-        randomizeRest: true, // ✅ parallax
-        opacity: 0.2,
-      ),
-    );
-
-    clouds.add(
-      Cloud(
-        initialPosition: Vector2(size.x + 300, 360),
-        picturePath: 'cloud_shape3_5.png',
-        stretchY: 0.7,
-        velocity: Vector2(-90, 0),
-        randomizeRest: true, // ✅ parallax
-        opacity: 0.3,
-      ),
-    );
-
-    // clouds.add(
-    //   Cloud(
-    //     initialPosition: Vector2(size.x + 150, 320),
-    //     picturePath: 'cloud_shape4_4.png',
-    //     stretchY: 0.7,
-    //     velocity: Vector2(-30, 0),
-    //     randomizeRest: true, // ✅ parallax
-    //     opacity: 0.2,
-    //   ),
-    // );
-
-    // clouds.add(
-    //   Cloud(
-    //     initialPosition: Vector2(size.x + 300, 360),
-    //     picturePath: 'cloud_shape3_5.png',
-    //     stretchY: 0.7,
-    //     velocity: Vector2(-30, 0),
-    //     randomizeRest: true, // ✅ parallax
-    //     opacity: 0.2,
-    //   ),
-    // );
-
-    rainFall = Rain.generateRain(
-      count: 70,
-      startAreaTopLeft: Vector2(size.x / 3, 200),
-      startAreaBottomRight: Vector2(size.x * 2 / 3, 280),
-      endPosition: Vector2(size.x / 2, groundY),
-      minSpeed: 150,
-      maxSpeed: 300,
-      cloud: cloudRain, // <—
-    );
-
-    progressBar = LessonProgressBar(
-      position: Vector2(size.x / 2, 80),
-      stages: 3,
-    );
-
-    pauseButton = PauseButton(position: Vector2(size.x - 18, 75.5));
-    add(background);
-    add(ground);
-    add(progressBar);
-    add(arrowDown);
-    add(pauseButton);
-    addAll(clouds);
-    add(robot);
-    add(cloudRain);
-    addAll(rainFall);
-    add(barell);
-    add(bird);
-    add(introTextBox);
-    add(firstRunTextBox);
-    add(mcqFirstRun);
+    // Add everything in the original order
+    addAll(scene.components);
 
     //Start chain of Event
     handlePhase();
@@ -253,21 +95,13 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   Future<void> handlePhase() async {
     switch (phase) {
       case GamePhase.intro:
-        // introTextBox.switchPhase(EventText.showText);
-        // await Future.delayed(const Duration(seconds: 28));
-
-        // //Arrow for pointing to Robo
-        // arrowDown.switchPhase(EventHorizontalObstacle.startMoving);
-        // await Future.delayed(const Duration(milliseconds: 4500));
-        // arrowDown.switchPhase(EventHorizontalObstacle.stopMoving);
-
         phase = GamePhase.waitingForSwipe;
         break;
+
       case GamePhase.waitingForSwipe:
         break;
+
       case GamePhase.fisrtRun:
-        //Robot starts running
-        // introTextBox.switchPhase(EventText.hideText);
         robot.switchPhase(EventRobot.resume);
         ground.switchPhase(EventHorizontalObstacle.startMoving);
         clouds.forEach(
@@ -275,38 +109,29 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         );
 
         await Future.delayed(const Duration(seconds: 4));
-
-        //Bird
         bird.switchPhase(EventHorizontalObstacle.startMoving);
 
         await Future.delayed(const Duration(seconds: 4));
         firstRunTextBox.switchPhase(EventText.showText);
-        //Wait 8 seconds
-        await Future.delayed(const Duration(seconds: 3));
 
-        //Bird now stops moving
+        await Future.delayed(const Duration(seconds: 3));
         bird.switchPhase(EventHorizontalObstacle.stopMoving);
 
         await Future.delayed(const Duration(seconds: 5));
-        //Cloud and rain starts moving
         cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.startFalling),
         );
 
-        //CLoud and rain disappear
         await Future.delayed(const Duration(seconds: 12));
         cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
         rainFall.forEach(
           (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
         );
 
-        //Barrell
         barell.switchPhase(EventHorizontalObstacle.startMoving);
 
         await Future.delayed(const Duration(seconds: 4));
-
-        //jump and fail
         robot.switchPhase(EventRobot.jump);
 
         await Future.delayed(const Duration(seconds: 4));
@@ -318,8 +143,13 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
           (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
         );
 
+        await Future.delayed(const Duration(seconds: 7));
+        firstRunTextBox.switchPhase(EventText.hideText);
+        // await Future.delayed(const Duration(seconds: 6));
         mcqFirstRun.switchPhase(EventHorizontalObstacle.startMoving);
+        // mcqFirstRun.switchPhase(EventHorizontalObstacle.stopMoving);
         break;
+
       case GamePhase.contemplation:
         break;
 
