@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide CloseButton;
 
 // Components from your project
 import 'package:running_robot/static/background.dart';

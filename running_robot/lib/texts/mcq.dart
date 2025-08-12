@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:async'; // [ADDED]
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
@@ -47,6 +48,9 @@ class McqBox extends PositionComponent implements OpacityProvider {
   /// If provided, this takes precedence over the fields above.
   final TextStyle? explanationTextStyle;
 
+  // [ADDED] Hold time (in seconds) to keep the selected color visible
+  final double selectedHoldSeconds;
+
   // state
   int? _selected;
   bool _acceptInput = false;
@@ -68,6 +72,9 @@ class McqBox extends PositionComponent implements OpacityProvider {
   bool _showingExplanation = false;
   String? _explanationText;
 
+  // keep a handle to the close button so we can add/remove cleanly
+  _CloseXButton? _closeBtn;
+
   McqBox({
     required this.questions,
     required this.answers,
@@ -88,13 +95,16 @@ class McqBox extends PositionComponent implements OpacityProvider {
     required this.hideDuration,
     this.answerExplanations,
 
-    // NEW: explanation style overrides (all optional)
+    // explanation style overrides (all optional)
     this.explanationFontSize,
     this.explanationFontWeight,
     this.explanationFontStyle,
     this.explanationLetterSpacing,
     this.explanationColor,
     this.explanationTextStyle,
+
+    // [ADDED] configurable delay (defaults to 1s)
+    this.selectedHoldSeconds = 1.0,
   }) : assert(
          alignments.length >= 2,
          '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
@@ -253,11 +263,35 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _fadeFx = null;
   }
 
+  // utilities for close button lifecycle
+  void _addCloseButton() {
+    _disposeCloseButton();
+    const double pad = 8.0;
+    _closeBtn = _CloseXButton(
+      size: Vector2(25, 25), // adjust as needed
+      position: Vector2(size.x - pad, pad),
+      anchor: Anchor.topRight,
+      onPressed: () {
+        // EXACTLY the same behavior as tapping dismiss: fade out via switchPhase
+        switchPhase(EventHorizontalObstacle.stopMoving);
+      },
+    );
+    add(_closeBtn!);
+  }
+
+  void _disposeCloseButton() {
+    _closeBtn?.removeFromParent();
+    _closeBtn = null;
+  }
+
   void _enterStart() {
     _acceptInput = false;
     _selected = null;
     _showingExplanation = false;
     _explanationText = null;
+
+    // ensure close button is not around during MCQ phase
+    _disposeCloseButton();
 
     removeAll(children.toList());
     _buildQuestionAndOptions();
@@ -279,6 +313,10 @@ class McqBox extends PositionComponent implements OpacityProvider {
   void _enterStop() {
     _acceptInput = false;
     _killFade();
+
+    // button goes away when we stop/fade out
+    _disposeCloseButton();
+
     final dur = (hideDuration.isFinite && hideDuration > 0.05)
         ? hideDuration
         : 0.20;
@@ -310,9 +348,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
       Radius.circular(borderRadius),
     );
     canvas.drawRRect(rrect, Paint()..color = _outerColor());
-    super.render(canvas);
 
-    // Explanation: align using alignments[2] if provided; else center (legacy)
+    // draw explanation (if any) BEFORE children so the close button sits on top
     if (_showingExplanation &&
         _explanationText != null &&
         _explanationText!.isNotEmpty) {
@@ -346,16 +383,14 @@ class McqBox extends PositionComponent implements OpacityProvider {
           : 'center';
       final TextAlign explainAlign = _textAlignOf(explainAlignStr);
 
-      // --- Build the explanation TextStyle with overrides (or full override) ---
+      // Build the explanation TextStyle with overrides (or full override)
       final TextStyle effectiveStyle =
           explanationTextStyle ??
           GoogleFonts.lato(
             fontSize: explanationFontSize ?? textSizes[0],
             color: explanationColor ?? textColors[0],
             fontWeight: explanationFontWeight ?? FontWeight.w700,
-            fontStyle:
-                explanationFontStyle ??
-                FontStyle.normal, // set to FontStyle.italic for italics
+            fontStyle: explanationFontStyle ?? FontStyle.normal,
             letterSpacing: explanationLetterSpacing,
           );
 
@@ -372,15 +407,30 @@ class McqBox extends PositionComponent implements OpacityProvider {
       final double dy = (contentHeight - contentH) / 2.0; // vertical center
       painter.paint(
         canvas,
-        Offset(0, dy), // x at 0; TextAlign handles left/center/right
+        const Offset(0, 0) + Offset(0, dy),
       );
       canvas.restore();
     }
+
+    // children (including the close button) render above the explanation
+    super.render(canvas);
   }
 
   Future<void> dismissAfter(Duration d) async {
     await Future.delayed(d);
     switchPhase(EventHorizontalObstacle.stopMoving);
+  }
+
+  // [ADDED] factor out the explanation swap to a helper
+  void _showExplanation(bool isCorrect) {
+    removeAll(children.whereType<_Option>().toList());
+    removeAll(children.whereType<TextComponent>().toList()); // remove question
+    _showingExplanation = true;
+    _explanationText = isCorrect
+        ? answerExplanations![0]
+        : answerExplanations![1];
+
+    _addCloseButton();
   }
 
   void _handleTap(int index) {
@@ -394,18 +444,27 @@ class McqBox extends PositionComponent implements OpacityProvider {
     final bool isCorrect = index == correctAnswerIndex;
 
     if (answerExplanations != null && answerExplanations!.length >= 2) {
+      // [ADDED] freeze input and HOLD the selected state for N seconds
       _acceptInput = false;
-      removeAll(children.whereType<_Option>().toList());
-      removeAll(
-        children.whereType<TextComponent>().toList(),
-      ); // remove question
-      _showingExplanation = true;
-      _explanationText = isCorrect
-          ? answerExplanations![0]
-          : answerExplanations![1];
+
+      // Wait before switching to explanation so the color change is visible
+      Future.delayed(
+        Duration(
+          milliseconds: (selectedHoldSeconds * 1000).round(),
+        ),
+        () {
+          // Guard against the box being hidden/stopped/removed during the wait
+          if (parent == null) return;
+          if (currentEvent != EventHorizontalObstacle.startMoving) return;
+          if (_showingExplanation) return;
+
+          _showExplanation(isCorrect);
+        },
+      );
       return;
     }
 
+    // Legacy path: no explanation, fire callbacks immediately
     if (callbacks != null && callbacks!.length >= 2) {
       if (isCorrect) {
         callbacks![0]();
@@ -490,6 +549,59 @@ class _Option extends PositionComponent with TapCallbacks {
   @override
   void onTapUp(TapUpEvent event) {
     onTap(index);
+    super.onTapUp(event);
+  }
+}
+
+// ---------------------------------------------------------------
+// Minimal Flame close “X” button component.
+
+class _CloseXButton extends PositionComponent with TapCallbacks {
+  final VoidCallback onPressed;
+
+  _CloseXButton({
+    required Vector2 size,
+    required Vector2 position,
+    required Anchor anchor,
+    required this.onPressed,
+  }) : super(size: size, position: position, anchor: anchor);
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // Background (slightly translucent to sit nicely on any fill)
+    final bgPaint = Paint()..color = const Color(0xCC000000);
+    final r = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.x, size.y),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(r, bgPaint);
+
+    // Draw the X
+    final stroke = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    // inset so lines don't hit the edges
+    const double inset = 8;
+    canvas.drawLine(
+      Offset(inset, inset),
+      Offset(size.x - inset, size.y - inset),
+      stroke,
+    );
+    canvas.drawLine(
+      Offset(size.x - inset, inset),
+      Offset(inset, size.y - inset),
+      stroke,
+    );
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    onPressed();
     super.onTapUp(event);
   }
 }
