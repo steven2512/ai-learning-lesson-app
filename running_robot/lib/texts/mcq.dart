@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:async'; // [ADDED]
+import 'dart:async'; // [EXISTS]
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
@@ -8,50 +8,48 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/events/event_type.dart';
 
 class McqBox extends PositionComponent implements OpacityProvider {
-  // data
+  // ── data
   final List<String> questions;
   final List<String> answers;
   final int correctAnswerIndex;
 
-  // layout
+  // ── layout
   final Vector2 outerBoxSize;
   final Vector2 innerBoxSize;
-
-  /// alignments: [question, answers, (optional) explanation]
-  final List<String> alignments; // [question, answers, explanation?]
+  final List<String> alignments; // [question, answers, (optional) explanation]
   final List<double> padding; // [topBottom, qToOptions, between, left, right]
   final double borderRadius;
 
-  // style
+  // ── style
   final List<double> opacities; // [outer, inner, selected]
   final List<Color> textColors; // [question, answer]
   final List<Color> fillColors; // [outer, inner, correct, wrong]
   final List<double> textSizes; // [question, answer]
 
-  // callbacks (optional)
+  // ── callbacks
   final List<VoidCallback>? callbacks; // [onCorrect, onWrong]
-
-  // animation config
   final double showDuration;
   final double hideDuration;
 
   // optional explanations [0]=correct text, [1]=wrong text
   final List<String>? answerExplanations;
 
-  // --- NEW: optional styling overrides for explanation text ---
+  // explanation style overrides
   final double? explanationFontSize;
   final FontWeight? explanationFontWeight;
-  final FontStyle? explanationFontStyle; // e.g., FontStyle.italic
+  final FontStyle? explanationFontStyle;
   final double? explanationLetterSpacing;
   final Color? explanationColor;
-
-  /// If provided, this takes precedence over the fields above.
   final TextStyle? explanationTextStyle;
 
-  // [ADDED] Hold time (in seconds) to keep the selected color visible
+  // keep selected color visible for N seconds
   final double selectedHoldSeconds;
 
-  // state
+  // [ADDED] optional extra callback when user clicks the top-right close “X”
+  // This is called IN ADDITION to closing (after the box is told to close).
+  final VoidCallback? onClosePressed; // [ADDED]
+
+  // ── state
   int? _selected;
   bool _acceptInput = false;
 
@@ -62,17 +60,14 @@ class McqBox extends PositionComponent implements OpacityProvider {
   set opacity(double v) => _opacity = v.clamp(0.0, 1.0);
 
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
-
   OpacityEffect? _fadeFx;
 
   bool get _hidden =>
       currentEvent == EventHorizontalObstacle.stopMoving && opacity <= 0.00001;
 
-  // explanation mode
   bool _showingExplanation = false;
   String? _explanationText;
 
-  // keep a handle to the close button so we can add/remove cleanly
   _CloseXButton? _closeBtn;
 
   McqBox({
@@ -103,8 +98,9 @@ class McqBox extends PositionComponent implements OpacityProvider {
     this.explanationColor,
     this.explanationTextStyle,
 
-    // [ADDED] configurable delay (defaults to 1s)
     this.selectedHoldSeconds = 1.0,
+
+    this.onClosePressed, // [ADDED]
   }) : assert(
          alignments.length >= 2,
          '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
@@ -122,7 +118,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     currentEvent = EventHorizontalObstacle.stopMoving;
   }
 
-  // Helpers
+  // ── helpers
   Anchor _hAnchor(String a, {bool top = true}) {
     switch (a.toLowerCase()) {
       case 'center':
@@ -268,12 +264,14 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _disposeCloseButton();
     const double pad = 8.0;
     _closeBtn = _CloseXButton(
-      size: Vector2(24, 24), // adjust as needed
+      size: Vector2(24, 24),
       position: Vector2(size.x - pad, pad),
       anchor: Anchor.topRight,
       onPressed: () {
-        // EXACTLY the same behavior as tapping dismiss: fade out via switchPhase
+        // close first
         switchPhase(EventHorizontalObstacle.stopMoving);
+        // then external callback (if provided)
+        onClosePressed?.call(); // [ADDED]
       },
     );
     add(_closeBtn!);
@@ -290,7 +288,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _showingExplanation = false;
     _explanationText = null;
 
-    // ensure close button is not around during MCQ phase
     _disposeCloseButton();
 
     removeAll(children.toList());
@@ -303,9 +300,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _fadeFx = OpacityEffect.to(
       1.0,
       EffectController(duration: dur, curve: Curves.easeOutCubic),
-      onComplete: () {
-        _acceptInput = true;
-      },
+      onComplete: () => _acceptInput = true,
     );
     add(_fadeFx!);
   }
@@ -314,7 +309,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _acceptInput = false;
     _killFade();
 
-    // button goes away when we stop/fade out
     _disposeCloseButton();
 
     final dur = (hideDuration.isFinite && hideDuration > 0.05)
@@ -365,7 +359,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
       final double contentBottom = size.y - topBottom;
       final double contentHeight = math.max(0, contentBottom - contentTop);
 
-      // Clip to padded content area
       final Rect clipRect = Rect.fromLTWH(
         contentLeft,
         contentTop,
@@ -375,7 +368,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
       canvas.save();
       canvas.clipRect(clipRect);
 
-      // Local origin = top-left of the content area
       canvas.translate(contentLeft, contentTop);
 
       final String explainAlignStr = (alignments.length >= 3)
@@ -383,7 +375,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
           : 'center';
       final TextAlign explainAlign = _textAlignOf(explainAlignStr);
 
-      // Build the explanation TextStyle with overrides (or full override)
       final TextStyle effectiveStyle =
           explanationTextStyle ??
           GoogleFonts.lato(
@@ -398,21 +389,13 @@ class McqBox extends PositionComponent implements OpacityProvider {
         text: TextSpan(text: _explanationText, style: effectiveStyle),
         textAlign: explainAlign,
         textDirection: TextDirection.ltr,
-      );
+      )..layout(minWidth: contentWidth, maxWidth: contentWidth);
 
-      // Lock layout width to contentWidth so alignment is exact within the box
-      painter.layout(minWidth: contentWidth, maxWidth: contentWidth);
-
-      final double contentH = painter.height;
-      final double dy = (contentHeight - contentH) / 2.0; // vertical center
-      painter.paint(
-        canvas,
-        const Offset(0, 0) + Offset(0, dy),
-      );
+      final double dy = (contentHeight - painter.height) / 2.0;
+      painter.paint(canvas, Offset(0, dy));
       canvas.restore();
     }
 
-    // children (including the close button) render above the explanation
     super.render(canvas);
   }
 
@@ -421,7 +404,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
     switchPhase(EventHorizontalObstacle.stopMoving);
   }
 
-  // [ADDED] factor out the explanation swap to a helper
   void _showExplanation(bool isCorrect) {
     removeAll(children.whereType<_Option>().toList());
     removeAll(children.whereType<TextComponent>().toList()); // remove question
@@ -429,7 +411,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _explanationText = isCorrect
         ? answerExplanations![0]
         : answerExplanations![1];
-
     _addCloseButton();
   }
 
@@ -444,16 +425,11 @@ class McqBox extends PositionComponent implements OpacityProvider {
     final bool isCorrect = index == correctAnswerIndex;
 
     if (answerExplanations != null && answerExplanations!.length >= 2) {
-      // [ADDED] freeze input and HOLD the selected state for N seconds
       _acceptInput = false;
 
-      // Wait before switching to explanation so the color change is visible
       Future.delayed(
-        Duration(
-          milliseconds: (selectedHoldSeconds * 1000).round(),
-        ),
+        Duration(milliseconds: (selectedHoldSeconds * 1000).round()),
         () {
-          // Guard against the box being hidden/stopped/removed during the wait
           if (parent == null) return;
           if (currentEvent != EventHorizontalObstacle.startMoving) return;
           if (_showingExplanation) return;
@@ -464,7 +440,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
       return;
     }
 
-    // Legacy path: no explanation, fire callbacks immediately
     if (callbacks != null && callbacks!.length >= 2) {
       if (isCorrect) {
         callbacks![0]();
@@ -475,7 +450,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
   }
 }
 
-// ---------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────
 
 class _Option extends PositionComponent with TapCallbacks {
   final int index;
@@ -553,7 +528,7 @@ class _Option extends PositionComponent with TapCallbacks {
   }
 }
 
-// ---------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────
 // Minimal Flame close “X” button component.
 
 class _CloseXButton extends PositionComponent with TapCallbacks {
@@ -570,7 +545,6 @@ class _CloseXButton extends PositionComponent with TapCallbacks {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Background (slightly translucent to sit nicely on any fill)
     final bgPaint = Paint()..color = const Color(0xCC000000);
     final r = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.x, size.y),
@@ -578,14 +552,12 @@ class _CloseXButton extends PositionComponent with TapCallbacks {
     );
     canvas.drawRRect(r, bgPaint);
 
-    // Draw the X
     final stroke = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
-    // inset so lines don't hit the edges
     const double inset = 8;
     canvas.drawLine(
       Offset(inset, inset),
