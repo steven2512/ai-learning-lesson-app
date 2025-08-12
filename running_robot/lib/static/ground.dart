@@ -168,6 +168,19 @@ class Ground extends PositionComponent {
       canvas.drawCircle(Offset(d.x, d.y), d.r, p);
     }
   }
+
+  void reset() {
+    // Back to initial phase & placement
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    position.setValues(dimensions.x / 2, dimensions.y / 2 + 90);
+
+    // Re-randomize dot X positions (keep lanes/radii intact) if loaded
+    if (isLoaded) {
+      for (final d in _dots) {
+        d.x = _rng.nextDouble() * size.x;
+      }
+    }
+  }
 }
 
 class _Dot {

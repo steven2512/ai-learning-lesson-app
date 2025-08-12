@@ -150,4 +150,12 @@ class Electric extends PositionComponent {
     }
     return path;
   }
+
+  // ────────── RESET (simple assignments only) ──────────
+  void reset() {
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    _active = false;
+    _t = 0.0;
+    // Paint colors will be reassigned on next render when active.
+  }
 }

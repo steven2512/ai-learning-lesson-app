@@ -353,4 +353,21 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
     _fadeEffect = null;
     currentEvent = EventText.showText;
   }
+
+  void reset() {
+    // Back to initial hidden state & first entry
+    currentEvent = EventText.hideText;
+
+    _fadeEffect?.removeFromParent();
+    _fadeEffect = null;
+
+    currentIndex = 0;
+    text = sequence[0];
+    timer = 0.0;
+
+    _waitingGap = false;
+    _hasShownCurrent = false;
+
+    opacity = 0.0;
+  }
 }

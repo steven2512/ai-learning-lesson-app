@@ -5,7 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 import 'package:running_robot/buttons/button.dart';
-import 'package:running_robot/decorations/pause.dart';
+import 'package:running_robot/buttons/pause.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
 import 'package:running_robot/obstacles/fence.dart';
@@ -140,11 +140,11 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       ],
       answerExplanations: [
         '✅  Correct',
-        "❌  Not exactly. Robo just hasn't been trained on this coure yet \n\n 🤖  Even the smartest robot is blindly guessing without examples and feedback (data)",
+        "❌  Not exactly. Robo just hasn't been trained on this coure yet \n🤖  Even the smartest robot is blindly guessing without examples and feedback (data)",
       ],
       correctAnswerIndex: 1,
-      outerBoxSize: Vector2(320, 183),
-      innerBoxSize: Vector2(255, 45),
+      outerBoxSize: Vector2(320, 170),
+      innerBoxSize: Vector2(255, 38),
       alignments: [
         'center',
         'center',
@@ -231,16 +231,18 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       anchor: Anchor.center,
       buttonSize: Vector2(200, 56),
       padding: const [10, 16, 10, 16], // [top, left, bottom, right]
-      content: 'Continue',
+      content: 'Next Stage',
       boxColor: const Color.fromARGB(255, 0, 125, 226), // fill
       boxOpacity: 1,
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: FontWeight.w600,
       fontColor: Colors.white,
       payload: 'next_phase',
       onPressed: (value) {
         phase = GamePhase.contemplation;
         progressBar.switchPhase(EventProgressBar.proceed);
+        continueButton.switchPhase(EventHorizontalObstacle.stopMoving);
+        robot.reset();
       },
       borderRadius: 22,
     );

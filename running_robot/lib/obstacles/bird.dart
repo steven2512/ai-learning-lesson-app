@@ -57,4 +57,16 @@ class Bird extends AnimatedMover with CollisionCallbacks {
       case EventHorizontalObstacle.stopMoving:
     }
   }
+
+  void reset() {
+    // Back to initial state
+    currentEvent = EventHorizontalObstacle.stopMoving;
+
+    // Return to start position (clone to avoid aliasing)
+    position = startPosition.clone();
+
+    // Optional sanity resets
+    angle = 0.0;
+    scale = Vector2.all(1.0);
+  }
 }

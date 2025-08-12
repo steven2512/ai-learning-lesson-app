@@ -3,6 +3,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
+import 'package:running_robot/events/event_type.dart'; // [ADDED] for currentEvent
 
 class Diziness extends PositionComponent {
   // ───────── Visual config ─────────
@@ -29,12 +30,15 @@ class Diziness extends PositionComponent {
   double _a1 = 0.0;
   double _a2 = 0.0;
 
+  // [ADDED] Event state for consistency with the project’s components
+  EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
+
   Diziness({
     required Vector2 position,
     double radius = 38,
     double gap = 12,
-    this.delay = 1.5, // ← new
-    this.duration = 4.0, // ← new
+    this.delay = 1.5,
+    this.duration = 4.0,
   }) : _radius = radius,
        _gap = gap,
        _squash = 0.38,
@@ -52,6 +56,7 @@ class Diziness extends PositionComponent {
          anchor: Anchor.center,
        ) {
     this.position = position;
+    currentEvent = EventHorizontalObstacle.stopMoving; // [ADDED] initial state
   }
 
   bool get _isVisible =>
@@ -134,5 +139,16 @@ class Diziness extends PositionComponent {
     );
     canvas.drawOval(rect, glow);
     canvas.drawOval(rect, core);
+  }
+
+  // [ADDED] Reset all runtime state back to the initial spawn conditions.
+  void reset() {
+    _clock = 0.0;
+    _t = 0.0;
+    _a1 = 0.0;
+    _a2 = 0.0;
+    currentEvent = EventHorizontalObstacle.stopMoving; // most important
+    // Note: size/position/anchor/config remain as constructed.
+    // If this component had been removed from parent, re-adding is external.
   }
 }

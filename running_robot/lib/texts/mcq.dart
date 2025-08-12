@@ -448,6 +448,29 @@ class McqBox extends PositionComponent implements OpacityProvider {
       }
     }
   }
+
+  void reset() {
+    // Phase & opacity
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    _fadeFx?.removeFromParent();
+    _fadeFx = null;
+    opacity = 0.0;
+
+    // Input & selection state
+    _acceptInput = false;
+    _selected = null;
+
+    // Explanation / close button
+    _showingExplanation = false;
+    _explanationText = null;
+    _disposeCloseButton();
+
+    // Rebuild fresh content (if already loaded into the tree)
+    if (isLoaded) {
+      removeAll(children.toList());
+      _buildQuestionAndOptions();
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────

@@ -113,4 +113,12 @@ class Cloud extends SimpleMover {
         break;
     }
   }
+
+  void reset() {
+    // Back to spawn state
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    position = _spawnOrigin.clone();
+    isPaused = false;
+    angle = 0.0;
+  }
 }

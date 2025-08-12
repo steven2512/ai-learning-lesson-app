@@ -158,4 +158,22 @@ class Fence extends SimpleMover
     }
     return lowest;
   }
+
+  void reset() {
+    // Phase & flags
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    isPaused = false;
+
+    // Tip-over state
+    _tipping = false;
+    _tipped = false;
+    _ang = 0.0;
+    _angVel = 0.0;
+    angle = 0.0;
+
+    // Position back to spawn, then snap to ground for upright pose
+    resetPosition(); // from SimpleMover
+    _buildContactPoints(); // defensive (in case size/anchor changed)
+    position.y = groundY - _lowestLocalY(angle);
+  }
 }

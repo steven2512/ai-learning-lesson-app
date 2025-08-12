@@ -140,4 +140,10 @@ class Rain extends DrawnMover with CollisionCallbacks {
   }
 
   bool _hasPassedEnd() => position.y > endPosition.y;
+  void reset() {
+    // Back to initial state
+    currentEvent = EventVerticalObstacle.stopFalling;
+    // Hide offscreen like at startup/onLoad
+    position.setValues(-200, -200);
+  }
 }

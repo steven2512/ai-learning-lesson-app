@@ -228,4 +228,14 @@ class LessonProgressBar extends PositionComponent {
   // ───────── Helpers ─────────
   int get currentStage => _stage;
   double get progress => _progress;
+
+  void reset() {
+    currentEvent = EventProgressBar.initial;
+    _stage = 0;
+    _animating = false;
+    _t = 0.0;
+    _from = 0.0;
+    _to = 0.0;
+    _progress = 0.0;
+  }
 }

@@ -96,4 +96,12 @@ class Arrow extends SpriteComponent implements OpacityProvider {
     super.render(canvas);
     canvas.restore();
   }
+
+  void reset() {
+    // Return to initial hidden state
+    currentEvent = EventHorizontalObstacle.stopMoving;
+    _fadeEffect?.removeFromParent();
+    _fadeEffect = null;
+    opacity = 0.0;
+  }
 }

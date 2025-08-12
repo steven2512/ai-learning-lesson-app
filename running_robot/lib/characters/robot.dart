@@ -616,4 +616,52 @@ class Robot extends PositionComponent
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
   }
+
+  // ────────── PUBLIC: Hard reset back to spawn state ──────────
+  void reset() {
+    // Event + pose
+    currentEvent = EventRobot.idle;
+    position = initialPosition.clone();
+    angle = 0.0;
+    velocity.setZero();
+    _angleDelta = 0.0;
+
+    // Sprites & tracks
+    trackTimer = 0.0;
+    trackFrame = 0;
+    pauseTracks = true; // as at start
+    leftTrack.sprite = _track1;
+    rightTrack.sprite = _track1;
+
+    // Child parts pose
+    body.position = Vector2(20, _bodyBaseY);
+    body.angle = 0.0;
+    body.scale = Vector2.all(1.0);
+    leftTrack.position = Vector2(-11, 84);
+    rightTrack.position = Vector2(64, 84);
+
+    // Trip/settle state
+    _settling = false;
+    _hasPivot = false;
+    _pivotLocal = null;
+    _settleFloorY = double.negativeInfinity;
+
+    // Duck
+    duckTimer = 0.0;
+
+    // Electrocute
+    electrocuted = false;
+    _electroElapsed = 0.0;
+    electric1?.switchPhase(EventHorizontalObstacle.stopMoving);
+    electric1?.removeFromParent();
+    electric1 = null;
+
+    // Hurt
+    isHurt = false;
+    _hurtElapsed = 0.0;
+    _hurtPhase = 0;
+    _hurtHoldElapsed = 0.0;
+    _hurtWiggleElapsed = 0.0;
+    _hurtStandingUp = false;
+  }
 }
