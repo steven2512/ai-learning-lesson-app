@@ -268,7 +268,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _disposeCloseButton();
     const double pad = 8.0;
     _closeBtn = _CloseXButton(
-      size: Vector2(25, 25), // adjust as needed
+      size: Vector2(24, 24), // adjust as needed
       position: Vector2(size.x - pad, pad),
       anchor: Anchor.topRight,
       onPressed: () {

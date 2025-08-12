@@ -3,6 +3,8 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flutter/material.dart';
+import 'package:running_robot/buttons/button.dart';
 import 'package:running_robot/decorations/pause.dart';
 import 'package:running_robot/events/event_type.dart';
 import 'package:running_robot/obstacles/bird.dart';
@@ -16,16 +18,14 @@ import 'package:running_robot/characters/robot.dart';
 import 'package:running_robot/texts/mcq.dart';
 import 'package:running_robot/texts/text_box.dart';
 import 'package:running_robot/obstacles/rain.dart';
-
-// CHANGE: import the builder
-import 'package:running_robot/scene_builder.dart';
+import 'package:running_robot/texts/lessons/lesson1_text.dart';
 
 enum GamePhase {
   intro,
   waitingForSwipe,
   fisrtRun,
   contemplation,
-  firstTutorial,
+  tutorial,
   secondRun,
   finalExplanation,
   paused,
@@ -50,46 +50,219 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final FancyTextBox introTextBox;
   late final FancyTextBox firstRunTextBox;
 
-  // CHANGE: feedback boxes (not created here per your current code)
-  late final FancyTextBox resultCorrectBox; // not initialized here
-  late final FancyTextBox resultWrongBox; // not initialized here
+  // Reserved (not initialized here per your current scaffolding)
+  late final FancyTextBox resultCorrectBox;
+  late final FancyTextBox resultWrongBox;
 
   late final LessonProgressBar progressBar;
   late final PauseButton pauseButton;
   late final Cloud cloudRain;
-  late final List<Cloud> clouds = [];
+  late List<Cloud> clouds = [];
   late final List<Rain> rainFall;
   late final Arrow arrowDown;
   late final McqBox mcqFirstRun;
+  late final GenericButton<String> continueButton;
 
   @override
   FutureOr<void> onLoad() async {
-    // CHANGE: delegate creation to SceneBuilder
-    final scene = await SceneBuilder(size).build();
+    // ──────────────────────────────────────────────────────────────
+    // [CHANGED] SceneBuilder(build) → inline construction here
+    // ──────────────────────────────────────────────────────────────
+    final gameSize = size;
+    final double groundY = gameSize.y - 120;
 
-    // Assign references exactly as before
-    background = scene.background;
-    ground = scene.ground;
-    robot = scene.robot;
-    barell = scene.barell;
-    bird = scene.bird;
-    introTextBox = scene.introTextBox;
-    firstRunTextBox = scene.firstRunTextBox;
-    progressBar = scene.progressBar;
-    pauseButton = scene.pauseButton;
-    cloudRain = scene.cloudRain;
-    arrowDown = scene.arrowDown;
-    mcqFirstRun = scene.mcqFirstRun;
+    // Background + Ground
+    background = Background(backgroundSize: Vector2(gameSize.x, gameSize.y));
+    ground = Ground(dimensions: Vector2(gameSize.x, gameSize.y));
 
-    // Lists
-    clouds.addAll(scene.clouds); // keep your existing list instance
-    rainFall = scene.rainFall; // late final assignment
+    // Robot
+    robot = Robot(
+      initialPosition: Vector2(gameSize.x / 2, gameSize.y / 2),
+      groundY: groundY,
+    );
 
-    // Add everything in the original order
-    addAll(scene.components);
+    // Fence (barrel)
+    barell = Fence(
+      initialPosition: Vector2(gameSize.x + 200, groundY - 45),
+      picturePath: 'barrell_red.png',
+      groundY: groundY,
+      size: Vector2(90, 90),
+      velocity: Vector2(-70, 0),
+    );
 
-    //Start chain of Event
-    handlePhase();
+    // Arrow
+    arrowDown = Arrow(
+      imageFile: 'down_arrow.png',
+      position: Vector2(gameSize.x / 2 - 18, gameSize.y - 560),
+      size: Vector2(35, 54),
+    );
+
+    // Bird
+    bird = Bird(
+      framePaths: ['bat.png', 'bat_hang.png', 'bat_fly.png'],
+      startPosition: Vector2(gameSize.x + 100, 450),
+      endPosition: Vector2(-100, 450),
+      velocity: Vector2(-80, 0),
+      customSize: Vector2(80, 50),
+    );
+
+    // Story text
+    introTextBox = FancyTextBox(
+      sequence: introText,
+      interval: 4.5,
+      fadeDuration: 0.5,
+      position: Vector2(gameSize.x / 2, gameSize.y / 3),
+      anchor: Anchor.center,
+      fontSize: 25,
+      letterSpacing: 0.5,
+      fontWeight: FontWeight.w800,
+      maxWidth: 350,
+    );
+
+    firstRunTextBox = FancyTextBox(
+      sequence: firstRunText,
+      durations: [3, 3, 3, 3, 5],
+      intervals: [0, 3, 8, 4, 2],
+      fadeDuration: 0.5,
+      position: Vector2(gameSize.x / 2, gameSize.y / 3),
+      anchor: Anchor.center,
+      fontSize: 25,
+      letterSpacing: 0.5,
+      fontWeight: FontWeight.w800,
+      maxWidth: 350,
+    );
+
+    // MCQ
+    mcqFirstRun = McqBox(
+      questions: ['Why do you think Robo failed?'],
+      answers: [
+        'Robo is not intelligent enough',
+        'Robo has not learned this course',
+      ],
+      answerExplanations: [
+        '✅  Correct',
+        "❌  Not exactly. Robo just hasn't been trained on this coure yet \n\n 🤖  Even the smartest robot is blindly guessing without examples and feedback (data)",
+      ],
+      correctAnswerIndex: 1,
+      outerBoxSize: Vector2(320, 183),
+      innerBoxSize: Vector2(255, 45),
+      alignments: [
+        'center',
+        'center',
+        'left',
+      ], // question, answers, explanation
+      padding: [
+        18,
+        17,
+        10,
+        16,
+        16,
+      ], // [topBottom, qToOptions, between, left, right]
+      borderRadius: 24,
+      anchor: Anchor.center,
+      opacities: [0.7, 1.0, 1.0], // outer, inner, selected
+      textColors: [Colors.white, Colors.white], // question, answer
+      fillColors: [
+        Colors.black, // outer
+        const Color(0xFF757575), // inner
+        const Color(0xFF00B530), // select correct
+        const Color(0xFFE53935), // select wrong
+      ],
+      position: Vector2(gameSize.x / 2, gameSize.y - 600),
+      textSizes: [20, 15],
+      showDuration: 1,
+      hideDuration: 0.5,
+      explanationFontSize: 18,
+      explanationFontWeight: FontWeight.w600,
+      explanationFontStyle: FontStyle.italic,
+    );
+
+    // Clouds & rain
+    cloudRain = Cloud(
+      initialPosition: Vector2(gameSize.x + 300, 220),
+      picturePath: 'cloud_grey.png',
+      stretchY: 1.5,
+      stretchX: 1.5,
+      velocity: Vector2(-70, 0),
+    );
+
+    clouds = <Cloud>[
+      Cloud(
+        initialPosition: Vector2(gameSize.x + 150, 320),
+        picturePath: 'cloud_shape4_4.png',
+        stretchY: 0.7,
+        velocity: Vector2(-100, 0),
+        randomizeRest: true,
+        opacity: 0.2,
+      ),
+      Cloud(
+        initialPosition: Vector2(gameSize.x + 300, 360),
+        picturePath: 'cloud_shape3_5.png',
+        stretchY: 0.7,
+        velocity: Vector2(-90, 0),
+        randomizeRest: true,
+        opacity: 0.3,
+      ),
+    ];
+
+    rainFall = Rain.generateRain(
+      count: 70,
+      startAreaTopLeft: Vector2(gameSize.x / 3, 200),
+      startAreaBottomRight: Vector2(gameSize.x * 2 / 3, 280),
+      endPosition: Vector2(gameSize.x / 2, groundY),
+      minSpeed: 150,
+      maxSpeed: 300,
+      cloud: cloudRain,
+    );
+
+    // UI
+    progressBar = LessonProgressBar(
+      position: Vector2(gameSize.x / 2, 80),
+      stages: 3,
+    );
+
+    pauseButton = PauseButton(position: Vector2(gameSize.x - 18, 75.5));
+
+    // [CHANGED] uses your new GenericButton signature
+    continueButton = GenericButton<String>(
+      position: Vector2(size.x / 2, size.y - 300),
+      anchor: Anchor.center,
+      buttonSize: Vector2(200, 56),
+      padding: const [10, 16, 10, 16], // [top, left, bottom, right]
+      content: 'Continue',
+      boxColor: const Color.fromARGB(255, 0, 125, 226), // fill
+      boxOpacity: 1,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      fontColor: Colors.white,
+      payload: 'next_phase',
+      onPressed: (value) {
+        phase = GamePhase.contemplation;
+      },
+      borderRadius: 22,
+    );
+
+    // Draw order preserved
+    addAll(<Component>[
+      background,
+      ground,
+      progressBar,
+      arrowDown,
+      pauseButton,
+      ...clouds,
+      robot,
+      cloudRain,
+      ...rainFall,
+      barell,
+      bird,
+      introTextBox,
+      firstRunTextBox,
+      mcqFirstRun,
+      continueButton,
+    ]);
+
+    // Kick off
+    await handlePhase();
   }
 
   Future<void> handlePhase() async {
@@ -102,50 +275,51 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
         break;
 
       case GamePhase.fisrtRun:
-        // robot.switchPhase(EventRobot.resume);
-        // ground.switchPhase(EventHorizontalObstacle.startMoving);
-        // clouds.forEach(
-        //   (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
-        // );
+        robot.switchPhase(EventRobot.resume);
+        ground.switchPhase(EventHorizontalObstacle.startMoving);
+        clouds.forEach(
+          (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
+        );
 
-        // await Future.delayed(const Duration(seconds: 4));
-        // bird.switchPhase(EventHorizontalObstacle.startMoving);
+        await Future.delayed(const Duration(seconds: 4));
+        bird.switchPhase(EventHorizontalObstacle.startMoving);
 
-        // await Future.delayed(const Duration(seconds: 4));
-        // firstRunTextBox.switchPhase(EventText.showText);
+        await Future.delayed(const Duration(seconds: 4));
+        firstRunTextBox.switchPhase(EventText.showText);
 
-        // await Future.delayed(const Duration(seconds: 3));
-        // bird.switchPhase(EventHorizontalObstacle.stopMoving);
+        await Future.delayed(const Duration(seconds: 3));
+        bird.switchPhase(EventHorizontalObstacle.stopMoving);
 
-        // await Future.delayed(const Duration(seconds: 5));
-        // cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
-        // rainFall.forEach(
-        //   (x) => x.switchPhase(EventVerticalObstacle.startFalling),
-        // );
+        await Future.delayed(const Duration(seconds: 5));
+        cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.startFalling),
+        );
 
-        // await Future.delayed(const Duration(seconds: 12));
-        // cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
-        // rainFall.forEach(
-        //   (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
-        // );
+        await Future.delayed(const Duration(seconds: 12));
+        cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
+        rainFall.forEach(
+          (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
+        );
 
-        // barell.switchPhase(EventHorizontalObstacle.startMoving);
+        barell.switchPhase(EventHorizontalObstacle.startMoving);
 
-        // await Future.delayed(const Duration(seconds: 4));
-        // robot.switchPhase(EventRobot.jump);
+        await Future.delayed(const Duration(seconds: 4));
+        robot.switchPhase(EventRobot.jump);
 
-        // await Future.delayed(const Duration(seconds: 4));
-        // barell.switchPhase(EventHorizontalObstacle.stopMoving);
-        // ground.switchPhase(EventHorizontalObstacle.stopMoving);
+        await Future.delayed(const Duration(seconds: 4));
+        barell.switchPhase(EventHorizontalObstacle.stopMoving);
+        ground.switchPhase(EventHorizontalObstacle.stopMoving);
 
-        // await Future.delayed(const Duration(seconds: 3));
-        // clouds.forEach(
-        //   (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
-        // );
+        await Future.delayed(const Duration(seconds: 3));
+        clouds.forEach(
+          (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
+        );
 
         // await Future.delayed(const Duration(seconds: 8));
+
         firstRunTextBox.switchPhase(EventText.hideText);
-        // await Future.delayed(const Duration(seconds: 6));
+        await Future.delayed(const Duration(seconds: 6));
         mcqFirstRun.switchPhase(EventHorizontalObstacle.startMoving);
         // mcqFirstRun.switchPhase(EventHorizontalObstacle.stopMoving);
         break;
@@ -153,7 +327,7 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
       case GamePhase.contemplation:
         break;
 
-      case GamePhase.firstTutorial:
+      case GamePhase.tutorial:
         break;
 
       case GamePhase.secondRun:
