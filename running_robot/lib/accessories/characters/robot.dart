@@ -3,16 +3,16 @@
 import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:running_robot/characters/diziness.dart';
-import 'package:running_robot/characters/electric.dart';
-import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/my_game.dart';
-import 'package:running_robot/obstacles/bird.dart';
-import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/obstacles/rain.dart';
+import 'package:running_robot/accessories/characters/diziness.dart';
+import 'package:running_robot/accessories/characters/electric.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/lessons/lesson_one.dart';
+import 'package:running_robot/accessories/obstacles/bird.dart';
+import 'package:running_robot/accessories/obstacles/fence.dart';
+import 'package:running_robot/accessories/obstacles/rain.dart';
 
 class Robot extends PositionComponent
-    with CollisionCallbacks, HasGameRef<MyGame> {
+    with CollisionCallbacks, HasGameRef<LessonOne> {
   EventRobot currentEvent = EventRobot.idle;
   final double groundY;
 

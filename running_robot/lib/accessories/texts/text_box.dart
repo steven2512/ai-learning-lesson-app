@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
 
 class FancyTextBox extends TextBoxComponent implements OpacityProvider {
   final List<String> sequence;

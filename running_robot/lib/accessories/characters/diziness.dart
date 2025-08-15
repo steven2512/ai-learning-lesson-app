@@ -3,7 +3,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:running_robot/events/event_type.dart'; // [ADDED] for currentEvent
+import 'package:running_robot/accessories/events/event_type.dart'; // [ADDED] for currentEvent
 
 class Diziness extends PositionComponent {
   // ───────── Visual config ─────────

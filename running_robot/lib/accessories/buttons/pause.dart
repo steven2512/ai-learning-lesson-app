@@ -4,7 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
 
 class PauseButton extends PositionComponent
     with TapCallbacks, HasGameRef<FlameGame> {

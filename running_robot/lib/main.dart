@@ -1,11 +1,10 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/my_game.dart';
+import 'package:running_robot/my_app.dart';
 
 void main() {
   runApp(
-    GameWidget(
-      game: MyGame(),
+    MaterialApp(
+      home: MyApp(),
     ),
   );
 }

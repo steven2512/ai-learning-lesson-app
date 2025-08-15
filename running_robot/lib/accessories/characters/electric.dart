@@ -3,7 +3,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
 
 /// Electric: elegant, animated lightning/sizzle line.
 /// Start/stop via EventHorizontalObstacle events.

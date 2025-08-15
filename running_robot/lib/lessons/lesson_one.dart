@@ -4,21 +4,22 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/buttons/button.dart';
-import 'package:running_robot/buttons/pause.dart';
-import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/obstacles/bird.dart';
-import 'package:running_robot/obstacles/fence.dart';
-import 'package:running_robot/decorations/progress_bar.dart';
-import 'package:running_robot/texts/arrow.dart';
-import 'package:running_robot/static/background.dart';
-import 'package:running_robot/static/ground.dart';
-import 'package:running_robot/obstacles/cloud.dart';
-import 'package:running_robot/characters/robot.dart';
-import 'package:running_robot/texts/mcq.dart';
-import 'package:running_robot/texts/text_box.dart';
-import 'package:running_robot/obstacles/rain.dart';
-import 'package:running_robot/texts/lessons/lesson1_text.dart';
+import 'package:running_robot/accessories/buttons/button.dart';
+import 'package:running_robot/accessories/buttons/pause.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/obstacles/bird.dart';
+import 'package:running_robot/accessories/obstacles/fence.dart';
+import 'package:running_robot/accessories/decorations/progress_bar.dart';
+import 'package:running_robot/accessories/texts/arrow.dart';
+import 'package:running_robot/accessories/static/background.dart';
+import 'package:running_robot/accessories/static/ground.dart';
+import 'package:running_robot/accessories/obstacles/cloud.dart';
+import 'package:running_robot/accessories/characters/robot.dart';
+import 'package:running_robot/accessories/texts/mcq.dart';
+import 'package:running_robot/accessories/texts/text_box.dart';
+import 'package:running_robot/accessories/obstacles/rain.dart';
+import 'package:running_robot/accessories/texts/lessons_text/lesson1_text.dart';
+import 'package:running_robot/my_app.dart';
 
 enum GamePhase {
   intro,
@@ -31,7 +32,7 @@ enum GamePhase {
   paused,
 }
 
-class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
+class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
   GamePhase phase = GamePhase.intro;
   int failCount = 0;
 
@@ -62,6 +63,13 @@ class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   late final Arrow arrowDown;
   late final McqBox mcqFirstRun;
   late final GenericButton<String> continueButton;
+  final AppRouter onNavigate;
+  final AppEvent completeEvent;
+
+  LessonOne({
+    required this.onNavigate,
+    this.completeEvent = AppEvent.lessonComplete,
+  });
 
   @override
   FutureOr<void> onLoad() async {

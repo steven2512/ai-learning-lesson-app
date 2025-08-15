@@ -6,8 +6,8 @@
 
 import 'dart:math';
 import 'package:flame/components.dart';
-import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/obstacles/superclass/simple_mover.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/obstacles/superclass/simple_mover.dart';
 
 class Cloud extends SimpleMover {
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;

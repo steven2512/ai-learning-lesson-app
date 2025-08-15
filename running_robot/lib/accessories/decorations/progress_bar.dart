@@ -2,7 +2,7 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
 
 class LessonProgressBar extends PositionComponent {
   // ───────── VISUAL TUNING (Duolingo/Brilliant vibe) ─────────

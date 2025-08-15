@@ -6,7 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
 
 class McqBox extends PositionComponent implements OpacityProvider {
   // ── data

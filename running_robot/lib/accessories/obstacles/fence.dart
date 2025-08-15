@@ -3,13 +3,13 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:running_robot/my_game.dart';
-import 'package:running_robot/obstacles/superclass/simple_mover.dart';
-import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/characters/robot.dart';
+import 'package:running_robot/lessons/lesson_one.dart';
+import 'package:running_robot/accessories/obstacles/superclass/simple_mover.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/characters/robot.dart';
 
 class Fence extends SimpleMover
-    with CollisionCallbacks, HasGameReference<MyGame> {
+    with CollisionCallbacks, HasGameReference<LessonOne> {
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
 
   final Vector2 velocity;

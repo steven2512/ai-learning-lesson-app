@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/events/event_type.dart';
-import 'package:running_robot/obstacles/cloud.dart';
-import 'package:running_robot/obstacles/superclass/drawn_mover.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/obstacles/cloud.dart';
+import 'package:running_robot/accessories/obstacles/superclass/drawn_mover.dart';
 import 'package:flame/collisions.dart'; // + add this
 
 class Rain extends DrawnMover with CollisionCallbacks {
