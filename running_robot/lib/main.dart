@@ -3,8 +3,6 @@ import 'package:running_robot/my_app.dart';
 
 void main() {
   runApp(
-    MaterialApp(
-      home: MyApp(),
-    ),
+    const MyApp(),
   );
 }

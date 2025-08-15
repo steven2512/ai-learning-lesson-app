@@ -19,7 +19,7 @@ import 'package:running_robot/accessories/texts/mcq.dart';
 import 'package:running_robot/accessories/texts/text_box.dart';
 import 'package:running_robot/accessories/obstacles/rain.dart';
 import 'package:running_robot/accessories/texts/lessons_text/lesson1_text.dart';
-import 'package:running_robot/my_app.dart';
+import 'package:running_robot/core/app_router.dart';
 
 enum GamePhase {
   intro,
@@ -250,11 +250,12 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       fontColor: Colors.white,
       payload: 'next_phase',
       onPressed: (value) {
-        phase = GamePhase.contemplation;
-        progressBar.switchPhase(EventProgressBar.proceed);
-        continueButton.switchPhase(EventHorizontalObstacle.stopMoving);
-        robot.reset();
-        barell.reset();
+        // phase = GamePhase.contemplation;
+        // progressBar.switchPhase(EventProgressBar.proceed);
+        // continueButton.switchPhase(EventHorizontalObstacle.stopMoving);
+        // robot.reset();
+        // barell.reset();
+        onNavigate(completeEvent);
       },
       borderRadius: 22,
     );

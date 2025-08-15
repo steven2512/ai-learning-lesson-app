@@ -1,15 +1,11 @@
 // lib/my_app.dart
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-
-// Your LessonOne must accept: LessonOne({required AppRouter onNavigate, AppEvent completeEvent = AppEvent.lessonComplete})
 import 'package:running_robot/lessons/lesson_one.dart';
+import 'package:running_robot/ui/end_lesson.dart';
+import 'package:running_robot/core/app_router.dart';
 
-enum AppEvent { lessonComplete, repeatLesson, nextLesson, mainMenu }
-
-typedef AppRouter = void Function(AppEvent event, {Object? payload});
-
-enum AppPage { lesson1 /*, endLesson, lesson2, mainMenu */ }
+enum AppPage { lesson1, endLesson, lesson2, mainMenu }
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -36,26 +32,34 @@ class _MyAppState extends State<MyApp> {
 
   // ---- CENTRAL ROUTER (dummy for now)
   void _navigate(AppEvent event, {Object? payload}) {
-    // This is what all pages/games call to lift state up.
-    // Wire real scene swaps later.
-    debugPrint('[NAV] event=$event payload=$payload');
-
     // Example of future handling (leave commented until you add pages):
-    // switch (event) {
-    //   case AppEvent.lessonComplete:
-    //     setState(() {
-    //       _currentPage = AppPage.endLesson;
-    //       _game = EndLessonPage(onRepeat: () => _navigate(AppEvent.repeatLesson),
-    //                             onNext:   () => _navigate(AppEvent.nextLesson),
-    //                             onMainMenu: () => _navigate(AppEvent.mainMenu));
-    //       _sceneKey++;
-    //     });
-    //     break;
-    //   case AppEvent.repeatLesson:
-    //     setState(() { _currentPage = AppPage.lesson1; _game = _buildLessonOne(); _sceneKey++; });
-    //     break;
-    //   // add others when ready
-    // }
+    switch (event) {
+      case AppEvent.lessonComplete:
+        setState(() {
+          _currentPage = AppPage.endLesson;
+          _game = EndLessonPage(
+            onRepeat: () => _navigate(AppEvent.repeatLesson),
+            onNext: () => _navigate(AppEvent.nextLesson),
+            onMainMenu: () => _navigate(AppEvent.mainMenu),
+          );
+          _sceneKey++;
+        });
+        break;
+      case AppEvent.repeatLesson:
+        setState(() {
+          _currentPage = AppPage.lesson1;
+          _game = _buildLessonOne();
+          _sceneKey++;
+        });
+        break;
+      // add others when ready
+      case AppEvent.nextLesson:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case AppEvent.mainMenu:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+    }
   }
 
   @override
