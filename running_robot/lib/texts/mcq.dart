@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+// import 'dart:ui' as ui; // [REMOVED]
 import 'dart:async'; // [EXISTS]
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -31,8 +32,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
   final double showDuration;
   final double hideDuration;
 
-  // optional explanations [0]=correct text, [1]=wrong text
-  final List<String>? answerExplanations;
+  // accepts legacy List<String> or new List<List<String>>
+  final List<dynamic /* String or List<String> */>? answerExplanations;
 
   // explanation style overrides
   final double? explanationFontSize;
@@ -45,9 +46,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
   // keep selected color visible for N seconds
   final double selectedHoldSeconds;
 
-  // [ADDED] optional extra callback when user clicks the top-right close “X”
-  // This is called IN ADDITION to closing (after the box is told to close).
-  final VoidCallback? onClosePressed; // [ADDED]
+  // optional extra callback when user clicks the top-right close “X”
+  final VoidCallback? onClosePressed;
 
   // ── state
   int? _selected;
@@ -66,9 +66,15 @@ class McqBox extends PositionComponent implements OpacityProvider {
       currentEvent == EventHorizontalObstacle.stopMoving && opacity <= 0.00001;
 
   bool _showingExplanation = false;
+
+  // normalized explanation pages: [[correct...],[wrong...]]
+  List<List<String>>? _explanations;
+  int _explainSetIdx = 0; // 0=correct, 1=wrong
+  int _explanationPage = 0;
   String? _explanationText;
 
   _CloseXButton? _closeBtn;
+  _NextButton? _nextBtn; // [CHANGED] use sprite button
 
   McqBox({
     required this.questions,
@@ -76,7 +82,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     required this.correctAnswerIndex,
     required this.outerBoxSize,
     required this.innerBoxSize,
-    required this.alignments, // [question, answers, explanation?]
+    required this.alignments,
     required this.padding,
     required this.borderRadius,
     required Anchor anchor,
@@ -89,33 +95,23 @@ class McqBox extends PositionComponent implements OpacityProvider {
     required this.showDuration,
     required this.hideDuration,
     this.answerExplanations,
-
-    // explanation style overrides (all optional)
     this.explanationFontSize,
     this.explanationFontWeight,
     this.explanationFontStyle,
     this.explanationLetterSpacing,
     this.explanationColor,
     this.explanationTextStyle,
-
     this.selectedHoldSeconds = 1.0,
-
-    this.onClosePressed, // [ADDED]
+    this.onClosePressed,
   }) : assert(
          alignments.length >= 2,
          '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
-       ),
-       assert(
-         answerExplanations == null ||
-             (answerExplanations.length >= 2 &&
-                 answerExplanations[0].isNotEmpty &&
-                 answerExplanations[1].isNotEmpty),
-         '`answerExplanations` must have 2 non-empty strings [correct, wrong] if provided',
        ),
        super(size: outerBoxSize, anchor: anchor, position: position) {
     opacity = 0.0;
     scale = Vector2.all(1.0);
     currentEvent = EventHorizontalObstacle.stopMoving;
+    _explanations = _normalizeExplanations(answerExplanations);
   }
 
   // ── helpers
@@ -160,6 +156,31 @@ class McqBox extends PositionComponent implements OpacityProvider {
 
   static const double _lh = 1.25;
   static const double _innerTextPad = 14;
+
+  // normalize to [[...],[...]] form or null
+  List<List<String>>? _normalizeExplanations(List<dynamic>? raw) {
+    if (raw == null) return null;
+    if (raw.isEmpty || raw.length < 2) {
+      throw ArgumentError(
+        'answerExplanations must have 2 entries: [correct, wrong]',
+      );
+    }
+
+    List<String> _toStringList(dynamic v) {
+      if (v is String) return [v];
+      if (v is Iterable) {
+        final list = v.map((e) => e.toString()).toList();
+        if (list.isEmpty)
+          throw ArgumentError('Explanation list cannot be empty');
+        return list;
+      }
+      throw ArgumentError('Explanation entries must be String or List<String>');
+    }
+
+    final correct = _toStringList(raw[0]);
+    final wrong = _toStringList(raw[1]);
+    return [correct, wrong];
+  }
 
   void _buildQuestionAndOptions() {
     // Question positioning
@@ -259,7 +280,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _fadeFx = null;
   }
 
-  // utilities for close button lifecycle
+  // close button lifecycle
   void _addCloseButton() {
     _disposeCloseButton();
     const double pad = 8.0;
@@ -268,10 +289,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
       position: Vector2(size.x - pad, pad),
       anchor: Anchor.topRight,
       onPressed: () {
-        // close first
         switchPhase(EventHorizontalObstacle.stopMoving);
-        // then external callback (if provided)
-        onClosePressed?.call(); // [ADDED]
+        onClosePressed?.call();
       },
     );
     add(_closeBtn!);
@@ -282,13 +301,42 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _closeBtn = null;
   }
 
+  // next button lifecycle
+  void _addArrowIfNeeded() {
+    _disposeArrowButton();
+    if (!_showingExplanation || _explanations == null) return;
+    final pages = _explanations![_explainSetIdx];
+    if (pages.length <= 1 || _explanationPage >= pages.length - 1) return;
+
+    final rightPad = padding[4];
+    final topBottom = padding[0];
+    final centerY = topBottom + (size.y - 2 * topBottom) / 2;
+
+    _nextBtn = _NextButton(
+      // [CHANGED] sprite-based button
+      size: Vector2(30, 30), // generous hit target
+      position: Vector2(size.x - rightPad - 6, centerY),
+      anchor: Anchor.centerRight,
+      onPressed: _nextExplanationPage,
+    );
+    add(_nextBtn!);
+  }
+
+  void _disposeArrowButton() {
+    _nextBtn?.removeFromParent();
+    _nextBtn = null;
+  }
+
   void _enterStart() {
     _acceptInput = false;
     _selected = null;
     _showingExplanation = false;
+    _explainSetIdx = 0;
+    _explanationPage = 0;
     _explanationText = null;
 
     _disposeCloseButton();
+    _disposeArrowButton();
 
     removeAll(children.toList());
     _buildQuestionAndOptions();
@@ -310,6 +358,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _killFade();
 
     _disposeCloseButton();
+    _disposeArrowButton();
 
     final dur = (hideDuration.isFinite && hideDuration > 0.05)
         ? hideDuration
@@ -324,7 +373,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
   @override
   void renderTree(Canvas canvas) {
     if (_hidden) return;
-
     if (opacity >= 0.999) {
       super.renderTree(canvas);
       return;
@@ -343,14 +391,11 @@ class McqBox extends PositionComponent implements OpacityProvider {
     );
     canvas.drawRRect(rrect, Paint()..color = _outerColor());
 
-    // draw explanation (if any) BEFORE children so the close button sits on top
-    if (_showingExplanation &&
-        _explanationText != null &&
-        _explanationText!.isNotEmpty) {
+    // draw explanation (before children so the buttons sit on top)
+    if (_showingExplanation && (_explanationText?.isNotEmpty ?? false)) {
       final double topBottom = padding[0];
       final double contentLeft = padding[3];
       final double contentRight = padding[4];
-
       final double contentWidth = math.max(
         0,
         size.x - contentLeft - contentRight,
@@ -367,7 +412,6 @@ class McqBox extends PositionComponent implements OpacityProvider {
       );
       canvas.save();
       canvas.clipRect(clipRect);
-
       canvas.translate(contentLeft, contentTop);
 
       final String explainAlignStr = (alignments.length >= 3)
@@ -406,12 +450,27 @@ class McqBox extends PositionComponent implements OpacityProvider {
 
   void _showExplanation(bool isCorrect) {
     removeAll(children.whereType<_Option>().toList());
-    removeAll(children.whereType<TextComponent>().toList()); // remove question
+    removeAll(children.whereType<TextComponent>().toList());
     _showingExplanation = true;
-    _explanationText = isCorrect
-        ? answerExplanations![0]
-        : answerExplanations![1];
+
+    if (_explanations == null) return;
+
+    _explainSetIdx = isCorrect ? 0 : 1;
+    _explanationPage = 0;
+    _explanationText = _explanations![_explainSetIdx][_explanationPage];
+
     _addCloseButton();
+    _addArrowIfNeeded();
+  }
+
+  void _nextExplanationPage() {
+    if (_explanations == null) return;
+    final pages = _explanations![_explainSetIdx];
+    if (_explanationPage < pages.length - 1) {
+      _explanationPage++;
+      _explanationText = pages[_explanationPage];
+      _addArrowIfNeeded(); // hide when last
+    }
   }
 
   void _handleTap(int index) {
@@ -424,16 +483,14 @@ class McqBox extends PositionComponent implements OpacityProvider {
 
     final bool isCorrect = index == correctAnswerIndex;
 
-    if (answerExplanations != null && answerExplanations!.length >= 2) {
+    if (_explanations != null) {
       _acceptInput = false;
-
       Future.delayed(
         Duration(milliseconds: (selectedHoldSeconds * 1000).round()),
         () {
           if (parent == null) return;
           if (currentEvent != EventHorizontalObstacle.startMoving) return;
           if (_showingExplanation) return;
-
           _showExplanation(isCorrect);
         },
       );
@@ -441,31 +498,26 @@ class McqBox extends PositionComponent implements OpacityProvider {
     }
 
     if (callbacks != null && callbacks!.length >= 2) {
-      if (isCorrect) {
-        callbacks![0]();
-      } else {
-        callbacks![1]();
-      }
+      isCorrect ? callbacks![0]() : callbacks![1]();
     }
   }
 
   void reset() {
-    // Phase & opacity
     currentEvent = EventHorizontalObstacle.stopMoving;
     _fadeFx?.removeFromParent();
     _fadeFx = null;
     opacity = 0.0;
 
-    // Input & selection state
     _acceptInput = false;
     _selected = null;
 
-    // Explanation / close button
     _showingExplanation = false;
+    _explainSetIdx = 0;
+    _explanationPage = 0;
     _explanationText = null;
     _disposeCloseButton();
+    _disposeArrowButton();
 
-    // Rebuild fresh content (if already loaded into the tree)
     if (isLoaded) {
       removeAll(children.toList());
       _buildQuestionAndOptions();
@@ -592,6 +644,54 @@ class _CloseXButton extends PositionComponent with TapCallbacks {
       Offset(inset, size.y - inset),
       stroke,
     );
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    onPressed();
+    super.onTapUp(event);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// [ADDED] Sprite-based next button using a hardcoded asset.
+
+class _NextButton extends SpriteComponent with TapCallbacks {
+  static const String assetPath = 'next.png'; // <- put this in pubspec assets
+  final VoidCallback onPressed;
+
+  _NextButton({
+    required Vector2 size,
+    required Vector2 position,
+    required Anchor anchor,
+    required this.onPressed,
+  }) : super(size: size, position: position, anchor: anchor);
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await Sprite.load(assetPath); // loads from assets
+  }
+
+  void _pressAnim() {
+    add(
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2(0.92, 0.92),
+          EffectController(duration: 0.07, curve: Curves.easeOutCubic),
+        ),
+        ScaleEffect.to(
+          Vector2(1, 1),
+          EffectController(duration: 0.10, curve: Curves.easeOutBack),
+        ),
+      ]),
+    );
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    _pressAnim();
+    super.onTapDown(event);
   }
 
   @override
