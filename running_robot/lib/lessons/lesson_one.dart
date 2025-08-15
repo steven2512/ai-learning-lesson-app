@@ -4,7 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/accessories/buttons/button.dart';
+import 'package:running_robot/accessories/buttons/generic_button.dart';
 import 'package:running_robot/accessories/buttons/pause.dart';
 import 'package:running_robot/accessories/events/event_type.dart';
 import 'package:running_robot/accessories/obstacles/bird.dart';

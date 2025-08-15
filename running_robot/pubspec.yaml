@@ -89,8 +89,10 @@ flutter:
     - assets/images/bat_hang.png
     - assets/images/bat.png
     - assets/images/down_arrow.png
+    - assets/images/arrow_left.png
     - assets/images/next.png
     - assets/images/star.png
+    - assets/images/star_empty.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
