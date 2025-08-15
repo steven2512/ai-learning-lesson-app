@@ -21,13 +21,19 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _game = _buildLessonOne(); // load LessonOne immediately
+    _game = _buildEndLessonPage(); // load LessonOne immediately
   }
 
   // ---- FACTORY: current lesson
   FlameGame _buildLessonOne() => LessonOne(
     onNavigate: _navigate, // <-- the "navigate thingy"
     completeEvent: AppEvent.lessonComplete,
+  );
+
+  FlameGame _buildEndLessonPage() => EndLessonPage(
+    onRepeat: () => _navigate(AppEvent.repeatLesson),
+    onNext: () => _navigate(AppEvent.nextLesson),
+    onMainMenu: () => _navigate(AppEvent.mainMenu),
   );
 
   // ---- CENTRAL ROUTER (dummy for now)

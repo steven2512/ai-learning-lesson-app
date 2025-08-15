@@ -90,6 +90,7 @@ flutter:
     - assets/images/bat.png
     - assets/images/down_arrow.png
     - assets/images/next.png
+    - assets/images/star.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

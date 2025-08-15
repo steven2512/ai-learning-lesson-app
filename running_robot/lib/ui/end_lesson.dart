@@ -5,48 +5,54 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart'; // CHANGED: use Flutter's VoidCallback
 import 'package:running_robot/accessories/buttons/button.dart';
+import 'package:running_robot/accessories/decorations/stars.dart';
+import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/static/background.dart';
 
 class EndLessonPage extends FlameGame {
   final VoidCallback onRepeat; // repeat current/previous lesson
   final VoidCallback onNext; // go to next lesson
   final VoidCallback onMainMenu; // go to main menu
 
+  late Background background;
+  late Star star1;
+  late Star star2;
+  late Star star3;
+
   EndLessonPage({
     required this.onRepeat,
     required this.onNext,
     required this.onMainMenu,
   });
-
   @override
   Future<void> onLoad() async {
     final sz = size;
 
-    // Background
-    add(
-      RectangleComponent(
-        position: Vector2.zero(),
-        size: sz,
-        paint: Paint()..color = const Color(0xFF0F1115),
-        priority: -1,
-      ),
+    background = Background(backgroundSize: Vector2(size.x, size.y));
+    star1 = Star(
+      position: Vector2(size.x / 2 - 90, 200),
+      size: Vector2.all(120),
+      angle: -0.08,
+    );
+    star2 = Star(
+      position: Vector2(size.x / 2, 160),
+      size: Vector2.all(120),
+      angle: 0,
+    );
+    star3 = Star(
+      position: Vector2(size.x / 2 + 90, 200),
+      size: Vector2.all(120),
+      angle: 0.08,
     );
 
-    // Title
-    add(
-      TextComponent(
-        text: 'Lesson Complete',
-        textRenderer: TextPaint(
-          style: const TextStyle(
-            fontSize: 28,
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        anchor: Anchor.center,
-        position: Vector2(sz.x / 2, sz.y / 3),
-      ),
-    );
+    //add objects on screen
+    addAll([
+      background,
+      star1,
+      star2,
+      star3,
+    ]); // await so star.onLoad() finishes
+    star1.switchPhase(EventProgressBar.proceed);
 
     // Helper to create your pill buttons
     GenericButton<String> makeBtn(String label, double y, VoidCallback cb) {

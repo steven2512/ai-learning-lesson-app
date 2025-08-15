@@ -46,6 +46,12 @@ enum EventProgressBar {
   finish,
 }
 
+enum EventEndLesson {
+  initial,
+  fill,
+  full,
+}
+
 enum EventButton {
   unpressed,
   pressed,
