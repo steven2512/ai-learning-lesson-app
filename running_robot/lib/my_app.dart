@@ -5,8 +5,6 @@ import 'package:running_robot/lessons/lesson_one.dart';
 import 'package:running_robot/ui/end_lesson.dart';
 import 'package:running_robot/core/app_router.dart';
 
-enum AppPage { lesson1, endLesson, lesson2, mainMenu }
-
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
@@ -14,58 +12,52 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  AppPage _currentPage = AppPage.lesson1;
+  AppRoute _route = const RouteLesson1();
   late FlameGame _game;
-  int _sceneKey = 0; // if/when you swap scenes, bump this to remount
+  int _sceneKey = 0; // bump to remount GameWidget when scene changes
 
   @override
   void initState() {
     super.initState();
-    _game = _buildEndLessonPage(); // load LessonOne immediately
+    _game = _buildScene(_route);
   }
 
-  // ---- FACTORY: current lesson
-  FlameGame _buildLessonOne() => LessonOne(
-    onNavigate: _navigate, // <-- the "navigate thingy"
-    completeEvent: AppEvent.lessonComplete,
-  );
+  /// The only API children need: call navigate(RouteX(...))
+  void navigate(AppRoute route) {
+    setState(() {
+      _route = route;
+      _game = _buildScene(route);
+      _sceneKey++;
+    });
+  }
 
-  FlameGame _buildEndLessonPage() => EndLessonPage(
-    onRepeat: () => _navigate(AppEvent.repeatLesson),
-    onNext: () => _navigate(AppEvent.nextLesson),
-    onMainMenu: () => _navigate(AppEvent.mainMenu),
-  );
-
-  // ---- CENTRAL ROUTER (dummy for now)
-  void _navigate(AppEvent event, {Object? payload}) {
-    // Example of future handling (leave commented until you add pages):
-    switch (event) {
-      case AppEvent.lessonComplete:
-        setState(() {
-          _currentPage = AppPage.endLesson;
-          _game = EndLessonPage(
-            onRepeat: () => _navigate(AppEvent.repeatLesson),
-            onNext: () => _navigate(AppEvent.nextLesson),
-            onMainMenu: () => _navigate(AppEvent.mainMenu),
-          );
-          _sceneKey++;
-        });
-        break;
-      case AppEvent.repeatLesson:
-        setState(() {
-          _currentPage = AppPage.lesson1;
-          _game = _buildLessonOne();
-          _sceneKey++;
-        });
-        break;
-      // add others when ready
-      case AppEvent.nextLesson:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case AppEvent.mainMenu:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+  /// Central scene factory — typed, tiny, no stringly-typed args.
+  FlameGame _buildScene(AppRoute route) {
+    if (route is RouteLesson1) {
+      // NOTE: LessonOne must accept `AppNavigate navigate`
+      return LessonOne(onNavigate: navigate);
+    } else if (route is RouteEndLesson) {
+      return EndLessonPage(
+        onRepeat: () => navigate(const RouteLesson1()),
+        onNext: () => navigate(const RouteLesson2()),
+        onMainMenu: () => navigate(const RouteMainMenu()),
+        xp: route.xp,
+        streak: route.streak,
+        progressPercent: route.progressPercent,
+        stageProgress: route.stageProgress,
+        topText: route.topText,
+        illustrationPath: route.illustrationPath,
+      );
+    } else if (route is RouteLesson2) {
+      // TODO: replace with your real LessonTwo when ready
+      return LessonOne(onNavigate: navigate);
+    } else if (route is RouteMainMenu) {
+      // TODO: return your MainMenu FlameGame when ready
+      return LessonOne(onNavigate: navigate);
     }
+
+    // Fallback (satisfies non-nullable return)
+    return LessonOne(onNavigate: navigate);
   }
 
   @override

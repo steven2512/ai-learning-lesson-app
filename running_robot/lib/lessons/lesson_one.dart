@@ -63,12 +63,10 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
   late final Arrow arrowDown;
   late final McqBox mcqFirstRun;
   late final GenericButton<String> continueButton;
-  final AppRouter onNavigate;
-  final AppEvent completeEvent;
+  final AppNavigate onNavigate;
 
   LessonOne({
     required this.onNavigate,
-    this.completeEvent = AppEvent.lessonComplete,
   });
 
   @override
@@ -250,12 +248,7 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       fontColor: Colors.white,
       payload: 'next_phase',
       onPressed: (value) {
-        // phase = GamePhase.contemplation;
-        // progressBar.switchPhase(EventProgressBar.proceed);
-        // continueButton.switchPhase(EventHorizontalObstacle.stopMoving);
-        // robot.reset();
-        // barell.reset();
-        onNavigate(completeEvent);
+        end();
       },
       borderRadius: 22,
     );
@@ -281,6 +274,19 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
 
     // Kick off
     await handlePhase();
+  }
+
+  void end() {
+    onNavigate(
+      RouteEndLesson(
+        xp: 82,
+        streak: 1,
+        progressPercent: 33, // 0..100
+        stageProgress: [1, 3], // two filled out of three
+        topText: 'Lesson Complete!',
+        illustrationPath: 'blue_robot.png',
+      ),
+    );
   }
 
   Future<void> handlePhase() async {
