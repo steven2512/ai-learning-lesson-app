@@ -93,6 +93,8 @@ flutter:
     - assets/images/next.png
     - assets/images/star.png
     - assets/images/star_empty.png
+    - assets/images/blue_robot.png
+    - assets/images/x_icon.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

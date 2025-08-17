@@ -4,11 +4,13 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart' hide IconButton;
 import 'package:running_robot/accessories/decorations/fancy_box.dart';
+import 'package:running_robot/accessories/decorations/progress_bar.dart';
 import 'package:running_robot/accessories/decorations/stars.dart';
 import 'package:running_robot/accessories/events/event_type.dart';
 import 'package:running_robot/accessories/static/background.dart';
 import 'package:running_robot/accessories/buttons/generic_button.dart';
 import 'package:running_robot/accessories/buttons/icon_button.dart';
+import 'package:running_robot/accessories/texts/text_box.dart';
 
 class EndLessonPage extends FlameGame {
   final VoidCallback onRepeat;
@@ -21,6 +23,9 @@ class EndLessonPage extends FlameGame {
   late Star star3;
   late GenericButton nextLessonButton;
   late IconButton returnButton;
+  late SpriteComponent robot;
+  late FancyTextBox textBox;
+  late LessonProgressBar progressBar;
 
   EndLessonPage({
     required this.onRepeat,
@@ -53,7 +58,7 @@ class EndLessonPage extends FlameGame {
       position: Vector2(40, 80),
       size: Vector2(30, 25),
       anchor: Anchor.center,
-      iconPath: 'arrow_left.png',
+      iconPath: 'x_icon.png',
       tint: Colors.black87,
       onPressed: (_) => onMainMenu(),
     )..show();
@@ -146,9 +151,37 @@ class EndLessonPage extends FlameGame {
       letterSpacing: 0.2,
     )..switchPhase(EventHorizontalObstacle.startMoving);
 
+    robot = SpriteComponent(
+      sprite: await Sprite.load('blue_robot.png'),
+      size: Vector2.all(350),
+      position: Vector2(size.x / 2, 360),
+      anchor: Anchor.center,
+    );
+
+    textBox = FancyTextBox(
+      position: Vector2(size.x / 2, 200),
+      anchor: Anchor.center,
+      sequence: ['Great Work!'],
+      fadeDuration: 0,
+      fontSize: 30,
+      letterSpacing: 0.5,
+      fontWeight: FontWeight.w700,
+      maxWidth: 300,
+    );
+
+    progressBar = LessonProgressBar(
+      position: Vector2(size.x / 2, 70),
+      stages: 3,
+    );
+    textBox.switchPhase(EventText.showText);
     add(background);
     add(nextLessonButton);
     add(returnButton);
     addAll([xpBox, progressBox, streakBox]);
+    add(robot);
+    add(textBox);
+    add(progressBar);
+
+    progressBar.switchPhase(EventProgressBar.proceed);
   }
 }
