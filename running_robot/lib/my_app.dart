@@ -4,6 +4,8 @@ import 'package:flame/game.dart';
 import 'package:running_robot/lessons/lesson_one.dart';
 import 'package:running_robot/ui/end_lesson.dart';
 import 'package:running_robot/core/app_router.dart';
+// ADDED: global transition widgets
+import 'package:animations/animations.dart'; // <-- ADDED
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -27,14 +29,13 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _route = route;
       _game = _buildScene(route);
-      _sceneKey++;
+      _sceneKey++; // <-- triggers transition
     });
   }
 
   /// Central scene factory — typed, tiny, no stringly-typed args.
   FlameGame _buildScene(AppRoute route) {
     if (route is RouteLesson1) {
-      // NOTE: LessonOne must accept `AppNavigate navigate`
       return LessonOne(onNavigate: navigate);
     } else if (route is RouteEndLesson) {
       return EndLessonPage(
@@ -49,14 +50,10 @@ class _MyAppState extends State<MyApp> {
         illustrationPath: route.illustrationPath,
       );
     } else if (route is RouteLesson2) {
-      // TODO: replace with your real LessonTwo when ready
       return LessonOne(onNavigate: navigate);
     } else if (route is RouteMainMenu) {
-      // TODO: return your MainMenu FlameGame when ready
       return LessonOne(onNavigate: navigate);
     }
-
-    // Fallback (satisfies non-nullable return)
     return LessonOne(onNavigate: navigate);
   }
 
@@ -64,9 +61,24 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: GameWidget(
-          key: ValueKey(_sceneKey),
-          game: _game,
+        // CHANGED: one global transition wrapper
+        body: PageTransitionSwitcher(
+          // <-- ADDED
+          duration: const Duration(milliseconds: 3000), // <-- ADDED
+          transitionBuilder: (child, a, sa) => FadeThroughTransition(
+            // <-- ADDED
+            animation: a,
+            secondaryAnimation: sa,
+            child: child,
+          ),
+          child: KeyedSubtree(
+            // <-- ADDED
+            key: ValueKey(_sceneKey), // changes -> animate
+            child: GameWidget(
+              // key removed; KeyedSubtree handles it
+              game: _game,
+            ),
+          ),
         ),
       ),
     );

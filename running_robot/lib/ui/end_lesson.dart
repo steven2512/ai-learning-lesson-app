@@ -52,16 +52,18 @@ class EndLessonPage extends FlameGame {
     required this.topText,
     this.illustrationPath,
   });
-
+  // In class LessonOne extends FlameGame ...
+  @override
+  Color backgroundColor() => const Color(0xFFFFFFFF);
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // -------- Background (always behind) --------
-    background = Background(
-      backgroundSize: Vector2(size.x, size.y),
-      colors: const [Color.fromARGB(255, 255, 255, 255)],
-    )..priority = -100;
+    // // -------- Background (always behind) --------
+    // background = Background(
+    //   backgroundSize: Vector2(size.x, size.y),
+    //   colors: const [Color.fromARGB(255, 255, 255, 255)],
+    // )..priority = -100;
 
     // -------- Next button --------
     nextLessonButton = GenericButton(
@@ -207,7 +209,7 @@ class EndLessonPage extends FlameGame {
       position: Vector2(thirdCenterX, y),
       anchor: Anchor.center,
       boxSize: boxSize,
-      titleText: 'Daily Streak',
+      titleText: 'Streak',
       mainContent: '$streak',
       fillColors: const [
         Color.fromARGB(255, 0, 157, 255),
@@ -229,7 +231,7 @@ class EndLessonPage extends FlameGame {
     )..switchPhase(EventHorizontalObstacle.startMoving);
 
     // Draw order
-    add(background);
+    // add(background);
     add(nextLessonButton);
     add(returnButton);
     addAll([xpBox, progressBox, streakBox]);

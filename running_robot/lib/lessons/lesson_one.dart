@@ -41,7 +41,9 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
 
   Vector2? dragStart;
   Vector2? dragLast;
-
+  // In class LessonOne extends FlameGame ...
+  @override
+  Color backgroundColor() => const Color(0xFFFFFFFF);
   // ─────── Global component references ───────
   late final Background background;
   late final Ground ground;
@@ -76,8 +78,6 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
     // ──────────────────────────────────────────────────────────────
     final gameSize = size;
 
-    // Background + Ground
-    background = Background(backgroundSize: Vector2(gameSize.x, gameSize.y));
     ground = Ground(dimensions: Vector2(gameSize.x, gameSize.y));
     final double groundY = ground.topY;
     // Robot
@@ -255,7 +255,6 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
 
     // Draw order preserved
     addAll(<Component>[
-      background,
       ground,
       progressBar,
       arrowDown,
