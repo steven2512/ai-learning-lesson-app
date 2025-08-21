@@ -20,13 +20,13 @@ class Bird extends AnimatedMover with CollisionCallbacks {
     required Vector2 customSize,
     double stepTime = 0.25,
   }) : super(
-         framePaths: framePaths,
-         startPosition: startPosition,
-         endPosition: endPosition,
-         velocity: velocity,
-         customSize: customSize,
-         stepTime: stepTime,
-       );
+          framePaths: framePaths,
+          startPosition: startPosition,
+          endPosition: endPosition,
+          velocity: velocity,
+          customSize: customSize,
+          stepTime: stepTime,
+        );
 
   void move() {
     currentEvent = EventHorizontalObstacle.startMoving;
@@ -40,8 +40,10 @@ class Bird extends AnimatedMover with CollisionCallbacks {
     switch (phase) {
       case EventHorizontalObstacle.stopMoving:
         stop();
+        break;
       case EventHorizontalObstacle.startMoving:
         move();
+        break;
     }
   }
 

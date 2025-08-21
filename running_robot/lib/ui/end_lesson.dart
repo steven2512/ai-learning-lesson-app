@@ -30,7 +30,7 @@ class EndLessonPage extends FlameGame {
   final int progressPercent; // middle box (0..100)
   /// Pair: [current, total]
   final List<int>
-  stageProgress; // e.g. [2,5] => pre-fill 1, animate 1 after add
+      stageProgress; // e.g. [2,5] => pre-fill 1, animate 1 after add
   final String topText; // top headline
   final String? illustrationPath; // image asset path
 
@@ -109,7 +109,7 @@ class EndLessonPage extends FlameGame {
       add(
         SpriteComponent(
           sprite: sprite,
-          size: Vector2.all(350),
+          size: Vector2.all(400),
           position: Vector2(size.x / 2, 360),
           anchor: Anchor.center,
         ),

@@ -64,7 +64,7 @@ class _MyAppState extends State<MyApp> {
         // CHANGED: one global transition wrapper
         body: PageTransitionSwitcher(
           // <-- ADDED
-          duration: const Duration(milliseconds: 3000), // <-- ADDED
+          duration: const Duration(milliseconds: 1500), // <-- ADDED
           transitionBuilder: (child, a, sa) => FadeThroughTransition(
             // <-- ADDED
             animation: a,

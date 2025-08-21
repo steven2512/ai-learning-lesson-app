@@ -1,49 +1,73 @@
+// lib/accessories/texts/text_box.dart
+// FancyTextBox with EXACT grouped-alpha look (no per-frame saveLayer),
+// uses your EventText + currentEvent + switchPhase API. Single-class change.
+
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/accessories/events/event_type.dart'; // <- EventText lives here
 
 class FancyTextBox extends TextBoxComponent implements OpacityProvider {
+  // ---- Public config ----
   final List<String> sequence;
 
-  // Global visible duration fallback (legacy).
+  /// Global visible duration (fallback) if per-item not provided.
   final double? interval;
 
-  // Per-item visible durations.
+  /// Per-item visible durations (seconds).
   final List<double>? durations;
 
-  // Per-item gaps BEFORE showing each entry.
+  /// Per-item pre-gaps BEFORE showing each entry (seconds).
   final List<double>? intervals;
 
+  /// Fade duration for show/hide.
   final double fadeDuration;
-  int currentIndex = 0;
-  double timer = 0.0;
 
+  // Background / layout
+  final Color? boxFill;
+  final double boxRadius;
+  final double boxFillOpacity;
+  final Vector2? boxSize; // inner content area for text
+  final List<double>? boxPadding; // [top, right, bottom, left]
+  final Color textColor;
+
+  /// Kept for constructor/API parity; we still use it for text layout.
+  final double maxWidthForLayout;
+
+  // ---- App event state (as in your project) ----
+  EventText currentEvent = EventText.hideText;
+
+  // ---- Internal sequence state ----
+  int currentIndex = 0;
+  double _timer = 0.0;
   bool _waitingGap = false;
   bool _hasShownCurrent = false;
 
-  static const double _kDefaultDuration = 2.0;
-
+  // ---- Opacity (Effect-driven) ----
   double _opacity = 1.0;
   @override
   double get opacity => _opacity;
   @override
-  set opacity(double value) => _opacity = value.clamp(0.0, 1.0);
+  set opacity(double value) {
+    final v = value.clamp(0.0, 1.0);
+    if (v == _opacity) return;
+    _opacity = v;
+    // We modulate at draw time; no need to rebuild raster on opacity change.
+  }
 
-  OpacityEffect? _fadeEffect;
+  OpacityEffect? _fadeFx;
 
-  EventText currentEvent = EventText.hideText;
+  // ---- Cached base text style (full opacity; we modulate at draw) ----
+  late final TextStyle _baseTextStyle;
 
-  // Background options
-  final Color? boxFill;
-  final double boxRadius;
-  final double boxFillOpacity;
-  final Vector2? boxSize; // when provided, center text inside this area
-
-  // Text & padding
-  final Color textColor;
-  final List<double>? boxPadding; // [top, right, bottom, left]
+  // ---- RASTER CACHE: precompose background + text once per change ----
+  ui.Image? _raster;
+  bool _rasterDirty = true;
+  double _lastDpr = ui.PlatformDispatcher.instance.views.isNotEmpty
+      ? ui.PlatformDispatcher.instance.views.first.devicePixelRatio
+      : (ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1.0);
 
   FancyTextBox({
     required Vector2 position,
@@ -57,317 +81,289 @@ class FancyTextBox extends TextBoxComponent implements OpacityProvider {
     required double letterSpacing,
     required FontWeight fontWeight,
     required double maxWidth,
-
-    // Visuals
     this.boxFill,
     this.boxRadius = 0.0,
     this.boxFillOpacity = 1.0,
     this.boxSize,
     this.textColor = Colors.black,
     this.boxPadding,
-  }) : assert(
-         interval == null || interval > 0,
-         '`interval` must be > 0 if provided',
-       ),
-       assert(
-         durations == null ||
-             (durations.isNotEmpty && durations.every((v) => v > 0)),
-         '`durations` values must be > 0',
-       ),
-       assert(
-         intervals == null || intervals.every((v) => v >= 0),
-         '`intervals` (gaps) must be >= 0',
-       ),
-       assert(
-         boxFillOpacity >= 0.0 && boxFillOpacity <= 1.0,
-         '`boxFillOpacity` must be between 0 and 1',
-       ),
-       assert(
-         boxPadding == null ||
-             (boxPadding.length == 4 && boxPadding.every((v) => v >= 0)),
-         '`boxPadding` must be 4 non-negative doubles: [top, right, bottom, left]',
-       ),
-       super(
-         align: anchor,
-         anchor: anchor,
-         text: sequence[0],
-         position: position,
-         boxConfig: TextBoxConfig(
-           maxWidth: (boxSize != null ? boxSize.x : maxWidth),
-           timePerChar: 0.0,
-         ),
-         textRenderer: TextPaint(
-           style: GoogleFonts.lato(
-             fontSize: fontSize,
-             letterSpacing: letterSpacing,
-             color: textColor,
-             fontWeight: fontWeight,
-           ),
-         ),
-       );
+  })  : maxWidthForLayout = maxWidth,
+        assert(interval == null || interval > 0, '`interval` must be > 0'),
+        assert(durations == null ||
+            (durations.isNotEmpty && durations.every((v) => v > 0))),
+        assert(intervals == null || intervals.every((v) => v >= 0)),
+        assert(boxFillOpacity >= 0.0 && boxFillOpacity <= 1.0),
+        assert(
+          boxPadding == null ||
+              (boxPadding.length == 4 && boxPadding.every((v) => v >= 0)),
+          '`boxPadding` must be [top, right, bottom, left]',
+        ),
+        super(
+          align: anchor,
+          anchor: anchor,
+          text: sequence.isNotEmpty ? sequence[0] : '',
+          position: position,
+          boxConfig: TextBoxConfig(
+            maxWidth: maxWidth,
+            timePerChar: 0.0,
+          ),
+          textRenderer: TextPaint(
+            style: GoogleFonts.lato(
+              fontSize: fontSize,
+              letterSpacing: letterSpacing,
+              color: textColor,
+              fontWeight: fontWeight,
+            ),
+          ),
+        );
 
+  // ---- Lifecycle ----
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    _baseTextStyle = (textRenderer as TextPaint).style;
+
+    // Establish component size now; height is finalized in raster build
     if (boxSize != null) {
       size = boxSize!;
+    } else {
+      size.x = maxWidthForLayout;
     }
-    if (currentEvent == EventText.hideText) {
-      opacity = 0.0;
+
+    // Start hidden by default (matches EventText.hideText)
+    currentEvent = EventText.hideText;
+    opacity = 0.0;
+    _rasterDirty = true;
+  }
+
+  @override
+  void onGameResize(Vector2 _) {
+    super.onGameResize(_);
+    _rasterDirty = true;
+  }
+
+  @override
+  void onRemove() {
+    _disposeRaster();
+    super.onRemove();
+  }
+
+  void _disposeRaster() {
+    _raster?.dispose();
+    _raster = null;
+  }
+
+  // ---- Public API (matches your architecture) ----
+  void switchPhase(EventText next) {
+    currentEvent = next;
+    if (next == EventText.showText) {
+      _show();
+    } else if (next == EventText.hideText) {
+      _hide();
+    } else if (next == EventText.nextSequence) {
+      _goNext(); // immediate step to next message
     }
   }
 
-  void switchPhase(EventText phase) {
-    switch (phase) {
-      case EventText.showText:
-        showText();
-        break;
-      case EventText.hideText:
-        hideText();
-        break;
-      case EventText.nextSequence:
-        break;
-    }
-  }
+  // Optional convenience (if you call these elsewhere)
+  void showText() => switchPhase(EventText.showText);
+  void hideText() => switchPhase(EventText.hideText);
 
-  void showText() {
-    currentEvent = EventText.showText;
-    final gap = _currentGap();
-    if (opacity < 1.0 && gap > 0 && !_hasShownCurrent) {
-      _fadeEffect?.removeFromParent();
-      _waitingGap = true;
-      timer = 0;
-      return;
+  // ---- Event handlers ----
+  void _show() {
+    if (_fadeFx != null && opacity < 1.0) {
+      _fadeFx!.removeFromParent();
+      _fadeFx = null;
     }
     if (opacity < 1.0) {
       _startFade(1.0, fadeDuration, onComplete: () => _hasShownCurrent = true);
+    } else {
+      _hasShownCurrent = true;
     }
   }
 
-  void hideText() {
-    // FIX: cancel any pending show-after-gap that would re-fade-in
-    _waitingGap = false; // FIX
-    _hasShownCurrent = false; // FIX
+  void _hide() {
+    _waitingGap = false;
+    _hasShownCurrent = false;
+    _timer = 0.0;
 
-    currentEvent = EventText.hideText;
-    timer = 0;
-
-    // FIX: ensure we land exactly at 0.0
-    _startFade(
+    _fadeFx?.removeFromParent();
+    _fadeFx = OpacityEffect.to(
       0.0,
-      fadeDuration,
-      onComplete: () {
-        opacity = 0.0; // FIX
-      },
+      EffectController(duration: fadeDuration),
     );
+    add(_fadeFx!);
   }
 
-  void _startFade(double target, double duration, {VoidCallback? onComplete}) {
-    _fadeEffect?.removeFromParent();
-    final fx = OpacityEffect.to(
+  void _startFade(double target, double seconds, {VoidCallback? onComplete}) {
+    _fadeFx?.removeFromParent();
+    _fadeFx = OpacityEffect.to(
       target,
-      EffectController(duration: duration),
-      onComplete: () {
-        _fadeEffect = null;
-        // FIX: snap to target to avoid residual alpha (e.g., 0.0001 keeping text visible)
-        opacity = target; // FIX
-        onComplete?.call();
-      },
+      EffectController(duration: seconds),
+      onComplete: onComplete,
     );
-    _fadeEffect = fx;
-    add(fx);
+    add(_fadeFx!);
   }
 
-  double _currentDuration() {
-    final d = durations;
-    if (d != null && d.isNotEmpty) {
-      if (currentIndex < d.length) return d[currentIndex];
-      return d.last;
-    }
-    if (interval != null) return interval!;
-    return _kDefaultDuration;
-  }
-
-  double _currentGap() {
-    final g = intervals;
-    if (g != null && g.isNotEmpty) {
-      if (currentIndex < g.length) return g[currentIndex];
-      return g.last;
-    }
-    return 0.0;
-  }
-
+  // ---- Update loop ----
   @override
   void update(double dt) {
     super.update(dt);
 
-    if (_waitingGap) {
-      timer += dt;
-      if (timer >= _currentGap()) {
-        _waitingGap = false;
-        timer = 0;
-        _startFade(
-          1.0,
-          fadeDuration,
-          onComplete: () {
-            _hasShownCurrent = true;
-            currentEvent = EventText.showText;
-          },
-        );
+    if (currentEvent != EventText.showText) return; // advance only when showing
+
+    final double dur = (durations != null && currentIndex < (durations!.length))
+        ? durations![currentIndex]
+        : (interval ?? 2.0);
+
+    if (!_hasShownCurrent) {
+      if (opacity < 1.0 && _fadeFx == null) {
+        _startFade(1.0, fadeDuration,
+            onComplete: () => _hasShownCurrent = true);
+      } else {
+        _hasShownCurrent = true;
       }
       return;
     }
 
-    switch (currentEvent) {
-      case EventText.showText:
-        timer += dt;
-        if (timer >= _currentDuration() && currentIndex < sequence.length - 1) {
-          timer = 0;
-          currentEvent = EventText.nextSequence;
-        }
-        break;
-      case EventText.nextSequence:
-        _fadeToNext();
-        currentEvent = EventText.hideText;
-        break;
-      case EventText.hideText:
-        break;
-    }
-  }
+    _timer += dt;
 
-  void _fadeToNext() {
-    _startFade(
-      0.0,
-      fadeDuration,
-      onComplete: () {
-        opacity = 0.0; // FIX: exact zero after step fade
-        currentIndex++;
-        text = sequence[currentIndex];
-        timer = 0;
-        _hasShownCurrent = false;
-
-        final gap = _currentGap();
-        if (gap > 0) {
-          _waitingGap = true;
+    if (_timer >= dur && !_waitingGap) {
+      final double gap = (intervals != null && currentIndex < intervals!.length)
+          ? intervals![currentIndex]
+          : 0.0;
+      if (gap > 0) {
+        _waitingGap = true;
+        _timer = 0.0;
+      } else {
+        _goNext();
+      }
+    } else if (_waitingGap) {
+      final double gapNow =
+          (intervals != null && currentIndex < intervals!.length)
+              ? intervals![currentIndex]
+              : 0.0;
+      if (_timer >= gapNow) {
+        _waitingGap = false;
+        _timer = 0.0;
+        if (opacity < 1.0) {
+          _startFade(1.0, fadeDuration,
+              onComplete: () => _hasShownCurrent = true);
         } else {
-          _startFade(
-            1.0,
-            fadeDuration,
-            onComplete: () {
-              _hasShownCurrent = true;
-              currentEvent = EventText.showText;
-            },
-          );
+          _hasShownCurrent = true;
         }
-      },
-    );
+      }
+    }
   }
 
-  @override
-  void render(Canvas canvas) {
-    // FIX: if fully transparent, skip drawing entirely
-    if (opacity <= 0.001) {
-      // FIX
-      return;
+  void _goNext() {
+    if (currentIndex + 1 < sequence.length) {
+      currentIndex += 1;
+      text = sequence[currentIndex];
+      _timer = 0.0;
+      _hasShownCurrent = false;
+      _rasterDirty = true; // text changed => rebuild raster
+      if (opacity < 1.0) {
+        _startFade(1.0, fadeDuration,
+            onComplete: () => _hasShownCurrent = true);
+      }
     }
+  }
 
-    // Padding unpack (top, right, bottom, left)
+  // ---- Raster build: precompose bg + text (exact grouped-alpha) ----
+  void _rebuildRaster() {
+    _disposeRaster();
+
+    final double dpr = ui.PlatformDispatcher.instance.views.isNotEmpty
+        ? ui.PlatformDispatcher.instance.views.first.devicePixelRatio
+        : (ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ??
+            1.0);
+
+    // Padding
     final double pt = boxPadding != null ? boxPadding![0] : 0.0;
     final double pr = boxPadding != null ? boxPadding![1] : 0.0;
     final double pb = boxPadding != null ? boxPadding![2] : 0.0;
     final double pl = boxPadding != null ? boxPadding![3] : 0.0;
 
-    // Inner text area
-    final double innerW = (boxSize?.x ?? size.x);
-    final double innerH = (boxSize?.y ?? size.y);
+    // Layout text with base style (full strength; fade applied at draw time)
+    final double innerW = boxSize?.x ?? maxWidthForLayout;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: _baseTextStyle),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+      maxLines: null,
+    )..layout(maxWidth: innerW);
 
-    // Background expands by padding
+    final double textH = painter.height;
+    final double innerH = boxSize?.y ?? textH;
+    final double dy = ((innerH - textH) * 0.5).clamp(0.0, double.infinity);
+
+    // Component outer size (includes padding)
     final double w = innerW + pl + pr;
     final double h = innerH + pt + pb;
+    size = Vector2(w, h);
 
-    // Group alpha so background + text fade together
-    final Rect layerBounds = Rect.fromLTWH(-pl, -pt, w, h);
-    canvas.saveLayer(
-      layerBounds,
-      Paint()..color = const Color(0xFFFFFFFF).withOpacity(opacity),
-    );
+    final int pxW = (w * dpr).ceil().clamp(1, 100000);
+    final int pxH = (h * dpr).ceil().clamp(1, 100000);
 
-    // Background (optional)
+    final recorder = ui.PictureRecorder();
+    final Canvas c = Canvas(recorder);
+
+    // Draw in logical units; rasterized at device pixels for sharpness.
+    c.save();
+    c.scale(dpr, dpr);
+
+    // Background at its own opacity (no overall fade here)
     if (boxFill != null && boxFillOpacity > 0.0) {
       final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(-pl, -pt, w, h),
+        Rect.fromLTWH(0, 0, w, h),
         Radius.circular(boxRadius),
       );
-      final combinedAlpha = (boxFill!.opacity * boxFillOpacity).clamp(0.0, 1.0);
-      final fillColor = boxFill!.withOpacity(combinedAlpha);
-      canvas.drawRRect(rrect, Paint()..color = fillColor);
+      c.drawRRect(rrect, Paint()..color = boxFill!.withOpacity(boxFillOpacity));
     }
 
-    // ---- TEXT RENDERING ----
-    if (boxSize == null) {
-      // Legacy behavior (left/top aligned by TextBoxComponent)
-      super.render(canvas);
-    } else {
-      // Center horizontally & vertically within inner box, respecting padding.
-      final style = (textRenderer as TextPaint).style;
-      final painter = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
+    // Text centered in inner box; clip to avoid bleeding into padding.
+    c.save();
+    c.clipRect(Rect.fromLTWH(pl, pt, innerW, innerH));
+    painter.paint(c, Offset(pl + (innerW - painter.width) / 2.0, pt + dy));
+    c.restore();
+
+    c.restore();
+
+    final picture = recorder.endRecording();
+    _raster = picture.toImageSync(pxW, pxH);
+    _lastDpr = dpr;
+    _rasterDirty = false;
+  }
+
+  // ---- Render ----
+  @override
+  void render(Canvas canvas) {
+    if (opacity <= 0.001) return;
+
+    final double dpr = ui.PlatformDispatcher.instance.views.isNotEmpty
+        ? ui.PlatformDispatcher.instance.views.first.devicePixelRatio
+        : (ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ??
+            1.0);
+
+    if (_raster == null || _rasterDirty || (dpr - _lastDpr).abs() > 1e-6) {
+      _rebuildRaster();
+    }
+    if (_raster == null) return;
+
+    final src = Rect.fromLTWH(
+        0, 0, _raster!.width.toDouble(), _raster!.height.toDouble());
+    final dst = Rect.fromLTWH(0, 0, size.x, size.y);
+
+    // Exact grouped-alpha fade by modulating the precomposed image
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..filterQuality = FilterQuality.low
+      ..colorFilter = ui.ColorFilter.mode(
+        Colors.white.withOpacity(opacity),
+        BlendMode.modulate,
       );
-      painter.layout(maxWidth: innerW);
 
-      final double contentH = painter.height;
-      final double dy = ((innerH - contentH) * 0.5).clamp(0.0, double.infinity);
-
-      canvas.save();
-      // Clip to inner area so long text doesn't bleed into padding/background
-      canvas.clipRect(Rect.fromLTWH(0, 0, innerW, innerH));
-      canvas.translate(0, dy);
-      // Paint at (0, 0); TextAlign.center + maxWidth=innerW centers horizontally.
-      painter.paint(canvas, const Offset(0, 0));
-      canvas.restore();
-    }
-
-    canvas.restore();
-  }
-
-  void resetText() {
-    currentIndex = 0;
-    text = sequence[0];
-    timer = 0;
-    opacity = 1;
-    _waitingGap = false;
-    _hasShownCurrent = true; // since opacity=1
-    _fadeEffect?.removeFromParent();
-    _fadeEffect = null;
-    currentEvent = EventText.showText;
-  }
-
-  void skipToEnd() {
-    currentIndex = sequence.length - 1;
-    text = sequence.last;
-    _waitingGap = false;
-    _hasShownCurrent = true;
-    _fadeEffect?.removeFromParent();
-    _fadeEffect = null;
-    currentEvent = EventText.showText;
-  }
-
-  void reset() {
-    // Back to initial hidden state & first entry
-    currentEvent = EventText.hideText;
-
-    _fadeEffect?.removeFromParent();
-    _fadeEffect = null;
-
-    currentIndex = 0;
-    text = sequence[0];
-    timer = 0.0;
-
-    _waitingGap = false;
-    _hasShownCurrent = false;
-
-    opacity = 0.0;
+    canvas.drawImageRect(_raster!, src, dst, paint);
   }
 }

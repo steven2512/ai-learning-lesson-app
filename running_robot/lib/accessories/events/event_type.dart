@@ -57,3 +57,5 @@ enum EventButton {
   pressed,
   hold,
 }
+
+enum EventFancyBox { hide, show, animate }

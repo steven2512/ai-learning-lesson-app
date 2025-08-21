@@ -16,6 +16,7 @@ final List<String> firstRunText = [
   "He did not stop for the rain...",
   "And the jump is too early",
   "Hmm...even though the course looks simple",
+  "How can Robo improve?"
 ];
 
 final List<String> contemplationText = [

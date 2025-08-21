@@ -74,18 +74,18 @@ class FancyBox extends PositionComponent {
     this.spriteIcon,
     this.spritePath,
     this.iconData,
-  }) : assert(
-         fillColors.length == 3,
-         'fillColors must be [inside, banner, border]',
-       ),
-       assert(
-         fontSizes.length == 3,
-         'fontSizes must be [banner, content, icon]',
-       ),
-       assert(
-         fontColors.length == 3,
-         'fontColors must be [bannerText, contentText, icon]',
-       ) {
+  })  : assert(
+          fillColors.length == 3,
+          'fillColors must be [inside, banner, border]',
+        ),
+        assert(
+          fontSizes.length == 3,
+          'fontSizes must be [banner, content, icon]',
+        ),
+        assert(
+          fontColors.length == 3,
+          'fontColors must be [bannerText, contentText, icon]',
+        ) {
     this.position = position;
     this.size = boxSize;
     this.anchor = anchor;
@@ -200,22 +200,25 @@ class FancyBox extends PositionComponent {
     const double hPad = 12, vPad = 6;
     final Size capSize = Size(tp.width + hPad * 2, tp.height + vPad * 2);
 
-    // horizontal placement by bannerTextAnchor
+    // --- CHANGED: replace switch(Anchor...) with simple predicates ---
+    bool _isCenter(Anchor a) =>
+        a == Anchor.center || a == Anchor.topCenter || a == Anchor.bottomCenter;
+
+    bool _isRight(Anchor a) =>
+        a == Anchor.centerRight ||
+        a == Anchor.topRight ||
+        a == Anchor.bottomRight;
+
     double x;
-    switch (bannerTextAnchor) {
-      case Anchor.center:
-      case Anchor.topCenter:
-      case Anchor.bottomCenter:
-        x = (size.x - capSize.width) / 2;
-        break;
-      case Anchor.centerRight:
-      case Anchor.topRight:
-      case Anchor.bottomRight:
-        x = size.x - _padRight - capSize.width;
-        break;
-      default: // left and others
-        x = _padLeft;
+    if (_isCenter(bannerTextAnchor)) {
+      x = (size.x - capSize.width) / 2;
+    } else if (_isRight(bannerTextAnchor)) {
+      x = size.x - _padRight - capSize.width;
+    } else {
+      // left (topLeft, centerLeft, bottomLeft)
+      x = _padLeft;
     }
+    // --- END CHANGE ---
 
     final double y = _padTop - (tp.height * 0.15);
 
@@ -251,19 +254,19 @@ class FancyBox extends PositionComponent {
 
     double contentFs = contentFs0;
     TextPainter _layout(double fs) => TextPainter(
-      text: TextSpan(
-        text: mainContent,
-        style: GoogleFonts.lato(
-          fontSize: fs,
-          fontWeight: m.FontWeight.w700,
-          color: contentColor,
-          letterSpacing: letterSpacing,
-        ),
-      ),
-      textDirection: m.TextDirection.ltr,
-      maxLines: 1,
-      ellipsis: '…',
-    )..layout();
+          text: TextSpan(
+            text: mainContent,
+            style: GoogleFonts.lato(
+              fontSize: fs,
+              fontWeight: m.FontWeight.w700,
+              color: contentColor,
+              letterSpacing: letterSpacing,
+            ),
+          ),
+          textDirection: m.TextDirection.ltr,
+          maxLines: 1,
+          ellipsis: '…',
+        )..layout();
 
     var valueTp = _layout(contentFs);
 
