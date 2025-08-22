@@ -246,7 +246,8 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       fontColor: Colors.white,
       payload: 'next_phase',
       onPressed: (value) {
-        end();
+        // endLesson();
+        endLesson();
       },
       borderRadius: 22,
     );
@@ -257,7 +258,7 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       anchor: Anchor.center,
       iconPath: 'x_icon.png',
       tint: Colors.black87,
-      onPressed: (_) => end(),
+      onPressed: (_) => close(),
     )..show();
 
     // Draw order preserved
@@ -282,7 +283,11 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
     await handlePhase();
   }
 
-  void end() {
+  void close() {
+    onNavigate(RouteMainMenu());
+  }
+
+  void endLesson() {
     onNavigate(
       RouteEndLesson(
         xp: 82,
