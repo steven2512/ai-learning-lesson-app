@@ -103,7 +103,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
           const SizedBox(height: 17),
 
-          // ---- MAIN PURPLE BOX ----
+          // ---- MAIN TEAL BOX ----
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             decoration: BoxDecoration(
@@ -118,7 +118,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
               ],
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // ---------------- LEFT SIDE ----------------
                 ConstrainedBox(
@@ -174,16 +174,17 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   ),
                 ),
 
-                const SizedBox(width: 5),
+                const SizedBox(width: 0),
 
                 // ---------------- RIGHT SIDE ----------------
-                // ***** NEW: ai_book.png inside SizedBox *****
-                SizedBox(
-                  width: 100, // control size
-                  height: 120,
-                  child: Image.asset(
-                    "assets/images/chat_bot.png",
-                    fit: BoxFit.contain,
+// ---------------- RIGHT SIDE ----------------
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 0.94, // keeps it square
+                    child: Image.asset(
+                      "assets/images/chat_bot_1.png",
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ],
