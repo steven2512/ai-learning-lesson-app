@@ -7,13 +7,13 @@ import 'package:flame/game.dart';
 
 // Typed routes
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/z_pages/end_lesson.dart';
 
 // Pure Flutter page (no Flame)
 import 'package:running_robot/z_pages/main_menu.dart';
 
 // Game scenes
 import 'package:running_robot/z_pages/lessons/lesson_one.dart';
-import 'package:running_robot/ui/end_lesson.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
