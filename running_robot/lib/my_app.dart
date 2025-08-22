@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   // CHANGED: start on Main Menu (pure Flutter). Switch to RouteLesson1() if you prefer.
-  AppRoute _route = const RouteLesson1();
+  AppRoute _route = const RouteMainMenu();
 
   // Keeps transitions smooth and forces clean remounts for GameWidget pages
   int _sceneKey = 0;
