@@ -3,9 +3,8 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide IconButton;
 import 'package:running_robot/accessories/buttons/generic_button.dart';
-import 'package:running_robot/accessories/buttons/pause.dart';
 import 'package:running_robot/accessories/events/event_type.dart';
 import 'package:running_robot/accessories/obstacles/bird.dart';
 import 'package:running_robot/accessories/obstacles/fence.dart';
@@ -20,6 +19,7 @@ import 'package:running_robot/accessories/texts/text_box.dart';
 import 'package:running_robot/accessories/obstacles/rain.dart';
 import 'package:running_robot/accessories/texts/lessons_text/lesson1_text.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/accessories/buttons/icon_button.dart';
 
 enum GamePhase {
   intro,
@@ -52,13 +52,13 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
   late final Bird bird;
   late final FancyTextBox introTextBox;
   late final FancyTextBox firstRunTextBox;
+  late final IconButton returnButton;
 
   // Reserved (not initialized here per your current scaffolding)
   late final FancyTextBox resultCorrectBox;
   late final FancyTextBox resultWrongBox;
 
   late final LessonProgressBar progressBar;
-  late final PauseButton pauseButton;
   late final Cloud cloudRain;
   late List<Cloud> clouds = [];
   late final List<Rain> rainFall;
@@ -228,11 +228,9 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
 
     // UI
     progressBar = LessonProgressBar(
-      position: Vector2(gameSize.x / 2, 80),
+      position: Vector2(gameSize.x / 2, 70),
       stages: 3,
     );
-
-    pauseButton = PauseButton(position: Vector2(gameSize.x - 18, 75.5));
 
     // [CHANGED] uses your new GenericButton signature
     continueButton = GenericButton<String>(
@@ -253,12 +251,20 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       borderRadius: 22,
     );
 
+    returnButton = IconButton<void>(
+      position: Vector2(40, 81),
+      size: Vector2(22, 22),
+      anchor: Anchor.center,
+      iconPath: 'x_icon.png',
+      tint: Colors.black87,
+      onPressed: (_) => end(),
+    )..show();
+
     // Draw order preserved
     addAll(<Component>[
       ground,
       progressBar,
       arrowDown,
-      pauseButton,
       ...clouds,
       robot,
       cloudRain,
@@ -269,6 +275,7 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
       firstRunTextBox,
       mcqFirstRun,
       continueButton,
+      returnButton,
     ]);
 
     // Kick off

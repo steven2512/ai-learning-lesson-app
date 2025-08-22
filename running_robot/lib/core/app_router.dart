@@ -14,7 +14,7 @@ class RouteEndLesson extends AppRoute {
   final int streak;
   final int progressPercent; // 0..100
   final List<int>
-  stageProgress; // e.g. [1.0, 0.0, 0.0] => 3 stages, first filled
+      stageProgress; // e.g. [1.0, 0.0, 0.0] => 3 stages, first filled
   final String topText;
   final String? illustrationPath; // <- pass just an asset path
 
@@ -35,6 +35,8 @@ class RouteLesson2 extends AppRoute {
 class RouteMainMenu extends AppRoute {
   const RouteMainMenu();
 }
+
+class RoutePause extends AppRoute {}
 
 /// Single navigation function children will receive and call.
 typedef AppNavigate = void Function(AppRoute route);

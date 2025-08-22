@@ -8,7 +8,7 @@ class LessonProgressBar extends PositionComponent {
   // ───────── VISUAL TUNING (Duolingo/Brilliant vibe) ─────────
   // Smaller length, thicker height, full pill radius
   static const double _width = 279; // CHANGED: shorter
-  static const double _height = 20; // CHANGED: thicker
+  static const double _height = 22; // CHANGED: thicker
   static const double _radius = _height / 2; // CHANGED: pill
 
   // Track "glass" base (we'll apply opacity dynamically for initial vs active)
@@ -46,12 +46,12 @@ class LessonProgressBar extends PositionComponent {
   LessonProgressBar({
     required Vector2 position,
     required int stages,
-  }) : totalStages = stages.clamp(1, 999999),
-       super(
-         position: position,
-         size: Vector2(_width, _height),
-         anchor: Anchor.topCenter,
-       );
+  })  : totalStages = stages.clamp(1, 999999),
+        super(
+          position: position,
+          size: Vector2(_width, _height),
+          anchor: Anchor.topCenter,
+        );
 
   // ───────── Events API ─────────
   void switchPhase(EventProgressBar phase) {
@@ -130,12 +130,10 @@ class LessonProgressBar extends PositionComponent {
     // Decide "initial vs active" presentation
     final bool isInitialLook =
         currentEvent == EventProgressBar.initial && _progress <= 0.0001;
-    final double trackAlpha = isInitialLook
-        ? _trackAlphaInitial
-        : _trackAlphaActive;
-    final double fillAlpha = isInitialLook
-        ? _fillAlphaInitial
-        : _fillAlphaActive;
+    final double trackAlpha =
+        isInitialLook ? _trackAlphaInitial : _trackAlphaActive;
+    final double fillAlpha =
+        isInitialLook ? _fillAlphaInitial : _fillAlphaActive;
 
     // ── TRACK: frosted glass (vertical subtle gradient, semi-transparent)
     final trackPaint = Paint()

@@ -83,7 +83,7 @@ class EndLessonPage extends FlameGame {
 
     // -------- Close/X button --------
     returnButton = IconButton<void>(
-      position: Vector2(40, 80),
+      position: Vector2(40, 81),
       size: Vector2(30, 25),
       anchor: Anchor.center,
       iconPath: 'x_icon.png',
