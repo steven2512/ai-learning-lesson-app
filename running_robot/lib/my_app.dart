@@ -9,10 +9,10 @@ import 'package:flame/game.dart';
 import 'package:running_robot/core/app_router.dart';
 
 // Pure Flutter page (no Flame)
-import 'package:running_robot/ui/main_menu.dart';
+import 'package:running_robot/z_pages/main_menu.dart';
 
 // Game scenes
-import 'package:running_robot/lessons/lesson_one.dart';
+import 'package:running_robot/z_pages/lessons/lesson_one.dart';
 import 'package:running_robot/ui/end_lesson.dart';
 
 class MyApp extends StatefulWidget {

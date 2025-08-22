@@ -16,6 +16,9 @@ class ProfileAvatar extends StatelessWidget {
   /// Callback when avatar is tapped
   final VoidCallback onPressed;
 
+  /// Scale factor for the image inside the circle (1.0 = fit fully, <1 = smaller, >1 = zoom in)
+  final double imageScale;
+
   const ProfileAvatar({
     super.key,
     required this.size,
@@ -23,6 +26,7 @@ class ProfileAvatar extends StatelessWidget {
     this.image,
     this.placeholder,
     this.fillColor = Colors.white,
+    this.imageScale = 1.0, // NEW
   });
 
   @override
@@ -38,14 +42,17 @@ class ProfileAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: fillColor, // only fill color, no border
+            color: fillColor,
           ),
           clipBehavior: Clip.antiAlias,
           child: image != null
-              ? Image(
-                  image: image!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _fallback(),
+              ? Transform.scale(
+                  scale: imageScale, // <-- NEW
+                  child: Image(
+                    image: image!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _fallback(),
+                  ),
                 )
               : _fallback(),
         ),

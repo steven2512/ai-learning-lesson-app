@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/lessons/lesson_one.dart';
+import 'package:running_robot/z_pages/lessons/lesson_one.dart';
 
 class DrawnMover extends PositionComponent with HasGameRef<LessonOne> {
   final Vector2 startPosition;
@@ -17,10 +17,10 @@ class DrawnMover extends PositionComponent with HasGameRef<LessonOne> {
     required this.customSize,
     this.customDraw,
   }) : super(
-         position: startPosition.clone(),
-         size: customSize,
-         anchor: Anchor.center,
-       );
+          position: startPosition.clone(),
+          size: customSize,
+          anchor: Anchor.center,
+        );
 
   @override
   void render(Canvas canvas) {

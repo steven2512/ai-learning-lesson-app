@@ -3,7 +3,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:running_robot/accessories/events/event_type.dart'; // [ADDED] for currentEvent
+import 'package:running_robot/game/events/event_type.dart'; // [ADDED] for currentEvent
 
 class Diziness extends PositionComponent {
   // ───────── Visual config ─────────
@@ -39,22 +39,22 @@ class Diziness extends PositionComponent {
     double gap = 12,
     this.delay = 1.5,
     this.duration = 4.0,
-  }) : _radius = radius,
-       _gap = gap,
-       _squash = 0.38,
-       _lineWidth = 2.2,
-       _blurSigma = 6.0,
-       _speed1 = 1.6,
-       _speed2 = -2.0,
-       _bobAmp = 2.5,
-       _wobbleAmp = 0.04,
-       _ringColor = const Color.fromARGB(255, 255, 245, 200), // pale gold
-       _glowColor = const Color.fromARGB(180, 255, 255, 255), // soft white
-       _fadeOut = 0.45, // gentle exit
-       super(
-         size: Vector2((radius * 2) + 30, (radius * 2) + 30),
-         anchor: Anchor.center,
-       ) {
+  })  : _radius = radius,
+        _gap = gap,
+        _squash = 0.38,
+        _lineWidth = 2.2,
+        _blurSigma = 6.0,
+        _speed1 = 1.6,
+        _speed2 = -2.0,
+        _bobAmp = 2.5,
+        _wobbleAmp = 0.04,
+        _ringColor = const Color.fromARGB(255, 255, 245, 200), // pale gold
+        _glowColor = const Color.fromARGB(180, 255, 255, 255), // soft white
+        _fadeOut = 0.45, // gentle exit
+        super(
+          size: Vector2((radius * 2) + 30, (radius * 2) + 30),
+          anchor: Anchor.center,
+        ) {
     this.position = position;
     currentEvent = EventHorizontalObstacle.stopMoving; // [ADDED] initial state
   }

@@ -6,7 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/game/events/event_type.dart';
 
 class McqBox extends PositionComponent implements OpacityProvider {
   // ── data
@@ -33,7 +33,7 @@ class McqBox extends PositionComponent implements OpacityProvider {
   final double hideDuration;
 
   // accepts legacy List<String> or new List<List<String>>
-  final List<dynamic /* String or List<String> */>? answerExplanations;
+  final List<dynamic /* String or List<String> */ >? answerExplanations;
 
   // explanation style overrides
   final double? explanationFontSize;
@@ -103,11 +103,11 @@ class McqBox extends PositionComponent implements OpacityProvider {
     this.explanationTextStyle,
     this.selectedHoldSeconds = 1.0,
     this.onClosePressed,
-  }) : assert(
-         alignments.length >= 2,
-         '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
-       ),
-       super(size: outerBoxSize, anchor: anchor, position: position) {
+  })  : assert(
+          alignments.length >= 2,
+          '`alignments` must have at least two entries: [question, answers], plus optional [explanation]',
+        ),
+        super(size: outerBoxSize, anchor: anchor, position: position) {
     opacity = 0.0;
     scale = Vector2.all(1.0);
     currentEvent = EventHorizontalObstacle.stopMoving;
@@ -342,9 +342,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _buildQuestionAndOptions();
 
     _killFade();
-    final dur = (showDuration.isFinite && showDuration > 0.05)
-        ? showDuration
-        : 0.35;
+    final dur =
+        (showDuration.isFinite && showDuration > 0.05) ? showDuration : 0.35;
     _fadeFx = OpacityEffect.to(
       1.0,
       EffectController(duration: dur, curve: Curves.easeOutCubic),
@@ -360,9 +359,8 @@ class McqBox extends PositionComponent implements OpacityProvider {
     _disposeCloseButton();
     _disposeArrowButton();
 
-    final dur = (hideDuration.isFinite && hideDuration > 0.05)
-        ? hideDuration
-        : 0.20;
+    final dur =
+        (hideDuration.isFinite && hideDuration > 0.05) ? hideDuration : 0.20;
     _fadeFx = OpacityEffect.to(
       0.0,
       EffectController(duration: dur, curve: Curves.easeInQuad),
@@ -414,13 +412,11 @@ class McqBox extends PositionComponent implements OpacityProvider {
       canvas.clipRect(clipRect);
       canvas.translate(contentLeft, contentTop);
 
-      final String explainAlignStr = (alignments.length >= 3)
-          ? alignments[2]
-          : 'center';
+      final String explainAlignStr =
+          (alignments.length >= 3) ? alignments[2] : 'center';
       final TextAlign explainAlign = _textAlignOf(explainAlignStr);
 
-      final TextStyle effectiveStyle =
-          explanationTextStyle ??
+      final TextStyle effectiveStyle = explanationTextStyle ??
           GoogleFonts.lato(
             fontSize: explanationFontSize ?? textSizes[0],
             color: explanationColor ?? textColors[0],

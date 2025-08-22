@@ -5,7 +5,7 @@ import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/game/events/event_type.dart';
 
 /// FancyBox — capsule header + rounded card + border + icon + value
 /// Starts hidden (stopMoving). Use startMoving()/switchPhase(startMoving) to show.

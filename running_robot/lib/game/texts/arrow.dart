@@ -1,7 +1,7 @@
 import 'dart:ui' show Canvas, Paint, Rect, Color;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/game/events/event_type.dart';
 
 class Arrow extends SpriteComponent implements OpacityProvider {
   final String imageFile;

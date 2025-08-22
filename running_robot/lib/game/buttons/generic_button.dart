@@ -3,7 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/accessories/events/event_type.dart'; // EventHorizontalObstacle
+import 'package:running_robot/game/events/event_type.dart'; // EventHorizontalObstacle
 
 /// Single-color pill with **bevel depth** (no shadow, no gradient).
 /// Depth = an inner darker bottom band + a 1px top highlight.

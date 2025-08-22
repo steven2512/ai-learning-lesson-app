@@ -6,8 +6,8 @@
 
 import 'dart:math';
 import 'package:flame/components.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
-import 'package:running_robot/accessories/obstacles/superclass/simple_mover.dart';
+import 'package:running_robot/game/events/event_type.dart';
+import 'package:running_robot/game/obstacles/superclass/simple_mover.dart';
 
 class Cloud extends SimpleMover {
   EventHorizontalObstacle currentEvent = EventHorizontalObstacle.stopMoving;
@@ -36,14 +36,14 @@ class Cloud extends SimpleMover {
     double stretchY = 1.0, // <<< NEW: per-axis stretch (Y)
     this.randomizeRest = false,
     double opacity = 1.0, // optional opacity (0..1)
-  }) : _spawnOrigin = initialPosition.clone(),
-       _opacity = opacity,
-       super(
-         initialPosition: initialPosition,
-         picturePath: picturePath,
-         // ✅ CHANGED: compute absolute size from per-axis stretch; no `scale` used.
-         size: Vector2(_baseWidth * stretchX, _baseHeight * stretchY),
-       ) {
+  })  : _spawnOrigin = initialPosition.clone(),
+        _opacity = opacity,
+        super(
+          initialPosition: initialPosition,
+          picturePath: picturePath,
+          // ✅ CHANGED: compute absolute size from per-axis stretch; no `scale` used.
+          size: Vector2(_baseWidth * stretchX, _baseHeight * stretchY),
+        ) {
     setOpacity(_opacity); // apply initial opacity to PNG paint
   }
 
@@ -91,8 +91,7 @@ class Cloud extends SimpleMover {
           } else {
             // random respawn for parallax effect
             // X: respawn somewhere to the right of the original
-            final double randX =
-                _spawnOrigin.x +
+            final double randX = _spawnOrigin.x +
                 150 +
                 _rng.nextDouble() * 300; // 150..450 px to the right
 

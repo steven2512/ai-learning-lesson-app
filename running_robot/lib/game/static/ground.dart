@@ -8,7 +8,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/game/events/event_type.dart';
 
 class Ground extends PositionComponent {
   // ────────── CONFIG ──────────

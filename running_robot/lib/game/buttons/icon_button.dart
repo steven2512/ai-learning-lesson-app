@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/accessories/events/event_type.dart'; // EventHorizontalObstacle
+import 'package:running_robot/game/events/event_type.dart'; // EventHorizontalObstacle
 
 /// Minimal icon-only button:
 /// - Renders a single transparent PNG (no background)

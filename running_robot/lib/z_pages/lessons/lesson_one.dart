@@ -4,22 +4,22 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart' hide IconButton;
-import 'package:running_robot/accessories/buttons/generic_button.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
-import 'package:running_robot/accessories/obstacles/bird.dart';
-import 'package:running_robot/accessories/obstacles/fence.dart';
-import 'package:running_robot/accessories/decorations/progress_bar.dart';
-import 'package:running_robot/accessories/texts/arrow.dart';
-import 'package:running_robot/accessories/static/background.dart';
-import 'package:running_robot/accessories/static/ground.dart';
-import 'package:running_robot/accessories/obstacles/cloud.dart';
-import 'package:running_robot/accessories/characters/robot.dart';
-import 'package:running_robot/accessories/texts/mcq.dart';
-import 'package:running_robot/accessories/texts/text_box.dart';
-import 'package:running_robot/accessories/obstacles/rain.dart';
-import 'package:running_robot/accessories/texts/lessons_text/lesson1_text.dart';
+import 'package:running_robot/game/buttons/generic_button.dart';
+import 'package:running_robot/game/events/event_type.dart';
+import 'package:running_robot/game/obstacles/bird.dart';
+import 'package:running_robot/game/obstacles/fence.dart';
+import 'package:running_robot/game/decorations/progress_bar.dart';
+import 'package:running_robot/game/texts/arrow.dart';
+import 'package:running_robot/game/static/background.dart';
+import 'package:running_robot/game/static/ground.dart';
+import 'package:running_robot/game/obstacles/cloud.dart';
+import 'package:running_robot/game/characters/robot.dart';
+import 'package:running_robot/game/texts/mcq.dart';
+import 'package:running_robot/game/texts/text_box.dart';
+import 'package:running_robot/game/obstacles/rain.dart';
+import 'package:running_robot/game/texts/lessons_text/lesson1_text.dart';
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/accessories/buttons/icon_button.dart';
+import 'package:running_robot/game/buttons/icon_button.dart';
 
 enum GamePhase {
   intro,

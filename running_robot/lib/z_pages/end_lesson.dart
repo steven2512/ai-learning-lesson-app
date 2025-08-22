@@ -4,13 +4,13 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart' hide IconButton;
-import 'package:running_robot/accessories/decorations/fancy_box.dart';
-import 'package:running_robot/accessories/decorations/progress_bar.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
-import 'package:running_robot/accessories/static/background.dart';
-import 'package:running_robot/accessories/buttons/generic_button.dart';
-import 'package:running_robot/accessories/buttons/icon_button.dart';
-import 'package:running_robot/accessories/texts/text_box.dart';
+import 'package:running_robot/game/decorations/fancy_box.dart';
+import 'package:running_robot/game/decorations/progress_bar.dart';
+import 'package:running_robot/game/events/event_type.dart';
+import 'package:running_robot/game/static/background.dart';
+import 'package:running_robot/game/buttons/generic_button.dart';
+import 'package:running_robot/game/buttons/icon_button.dart';
+import 'package:running_robot/game/texts/text_box.dart';
 
 /// EndLessonPage
 /// - Layout/positions are fixed (hard-coded).

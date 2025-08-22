@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
-import 'package:running_robot/accessories/obstacles/cloud.dart';
-import 'package:running_robot/accessories/obstacles/superclass/drawn_mover.dart';
+import 'package:running_robot/game/events/event_type.dart';
+import 'package:running_robot/game/obstacles/cloud.dart';
+import 'package:running_robot/game/obstacles/superclass/drawn_mover.dart';
 import 'package:flame/collisions.dart'; // + add this
 
 class Rain extends DrawnMover with CollisionCallbacks {
@@ -23,14 +23,14 @@ class Rain extends DrawnMover with CollisionCallbacks {
     required this.offsetX,
     required this.offsetY,
     required this.cloud, // <— required
-  }) : originalStartPosition = startPosition.clone(),
-       super(
-         startPosition: startPosition,
-         endPosition: endPosition,
-         velocity: velocity,
-         customSize: Vector2(4, 14),
-         customDraw: _drawRaindrop,
-       );
+  })  : originalStartPosition = startPosition.clone(),
+        super(
+          startPosition: startPosition,
+          endPosition: endPosition,
+          velocity: velocity,
+          customSize: Vector2(4, 14),
+          customDraw: _drawRaindrop,
+        );
 
   static void _drawRaindrop(Canvas canvas, Size size) {
     final paint = Paint()..color = const Color(0xFF2196F3);

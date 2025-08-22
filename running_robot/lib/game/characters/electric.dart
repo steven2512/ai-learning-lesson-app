@@ -3,7 +3,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
+import 'package:running_robot/game/events/event_type.dart';
 
 /// Electric: elegant, animated lightning/sizzle line.
 /// Start/stop via EventHorizontalObstacle events.
@@ -56,16 +56,16 @@ class Electric extends PositionComponent {
     double? angle,
     Anchor anchor = Anchor.center,
     this.seedOffset = 0, // CHANGED
-  }) : _phase = List<double>.generate(
-         // CHANGED
-         _segments + 1,
-         (i) => math.Random(i * 997 + seedOffset).nextDouble() * math.pi * 2,
-       ),
-       _seed = List<double>.generate(
-         // CHANGED
-         _segments + 1,
-         (i) => math.Random(73 * i + 11 + seedOffset * 31).nextDouble() * 10.0,
-       ) {
+  })  : _phase = List<double>.generate(
+          // CHANGED
+          _segments + 1,
+          (i) => math.Random(i * 997 + seedOffset).nextDouble() * math.pi * 2,
+        ),
+        _seed = List<double>.generate(
+          // CHANGED
+          _segments + 1,
+          (i) => math.Random(73 * i + 11 + seedOffset * 31).nextDouble() * 10.0,
+        ) {
     this.size = size;
     this.position = position ?? Vector2.zero();
     if (angle != null) this.angle = angle;
@@ -131,8 +131,7 @@ class Electric extends PositionComponent {
       final double humps = (math.sin(2 * math.pi * t).abs() - 0.5) * 2.0;
       final double bow = bowAmp * humps;
 
-      final double base =
-          amp *
+      final double base = amp *
           (0.70 * math.sin((_freq * i) + _t * _speed + _phase[i]) +
               0.30 *
                   math.sin(
@@ -141,8 +140,7 @@ class Electric extends PositionComponent {
                         _phase[_segments - i],
                   ));
 
-      final double jitter =
-          (_jitter * 2.0) *
+      final double jitter = (_jitter * 2.0) *
           math.sin(_seed[i] + _t * (_speed * 9.0) + i * 0.37 + strand * 1.9);
 
       final double y = midY + bow + base + jitter * (1.0 - t * 0.15);

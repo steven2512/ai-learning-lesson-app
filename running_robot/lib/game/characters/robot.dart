@@ -3,13 +3,13 @@
 import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:running_robot/accessories/characters/diziness.dart';
-import 'package:running_robot/accessories/characters/electric.dart';
-import 'package:running_robot/accessories/events/event_type.dart';
-import 'package:running_robot/lessons/lesson_one.dart';
-import 'package:running_robot/accessories/obstacles/bird.dart';
-import 'package:running_robot/accessories/obstacles/fence.dart';
-import 'package:running_robot/accessories/obstacles/rain.dart';
+import 'package:running_robot/game/characters/diziness.dart';
+import 'package:running_robot/game/characters/electric.dart';
+import 'package:running_robot/game/events/event_type.dart';
+import 'package:running_robot/z_pages/lessons/lesson_one.dart';
+import 'package:running_robot/game/obstacles/bird.dart';
+import 'package:running_robot/game/obstacles/fence.dart';
+import 'package:running_robot/game/obstacles/rain.dart';
 
 class Robot extends PositionComponent
     with CollisionCallbacks, HasGameRef<LessonOne> {
@@ -103,7 +103,7 @@ class Robot extends PositionComponent
   bool _hurtStandingUp = false; // NEW
 
   Robot({required this.initialPosition, required this.groundY})
-    : super(size: Vector2.all(50), anchor: Anchor.center) {
+      : super(size: Vector2.all(50), anchor: Anchor.center) {
     position = initialPosition.clone();
   }
 
@@ -135,10 +135,10 @@ class Robot extends PositionComponent
     add(leftTrack);
     add(
       RectangleHitbox(
-          size: Vector2(96, 72),
-          position: Vector2(20, _bodyBaseY),
-          anchor: Anchor.center,
-        )
+        size: Vector2(96, 72),
+        position: Vector2(20, _bodyBaseY),
+        anchor: Anchor.center,
+      )
         ..collisionType = CollisionType.active
         ..renderShape = false,
     );
