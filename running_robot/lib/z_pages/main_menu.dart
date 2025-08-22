@@ -180,7 +180,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
 // ---------------- RIGHT SIDE ----------------
                 Expanded(
                   child: AspectRatio(
-                    aspectRatio: 0.94, // keeps it square
+                    aspectRatio: 0.92, // keeps it square
                     child: Image.asset(
                       "assets/images/chat_bot_1.png",
                       fit: BoxFit.contain,
