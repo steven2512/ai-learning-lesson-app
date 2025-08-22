@@ -40,8 +40,9 @@ class _MyAppState extends State<MyApp> {
   Widget _buildPage(AppRoute route) {
     // Prefer a simple if-chain to avoid pattern-matching surprises across Dart versions.
     if (route is RouteMainMenu) {
-      // PURE FLUTTER PAGE (no Flame)
-      return const MainMenuPage(); // should render a white Scaffold, empty body
+      return MainMenuPage(
+        onNavigate: navigate, // PASS NAVIGATOR
+      );
     }
 
     if (route is RouteLesson1) {
@@ -88,7 +89,9 @@ class _MyAppState extends State<MyApp> {
     }
 
     // Fallback
-    return const MainMenuPage();
+    return MainMenuPage(
+      onNavigate: navigate, // PASS NAVIGATOR
+    );
   }
 
   @override

@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/ui/buttons/avatar.dart';
+import 'package:running_robot/core/app_router.dart'; // ✅ needed for AppRoute
 
 /// MainMenuPage — plain StatefulWidget, white background.
 class MainMenuPage extends StatefulWidget {
-  const MainMenuPage({super.key});
+  final void Function(AppRoute) onNavigate; // ✅ NEW
+
+  const MainMenuPage({super.key, required this.onNavigate}); // ✅ NEW
 
   @override
   State<MainMenuPage> createState() => _MainMenuPageState();
@@ -139,9 +142,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
                       // ---- TRANSPARENT OUTLINE BUTTON ----
                       OutlinedButton.icon(
-                        onPressed: () {
-                          print("Continue Lesson tapped!");
-                        },
+                        onPressed: () =>
+                            widget.onNavigate(const RouteLesson1()), // ✅ NAV
                         icon: const Text("Continue Lesson"),
                         label: Padding(
                           padding: const EdgeInsets.only(top: 2),
@@ -177,7 +179,6 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 const SizedBox(width: 0),
 
                 // ---------------- RIGHT SIDE ----------------
-// ---------------- RIGHT SIDE ----------------
                 Expanded(
                   child: AspectRatio(
                     aspectRatio: 0.92, // keeps it square
