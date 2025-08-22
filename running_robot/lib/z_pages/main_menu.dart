@@ -174,8 +174,18 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   ),
                 ),
 
-                const SizedBox(width: 10),
-                // ---------------- RIGHT SIDE (future image etc) ----------------
+                const SizedBox(width: 5),
+
+                // ---------------- RIGHT SIDE ----------------
+                // ***** NEW: ai_book.png inside SizedBox *****
+                SizedBox(
+                  width: 100, // control size
+                  height: 120,
+                  child: Image.asset(
+                    "assets/images/chat_bot.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ],
             ),
           ),

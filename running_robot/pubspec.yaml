@@ -103,6 +103,8 @@ flutter:
     - assets/images/robot_megatron.png
     - assets/images/scribble_green.svg
     - assets/images/scribble_orange.svg
+    - assets/images/ai_book.png
+    - assets/images/chat_bot.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
