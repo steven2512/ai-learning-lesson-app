@@ -85,7 +85,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   }
 
   /// -----------------------------
-  /// NEW — Main content with scribble + box
+  /// Main content with scribble + cards
   /// -----------------------------
   Widget _buildMainContent() {
     return Positioned(
@@ -106,7 +106,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
           const SizedBox(height: 17),
 
-          // ---- MAIN TEAL BOX ----
+          const SizedBox(height: 5),
+
+          // ====== CARD 1: CONTINUE LESSON ======
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             decoration: BoxDecoration(
@@ -170,6 +172,22 @@ class _MainMenuPageState extends State<MainMenuPage> {
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
+                        ).copyWith(
+                          overlayColor:
+                              MaterialStateProperty.resolveWith<Color?>(
+                            (states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                return Colors.white.withOpacity(0.38);
+                              }
+                              if (states.contains(MaterialState.hovered)) {
+                                return Colors.white.withOpacity(0.18);
+                              }
+                              if (states.contains(MaterialState.focused)) {
+                                return Colors.white.withOpacity(0.22);
+                              }
+                              return null;
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -191,6 +209,125 @@ class _MainMenuPageState extends State<MainMenuPage> {
               ],
             ),
           ),
+
+          const SizedBox(height: 10), // spacing between the two cards
+
+          // ====== CARD 2: DAILY CHALLENGES (MATCH + DESCRIPTION RESTORED) ======
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // ---------------- LEFT SIDE (same layout, with description) ----------------
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Daily Challenges",
+                        style: GoogleFonts.lato(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        // ✅ restored
+                        "A curated 3-minute task to sharpen your instincts.",
+                        style: GoogleFonts.lato(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white70,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          // TODO: hook to your route, e.g. widget.onNavigate(const RouteDailyChallenges());
+                          print("Open Daily Challenges");
+                        },
+                        icon: const Text("Start Challenge"),
+                        label: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Transform.scale(
+                            scaleX: 1.3,
+                            child: const Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side:
+                              const BorderSide(color: Colors.white, width: 1.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          textStyle: GoogleFonts.lato(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ).copyWith(
+                          overlayColor:
+                              MaterialStateProperty.resolveWith<Color?>(
+                            (states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                return Colors.white.withOpacity(0.38);
+                              }
+                              if (states.contains(MaterialState.hovered)) {
+                                return Colors.white.withOpacity(0.18);
+                              }
+                              if (states.contains(MaterialState.focused)) {
+                                return Colors.white.withOpacity(0.22);
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 0),
+
+                // ---------------- RIGHT SIDE (same structure, new image) ----------------
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 0.92, // same as above
+                    child: Image.asset(
+                      "assets/images/trophy_people.jpg", // ✅ use illustration
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ), // ====== END DAILY CHALLENGES ======
         ],
       ),
     );
