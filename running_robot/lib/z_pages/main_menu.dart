@@ -5,6 +5,7 @@ import 'package:running_robot/ui/buttons/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/progress_bar.dart';
 import 'package:running_robot/z_pages/assets/simple_box.dart';
+import 'package:running_robot/z_pages/assets/weekly_streak.dart';
 
 /// =========================
 /// COLORS — edit here
@@ -96,14 +97,30 @@ class _MainMenuPageState extends State<MainMenuPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 50),
-
+            const SizedBox(height: 0),
+// --- Streak strip (sits under the name) ---
+            const SizedBox(height: 0),
+            WeeklyStreak(
+              streakCount: 8, // <- bind your real data
+              states: const [
+                StreakDayState.done, // Mon
+                StreakDayState.done, // Tue
+                StreakDayState.missed, // Wed
+                StreakDayState
+                    .todayPending, // Thu (example: today not completed yet)
+                StreakDayState.missed, // Fri
+                StreakDayState.missed, // Sat
+                StreakDayState.missed, // Sun
+              ],
+              startOnMonday: true,
+            ),
+            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.only(left: 2),
               child: Text(
                 "Learning Hub",
                 style: GoogleFonts.lato(
-                  fontSize: 25,
+                  fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                   letterSpacing: 0.2,
@@ -137,7 +154,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             const SizedBox(height: 10),
 
             // ====== PROGRESS (solid premium slate blue) ======
-            _buildMiniCourseProgressCard(),
+            // _buildMiniCourseProgressCard(),
 
             const SizedBox(height: 30),
 
