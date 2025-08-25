@@ -318,9 +318,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 // ---------------- RIGHT SIDE (same structure, new image) ----------------
                 Expanded(
                   child: AspectRatio(
-                    aspectRatio: 0.92, // same as above
+                    aspectRatio: 0.9, // same as above
                     child: Image.asset(
-                      "assets/images/trophy_people.jpg", // ✅ use illustration
+                      "assets/images/trophy_people.png", // ✅ use illustration
                       fit: BoxFit.contain,
                     ),
                   ),
