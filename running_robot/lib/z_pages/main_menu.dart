@@ -1,11 +1,23 @@
 /// FILE: lib/ui/main_menu.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/ui/buttons/avatar.dart';
-import 'package:running_robot/core/app_router.dart'; // existing
+import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/progress_bar.dart';
-import 'package:running_robot/z_pages/assets/simple_box.dart'; // NEW
+import 'package:running_robot/z_pages/assets/simple_box.dart';
+
+/// =========================
+/// COLORS — edit here
+/// =========================
+const box1Color = Color(0xFF00796B); // Teal hero (unchanged)
+
+// Brighter (not loud) steel blue for Progress
+const box2Color = Color.fromARGB(255, 47, 51, 73); // clean steel blue
+
+// Brighter refined plum for Daily
+const box3Color = Color.fromARGB(255, 192, 91, 91); // polished plum
+
+const onDarkText = Colors.white; // White text on the dark cards
 
 class MainMenuPage extends StatefulWidget {
   final void Function(AppRoute) onNavigate;
@@ -32,166 +44,142 @@ class _MainMenuPageState extends State<MainMenuPage> {
     );
   }
 
-  Widget _buildBackground() {
-    return const Positioned.fill(
-      child: ColoredBox(color: Colors.white),
-    );
-  }
+  Widget _buildBackground() => const Positioned.fill(
+        child: ColoredBox(color: Colors.white),
+      );
 
-  Widget _buildAvatar() {
-    return Positioned(
-      left: 19,
-      top: 60,
-      child: ProfileAvatar(
-        size: 55,
-        image: const AssetImage("assets/images/default_avatar.png"),
-        imageScale: 1.2,
-        onPressed: () => print("Avatar tapped!"),
-        fillColor: const Color.fromARGB(255, 228, 228, 228),
-      ),
-    );
-  }
+  Widget _buildAvatar() => Positioned(
+        left: 19,
+        top: 60,
+        child: ProfileAvatar(
+          size: 55,
+          image: const AssetImage("assets/images/default_avatar.png"),
+          imageScale: 1.2,
+          onPressed: () => print("Avatar tapped!"),
+          fillColor: const Color.fromARGB(255, 228, 228, 228),
+        ),
+      );
 
-  Widget _buildTextBox() {
-    return Positioned(
-      left: 86,
-      top: 67,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Good afternoon!",
-            style: GoogleFonts.lato(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Colors.black87,
-              height: 0.9,
-              letterSpacing: 0.1, // hardcoded tracking
-            ),
-          ),
-          Text(
-            "Steven Duong",
-            style: GoogleFonts.lato(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.black,
-              letterSpacing: 0.2, // hardcoded tracking
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return Positioned(
-      top: 140,
-      left: 30,
-      right: 30,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // // Scribble
-          // Padding(
-          //   padding: const EdgeInsets.only(left: 10),
-          //   child: SvgPicture.asset(
-          //     "assets/images/scribble_green.svg",
-          //     height: 40,
-          //     width: 1050, // hardcoded width thingy
-          //     fit: BoxFit.fitWidth,
-          //     alignment: Alignment.topLeft,
-          //   ),
-          // ),
-          const SizedBox(height: 50),
-
-          // Section title
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Text(
-              "Learning Hub",
+  Widget _buildTextBox() => Positioned(
+        left: 86,
+        top: 67,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Good afternoon!",
               style: GoogleFonts.lato(
-                fontSize: 25,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.black87,
+                height: 0.9,
+                letterSpacing: 0.1,
+              ),
+            ),
+            Text(
+              "Steven Duong",
+              style: GoogleFonts.lato(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
                 color: Colors.black,
                 letterSpacing: 0.2,
               ),
             ),
-          ),
-          const SizedBox(height: 5),
+          ],
+        ),
+      );
 
-          // ================== CARD 1: INTRO TO AI (teal stays) ==================
-          SimpleBox(
-            title: """Introduction to Artificial Intelligence""",
-            buttonText: "Continue Lesson",
-            buttonIcon: Icons.arrow_forward_rounded,
-            onPressed: () => widget.onNavigate(const RouteLesson1()),
-            imageAsset: "assets/images/chat_bot_1.png",
-            imageAspectRatio: 0.92,
-            decoration: BoxDecoration(
-              color: Colors.teal[700],
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
+  Widget _buildMainContent() => Positioned(
+        top: 140,
+        left: 30,
+        right: 30,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 50),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                "Learning Hub",
+                style: GoogleFonts.lato(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  letterSpacing: 0.2,
                 ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // ================== MINI PROGRESS CARD (deep indigo gradient) ==================
-          _buildMiniCourseProgressCard(),
-
-          const SizedBox(height: 30),
-
-          // Section title
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Text(
-              "Exercises",
-              style: GoogleFonts.lato(
-                fontSize: 25,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-                letterSpacing: 0.2,
               ),
             ),
-          ),
-          const SizedBox(height: 5),
+            const SizedBox(height: 5),
 
-          // ================== CARD 2: DAILY CHALLENGES (rust/amber gradient) ==================
-          SimpleBox(
-            title: "Daily Challenges",
-            description: "A curated 3-minute task to sharpen your instincts.",
-            buttonText: "Start Challenge",
-            buttonIcon: Icons.arrow_forward_rounded,
-            onPressed: () => print("Open Daily Challenges"),
-            imageAsset: "assets/images/trophy_people.png",
-            imageAspectRatio: 0.90,
-            decoration: BoxDecoration(
-              // 🎨 UPDATED: warm Rust → Amber gradient to avoid clashing with teal/indigo
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2A1304), Color(0xFF9A3412)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            // ====== CARD 1: INTRO TO AI (solid teal) ======
+            SimpleBox(
+              title: "Introduction to Artificial Intelligence",
+              buttonText: "Continue Lesson",
+              buttonIcon: Icons.arrow_forward_rounded,
+              onPressed: () => widget.onNavigate(const RouteLesson1()),
+              imageAsset: "assets/images/chat_bot_1.png",
+              imageAspectRatio: 0.92,
+              decoration: BoxDecoration(
+                color: box1Color,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, 6),
-                ),
-              ],
+              textColor: onDarkText,
             ),
-          ),
-        ],
-      ),
-    );
-  }
+
+            const SizedBox(height: 10),
+
+            // ====== PROGRESS (solid premium slate blue) ======
+            _buildMiniCourseProgressCard(),
+
+            const SizedBox(height: 30),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                "Exercises",
+                style: GoogleFonts.lato(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+
+            // ====== DAILY (solid deep eggplant) ======
+            SimpleBox(
+              title: "Daily Challenges",
+              description: "A curated 3-minute task to sharpen your instincts.",
+              buttonText: "Start Challenge",
+              buttonIcon: Icons.arrow_forward_rounded,
+              onPressed: () => print("Open Daily Challenges"),
+              imageAsset: "assets/images/trophy_people.png",
+              imageAspectRatio: 0.90,
+              decoration: BoxDecoration(
+                color: box3Color,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              textColor: onDarkText,
+            ),
+          ],
+        ),
+      );
 
   Widget _buildMiniCourseProgressCard() {
     const double progress = 0.66;
@@ -201,12 +189,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        // 🎨 UPDATED: cool Deep Indigo gradient so it reads distinct from the teal hero
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0B1220), Color(0xFF1E40AF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: box2Color, // solid
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
@@ -215,7 +198,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             offset: Offset(0, 6),
           ),
         ],
-        border: Border.all(color: Colors.white12, width: 0.6),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -227,7 +210,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 style: GoogleFonts.lato(
                   fontSize: 16.5,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: onDarkText,
                   letterSpacing: 0.15,
                 ),
               ),
@@ -241,23 +224,12 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   minimumSize: const Size(0, 0),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "View all lessons",
-                      style: GoogleFonts.lato(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward,
-                      size: 18,
-                      color: Colors.white70,
-                    ),
+                    Text("View all lessons"),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward, size: 18, color: Colors.white70),
                   ],
                 ),
               ),
@@ -266,23 +238,23 @@ class _MainMenuPageState extends State<MainMenuPage> {
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+            children: const [
               Text(
-                "$done/$total",
-                style: GoogleFonts.lato(
+                "8/12",
+                style: TextStyle(
+                  fontFamily: 'Lato',
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                   color: Colors.white70,
-                  letterSpacing: 0.1,
                 ),
               ),
               Text(
-                "${(progress * 100).round()}%",
-                style: GoogleFonts.lato(
+                "66%",
+                style: TextStyle(
+                  fontFamily: 'Lato',
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   color: Colors.white70,
-                  letterSpacing: 0.1,
                 ),
               ),
             ],

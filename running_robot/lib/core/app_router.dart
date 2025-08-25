@@ -13,10 +13,9 @@ class RouteEndLesson extends AppRoute {
   final int xp;
   final int streak;
   final int progressPercent; // 0..100
-  final List<int>
-      stageProgress; // e.g. [1.0, 0.0, 0.0] => 3 stages, first filled
+  final List<int> stageProgress; // e.g. [1, 0, 0] => 3 stages, first filled
   final String topText;
-  final String? illustrationPath; // <- pass just an asset path
+  final String? illustrationPath; // pass just an asset path
 
   const RouteEndLesson({
     required this.xp,
@@ -32,11 +31,18 @@ class RouteLesson2 extends AppRoute {
   const RouteLesson2();
 }
 
+/// Entry to the tab shell (Home/Lessons/Stats/Settings).
+/// Tabs themselves are switched internally (no new routes),
+/// but this lets you jump straight to a specific tab from outside the shell.
+/// 0 = Home, 1 = Lessons, 2 = Stats, 3 = Settings
 class RouteMainMenu extends AppRoute {
-  const RouteMainMenu();
+  final int tab;
+  const RouteMainMenu({this.tab = 0});
 }
 
-class RoutePause extends AppRoute {}
+class RoutePause extends AppRoute {
+  const RoutePause();
+}
 
 /// Single navigation function children will receive and call.
 typedef AppNavigate = void Function(AppRoute route);

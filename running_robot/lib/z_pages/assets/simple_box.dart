@@ -53,7 +53,7 @@ class SimpleBox extends StatelessWidget {
                   title,
                   style: GoogleFonts.lato(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: textColor,
                     letterSpacing: 0.15,
                     height: 1.1,
