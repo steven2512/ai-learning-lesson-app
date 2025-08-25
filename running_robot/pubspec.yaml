@@ -107,6 +107,7 @@ flutter:
     - assets/images/chat_bot.png
     - assets/images/chat_bot_1.png
     - assets/images/trophy_people.png
+    - assets/images/trophy_people.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
