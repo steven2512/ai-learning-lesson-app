@@ -91,15 +91,12 @@ class _MainMenuPageState extends State<MainMenuPage> {
       );
 
   Widget _buildMainContent() => Positioned(
-        top: 140,
+        top: 135,
         left: 30,
         right: 30,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 0),
-// --- Streak strip (sits under the name) ---
-            const SizedBox(height: 0),
             WeeklyStreak(
               streakCount: 8, // <- bind your real data
               states: const [
@@ -114,13 +111,13 @@ class _MainMenuPageState extends State<MainMenuPage> {
               ],
               startOnMonday: true,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.only(left: 2),
               child: Text(
                 "Learning Hub",
                 style: GoogleFonts.lato(
-                  fontSize: 24,
+                  fontSize: 23,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                   letterSpacing: 0.2,

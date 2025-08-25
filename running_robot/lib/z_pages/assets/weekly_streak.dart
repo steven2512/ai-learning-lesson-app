@@ -132,12 +132,12 @@ class _DayToken extends StatelessWidget {
               ),
               if (state == StreakDayState.done)
                 const Icon(Icons.local_fire_department_rounded,
-                    size: 18, color: Color(0xFFF59E0B)) // gold fire
+                    size: 22, color: Color(0xFFF59E0B)) // gold fire
               else if (state == StreakDayState.missed)
                 const Icon(Icons.ac_unit_rounded,
-                    size: 18, color: Color(0xFF7C8AA6)) // slate snowflake
+                    size: 22, color: Color(0xFF7C8AA6)) // slate snowflake
               else
-                const _TodayPendingDot(size: 6.5), // subtle gold dot
+                const _TodayPendingDot(size: 12), // subtle gold dot
             ],
           ),
           const SizedBox(height: 6),
