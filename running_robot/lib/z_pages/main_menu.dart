@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/ui/buttons/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/z_pages/assets/bell.dart';
 import 'package:running_robot/z_pages/assets/progress_bar.dart';
 import 'package:running_robot/z_pages/assets/simple_box.dart';
 import 'package:running_robot/z_pages/assets/weekly_streak.dart';
@@ -63,35 +64,50 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
   Widget _buildTextBox() => Positioned(
         left: 86,
+        right: 24, // allow row to reach the right edge
         top: 67,
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Good afternoon!",
-              style: GoogleFonts.lato(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Colors.black87,
-                height: 0.9,
-                letterSpacing: 0.1,
+            // Greeting + name (expands)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Good afternoon!",
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black87,
+                      height: 0.9,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  Text(
+                    "Steven Duong",
+                    style: GoogleFonts.lato(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              "Steven Duong",
-              style: GoogleFonts.lato(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-                letterSpacing: 0.2,
-              ),
+            const SizedBox(width: 10),
+            // Bell at top-right
+            Container(
+              padding: EdgeInsets.only(top: 3, right: 8),
+              child: const Bell(),
             ),
           ],
         ),
       );
 
   Widget _buildMainContent() => Positioned(
-        top: 135,
+        top: 140,
         left: 30,
         right: 30,
         child: Column(
