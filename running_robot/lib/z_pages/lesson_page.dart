@@ -1,5 +1,11 @@
 // FILE: lib/z_pages/lesson_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+/// ===== Global gaps (tweak these) =====
+const double kPillTopGap = 25.0; // distance from STATUS BAR to Chapter pill
+const double kMapTopGap =
+    100.0; // extra space between pill area and first node/map
 
 class LessonPage extends StatefulWidget {
   const LessonPage({super.key});
@@ -31,157 +37,64 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final chapters = List.generate(9, (i) => i + 1);
+    final double statusBar = MediaQuery.of(context).padding.top;
 
     return Scaffold(
+      // allow body to render behind the transparent AppBar
+      extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        // title: const Text(
-        //   "Lesson Map",
-        //   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        // ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark, // dark status bar icons
+
+        // ===== FIX: remove Material3 scrolled-under tint/overlay =====
+        scrolledUnderElevation: 0, // <--- CHANGED
+        surfaceTintColor: Colors.transparent, // <--- CHANGED
+        shadowColor: Colors.transparent, // <--- CHANGED (belt & braces)
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // const SizedBox(height: 16),
-          // ======= CHAPTER SELECTOR PILL =======
-          Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(40),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(40),
-                onTap: () => setState(() => _dropdownOpen = !_dropdownOpen),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome, color: Colors.blue.shade600),
-                    const SizedBox(width: 10),
-                    Text(
-                      "Chapter $_currentChapter",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
-                        fontSize: 16,
+          // ===== MAP SCROLL AREA =====
+          Positioned.fill(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: 1800 + kMapTopGap, // make room for the top gap
+                child: Padding(
+                  // push the entire map (path + nodes) down by kMapTopGap
+                  padding: EdgeInsets.only(top: kMapTopGap),
+                  child: Stack(
+                    children: [
+                      CustomPaint(
+                        size: Size(MediaQuery.of(context).size.width, 1800),
+                        painter: PathPainter(),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    AnimatedRotation(
-                      turns: _dropdownOpen ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 300),
-                      child:
-                          const Icon(Icons.expand_more, color: Colors.black54),
-                    )
-                  ],
+                      ..._buildLessonNodes(),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          // ======= DROPDOWN LIST =======
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: _dropdownOpen
-                ? Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      children: chapters.map((c) {
-                        final unlocked = c <= 3; // first 3 unlocked
-                        final isCurrent = c == _currentChapter;
-                        return InkWell(
-                          onTap: unlocked
-                              ? () {
-                                  setState(() {
-                                    _currentChapter = c;
-                                    _dropdownOpen = false;
-                                  });
-                                }
-                              : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  unlocked
-                                      ? Icons.auto_awesome
-                                      : Icons.lock_outline,
-                                  color: unlocked
-                                      ? (isCurrent
-                                          ? Colors.blue.shade600
-                                          : Colors.grey.shade600)
-                                      : Colors.grey.shade400,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Chapter $c",
-                                  style: TextStyle(
-                                    fontWeight: isCurrent
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
-                                    fontSize: 14,
-                                    color: unlocked
-                                        ? (isCurrent
-                                            ? Colors.blue.shade700
-                                            : Colors.black87)
-                                        : Colors.grey.shade400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ======= MAP =======
-          Expanded(
-            child: SingleChildScrollView(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: 1800,
-                child: Stack(
-                  children: [
-                    CustomPaint(
-                      size: Size(MediaQuery.of(context).size.width, 1800),
-                      painter: PathPainter(),
-                    ),
-                    ..._buildLessonNodes(),
-                  ],
+          // ===== FLOATING PILL + DROPDOWN (overlaps AppBar area) =====
+          Positioned(
+            // Pill sits relative to status bar + your global gap
+            top: statusBar + kPillTopGap,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                _buildChapterPill(),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: _dropdownOpen
+                      ? _buildDropdown(chapters)
+                      : const SizedBox.shrink(),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -189,10 +102,125 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     );
   }
 
+  // =========================
+  // CHAPTER PILL
+  // =========================
+  Widget _buildChapterPill() {
+    return Center(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(40),
+          onTap: () => setState(() => _dropdownOpen = !_dropdownOpen),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.blue.shade600),
+              const SizedBox(width: 10),
+              Text(
+                "Chapter $_currentChapter",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              AnimatedRotation(
+                turns: _dropdownOpen ? 0.5 : 0,
+                duration: const Duration(milliseconds: 300),
+                child: const Icon(Icons.expand_more, color: Colors.black54),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =========================
+  // DROPDOWN
+  // =========================
+  Widget _buildDropdown(List<int> chapters) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          )
+        ],
+      ),
+      child: Column(
+        children: chapters.map((c) {
+          final unlocked = c <= 3; // first 3 unlocked
+          final isCurrent = c == _currentChapter;
+          return InkWell(
+            onTap: unlocked
+                ? () {
+                    setState(() {
+                      _currentChapter = c;
+                      _dropdownOpen = false;
+                    });
+                  }
+                : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    unlocked ? Icons.auto_awesome : Icons.lock_outline,
+                    color: unlocked
+                        ? (isCurrent
+                            ? Colors.blue.shade600
+                            : Colors.grey.shade600)
+                        : Colors.grey.shade400,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Chapter $c",
+                    style: TextStyle(
+                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                      fontSize: 14,
+                      color: unlocked
+                          ? (isCurrent ? Colors.blue.shade700 : Colors.black87)
+                          : Colors.grey.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // =========================
+  // LESSON NODES
+  // =========================
   List<Widget> _buildLessonNodes() {
     final positions = [
-      const Offset(150, 100),
-      const Offset(200, 300),
+      const Offset(165, 100),
+      const Offset(215, 310),
       const Offset(120, 500),
       const Offset(160, 700),
       const Offset(80, 900),
@@ -216,7 +244,9 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 }
 
-// ========== NODE WIDGET ==========
+// =========================
+// NODE WIDGET
+// =========================
 class LessonNode extends StatelessWidget {
   final bool unlocked;
   final Animation<double> animation;
@@ -234,7 +264,7 @@ class LessonNode extends StatelessWidget {
           ? Tween<double>(begin: 1.0, end: 1.15).animate(
               CurvedAnimation(parent: animation, curve: Curves.easeInOut),
             )
-          : AlwaysStoppedAnimation(1.0),
+          : const AlwaysStoppedAnimation(1.0),
       child: Container(
         width: 80,
         height: 80,
@@ -253,9 +283,9 @@ class LessonNode extends StatelessWidget {
             width: 4,
           ),
         ),
-        child: Center(
+        child: const Center(
           child: Icon(
-            unlocked ? Icons.auto_awesome : Icons.lock,
+            Icons.auto_awesome,
             color: Colors.white,
             size: 32,
           ),
@@ -265,7 +295,9 @@ class LessonNode extends StatelessWidget {
   }
 }
 
-// ========== PATH PAINTER ==========
+// =========================
+// PATH
+// =========================
 class PathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -275,8 +307,8 @@ class PathPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    path.moveTo(190, 140);
-    path.quadraticBezierTo(300, 200, 240, 340);
+    path.moveTo(200, 140);
+    path.quadraticBezierTo(320, 200, 260, 340);
     path.quadraticBezierTo(100, 420, 140, 520);
     path.quadraticBezierTo(260, 620, 210, 720);
     path.quadraticBezierTo(50, 800, 100, 920);
