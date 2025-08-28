@@ -107,23 +107,24 @@ class _DayToken extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double newSize = size * 1.2; // bump up ~20% for bigger boxes
+
     return SizedBox(
-      width: size,
+      width: newSize,
       child: Column(
         children: [
-          // Flat, no border, soft shadow to lift from white
           Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: size,
-                height: size,
+                width: newSize,
+                height: newSize,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x14000000), // ~8% black
+                      color: Color(0x14000000),
                       blurRadius: 12,
                       offset: Offset(0, 6),
                     ),
@@ -131,70 +132,28 @@ class _DayToken extends StatelessWidget {
                 ),
               ),
               if (state == StreakDayState.done)
-                const Icon(Icons.local_fire_department_rounded,
-                    size: 22, color: Color(0xFFF59E0B)) // gold fire
+                const Icon(Icons.bolt_rounded,
+                    size: 26, color: Color(0xFF21C55D)) // green lightning
               else if (state == StreakDayState.missed)
                 const Icon(Icons.ac_unit_rounded,
-                    size: 22, color: Color(0xFF7C8AA6)) // slate snowflake
+                    size: 26, color: Color(0xFF7C8AA6)) // snowflake
               else
-                const _TodayPendingDot(size: 12), // subtle gold dot
+                const Icon(Icons.bolt_rounded,
+                    size: 26, color: Color(0xFFF5B301)), // gold lightning
             ],
           ),
           const SizedBox(height: 6),
           Text(
             label,
             style: GoogleFonts.lato(
-              fontSize: 11.5,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.15,
-              color: const Color(0xFF374151), // slate-700
+              color: const Color(0xFF374151),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _TodayPendingDot extends StatefulWidget {
-  final double size;
-  const _TodayPendingDot({required this.size});
-
-  @override
-  State<_TodayPendingDot> createState() => _TodayPendingDotState();
-}
-
-class _TodayPendingDotState extends State<_TodayPendingDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        final s = 1.0 + (_c.value * 0.06);
-        return Transform.scale(
-          scale: s,
-          child: Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFF5B301), // gold
-            ),
-          ),
-        );
-      },
     );
   }
 }
