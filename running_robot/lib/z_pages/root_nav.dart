@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/z_pages/lesson_page.dart';
 import 'package:running_robot/z_pages/main_menu.dart';
 
 /// RootNavScaffold
@@ -30,7 +31,9 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
   late final List<Widget> _tabs = <Widget>[
     // HOME
     MainMenuPage(onNavigate: widget.onNavigate),
-
+    LessonPage(
+      key: const PageStorageKey('lessons_tab'),
+    ),
     // LESSONS (stub for now — replace with your real page)
     const _SimpleScaffold(
       title: 'Lessons',

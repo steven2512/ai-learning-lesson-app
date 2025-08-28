@@ -56,7 +56,7 @@ class BoxWithProgress extends StatelessWidget {
 
     /// Defaults for fixed dimensions
     this.boxWidth = 390,
-    this.boxHeight = 190,
+    this.boxHeight = 185,
   });
 
   @override

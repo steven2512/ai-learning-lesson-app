@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/ui/buttons/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/z_pages/assets/bell.dart';
-import 'package:running_robot/z_pages/assets/box_with_progress.dart'; // 👈 use new class
-import 'package:running_robot/z_pages/assets/simple_box.dart';
-import 'package:running_robot/z_pages/assets/weekly_streak.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart'; // 👈 use new class
+import 'package:running_robot/z_pages/assets/mainMenu/simple_box.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/weekly_streak.dart';
 
 /// =========================
 /// COLORS — edit here

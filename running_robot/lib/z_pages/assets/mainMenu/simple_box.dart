@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// SimpleBox — reusable card with title, optional description,
-/// CTA button (text + trailing icon), and an image on the right.
+/// CTA button (text + trailing icon), and an optional image on the right.
 /// Fonts/sizing/letterSpacing intentionally hardcoded with Google Lato.
 class SimpleBox extends StatelessWidget {
   final String title;
@@ -10,13 +10,13 @@ class SimpleBox extends StatelessWidget {
   final String buttonText;
   final IconData buttonIcon;
   final VoidCallback onPressed;
-  final String imageAsset;
+  final String? imageAsset; // 👈 now optional
 
   final BoxDecoration decoration;
   final double maxTextWidth;
   final double imageAspectRatio;
   final EdgeInsets padding;
-  final EdgeInsets imagePadding; // 👈 NEW
+  final EdgeInsets imagePadding; // 👈 applied if image present
   final Color textColor;
 
   const SimpleBox({
@@ -26,12 +26,12 @@ class SimpleBox extends StatelessWidget {
     required this.buttonText,
     required this.buttonIcon,
     required this.onPressed,
-    required this.imageAsset,
+    this.imageAsset, // 👈 optional now
     required this.decoration,
     this.maxTextWidth = 220,
     this.imageAspectRatio = 0.92,
     this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 20),
-    this.imagePadding = EdgeInsets.zero, // 👈 default: no shift
+    this.imagePadding = EdgeInsets.zero,
     this.textColor = Colors.white,
   });
 
@@ -126,19 +126,20 @@ class SimpleBox extends StatelessWidget {
             ),
           ),
 
-          // RIGHT: image with padding
-          Expanded(
-            child: Padding(
-              padding: imagePadding, // 👈 applied here
-              child: AspectRatio(
-                aspectRatio: imageAspectRatio,
-                child: Image.asset(
-                  imageAsset,
-                  fit: BoxFit.contain,
+          // RIGHT: optional image
+          if (imageAsset != null) // 👈 only render if provided
+            Expanded(
+              child: Padding(
+                padding: imagePadding,
+                child: AspectRatio(
+                  aspectRatio: imageAspectRatio,
+                  child: Image.asset(
+                    imageAsset!,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
