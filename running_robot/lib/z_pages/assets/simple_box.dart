@@ -1,8 +1,7 @@
-/// FILE: lib/ui/widgets/simple_box.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// SimpleBox — reusable card with title, optional small-description,
+/// SimpleBox — reusable card with title, optional description,
 /// CTA button (text + trailing icon), and an image on the right.
 /// Fonts/sizing/letterSpacing intentionally hardcoded with Google Lato.
 class SimpleBox extends StatelessWidget {
@@ -17,6 +16,7 @@ class SimpleBox extends StatelessWidget {
   final double maxTextWidth;
   final double imageAspectRatio;
   final EdgeInsets padding;
+  final EdgeInsets imagePadding; // 👈 NEW
   final Color textColor;
 
   const SimpleBox({
@@ -31,6 +31,7 @@ class SimpleBox extends StatelessWidget {
     this.maxTextWidth = 220,
     this.imageAspectRatio = 0.92,
     this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 20),
+    this.imagePadding = EdgeInsets.zero, // 👈 default: no shift
     this.textColor = Colors.white,
   });
 
@@ -75,7 +76,6 @@ class SimpleBox extends StatelessWidget {
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: onPressed,
-                  // Put text before icon using the `icon` slot:
                   icon: Padding(
                     padding: const EdgeInsets.only(top: 1),
                     child: Text(
@@ -126,15 +126,16 @@ class SimpleBox extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 0),
-
-          // RIGHT: image
+          // RIGHT: image with padding
           Expanded(
-            child: AspectRatio(
-              aspectRatio: imageAspectRatio,
-              child: Image.asset(
-                imageAsset,
-                fit: BoxFit.contain,
+            child: Padding(
+              padding: imagePadding, // 👈 applied here
+              child: AspectRatio(
+                aspectRatio: imageAspectRatio,
+                child: Image.asset(
+                  imageAsset,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),

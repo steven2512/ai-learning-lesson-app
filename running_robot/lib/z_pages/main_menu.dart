@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/ui/buttons/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/bell.dart';
+import 'package:running_robot/z_pages/assets/circular_progress.dart';
 import 'package:running_robot/z_pages/assets/progress_bar.dart';
 import 'package:running_robot/z_pages/assets/simple_box.dart';
 import 'package:running_robot/z_pages/assets/weekly_streak.dart';
@@ -143,25 +144,36 @@ class _MainMenuPageState extends State<MainMenuPage> {
             const SizedBox(height: 5),
 
             // ====== CARD 1: INTRO TO AI (solid teal) ======
-            SimpleBox(
-              title: "Introduction to Artificial Intelligence",
-              buttonText: "Continue Lesson",
-              buttonIcon: Icons.arrow_forward_rounded,
-              onPressed: () => widget.onNavigate(const RouteLesson1()),
-              imageAsset: "assets/images/chat_bot_1.png",
-              imageAspectRatio: 0.92,
-              decoration: BoxDecoration(
-                color: box1Color,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+            Stack(
+              children: [
+                SimpleBox(
+                  title: "Introduction to Artificial Intelligence",
+                  buttonText: "Continue Lesson",
+                  buttonIcon: Icons.arrow_forward_rounded,
+                  onPressed: () => widget.onNavigate(const RouteLesson1()),
+                  imageAsset: "assets/images/chat_bot_1.png",
+                  imageAspectRatio: 0.92,
+                  decoration: BoxDecoration(
+                    color: box1Color,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              textColor: onDarkText,
+                  textColor: onDarkText,
+                ),
+
+                // Overlay progress badge (top-right corner of card)
+                Positioned(
+                  top: -1,
+                  right: -1,
+                  child: CircularProgressBadge(progress: 0.66),
+                ),
+              ],
             ),
 
             const SizedBox(height: 10),
