@@ -1,111 +1,293 @@
 // FILE: lib/z_pages/lesson_page.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonPage/boxWithCircle.dart';
 
 class LessonPage extends StatefulWidget {
   const LessonPage({super.key});
+
   @override
   State<LessonPage> createState() => _LessonPageState();
 }
 
-class _LessonPageState extends State<LessonPage> {
-  final double itemSpacing = 28;
+class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  bool _dropdownOpen = false;
+  int _currentChapter = 1;
 
-  // Brighter single tones
-  static const Color _cData = Color(0xFF10B981); // emerald 500
-  static const Color _cLearning = Color(0xFF6366F1); // indigo 500
-  static const Color _cLocked = Color(0xFF7C8AA6); // slate-ish mid grey
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
 
-  BoxWithCircle _lesson({
-    required String title,
-    String? subtitle,
-    required bool locked,
-    double percent = 0,
-    required Color color,
-    required IconData icon,
-  }) {
-    return BoxWithCircle(
-      title: title,
-      subtitle: subtitle,
-      percent: percent,
-      locked: locked,
-      textColor: Colors.white,
-      backgroundColor: color, // single tone
-      backgroundGradient: null, // ensure no gradient
-      progressColor: locked ? Colors.white70 : Colors.white,
-      center: Icon(locked ? Icons.lock_rounded : icon,
-          color: Colors.white, size: 28),
-      onTap: () => debugPrint('Open $title'),
-      onGo: () => debugPrint('Go to $title'),
-    );
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final chapters = List.generate(9, (i) => i + 1);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        elevation: 0.5,
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          'Lessons',
-          style: GoogleFonts.lato(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-            letterSpacing: 0.2,
-          ),
-        ),
-        centerTitle: false,
+        elevation: 1,
+        // title: const Text(
+        //   "Lesson Map",
+        //   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        // ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+      body: Column(
         children: [
-          _lesson(
-            title: 'Chapter 1: Data',
-            subtitle: 'Collect • Clean • Split',
-            locked: false,
-            percent: 0.35,
-            color: _cData,
-            icon: Icons.bolt_rounded,
+          // const SizedBox(height: 16),
+          // ======= CHAPTER SELECTOR PILL =======
+          Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(40),
+                onTap: () => setState(() => _dropdownOpen = !_dropdownOpen),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.blue.shade600),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Chapter $_currentChapter",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    AnimatedRotation(
+                      turns: _dropdownOpen ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 300),
+                      child:
+                          const Icon(Icons.expand_more, color: Colors.black54),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
-          SizedBox(height: itemSpacing),
-          _lesson(
-            title: 'Chapter 2: Learning',
-            subtitle: 'Supervised • Unsupervised • RL',
-            locked: false,
-            percent: 0.72,
-            color: _cLearning,
-            icon: Icons.local_fire_department_rounded,
+
+          // ======= DROPDOWN LIST =======
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _dropdownOpen
+                ? Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      children: chapters.map((c) {
+                        final unlocked = c <= 3; // first 3 unlocked
+                        final isCurrent = c == _currentChapter;
+                        return InkWell(
+                          onTap: unlocked
+                              ? () {
+                                  setState(() {
+                                    _currentChapter = c;
+                                    _dropdownOpen = false;
+                                  });
+                                }
+                              : null,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  unlocked
+                                      ? Icons.auto_awesome
+                                      : Icons.lock_outline,
+                                  color: unlocked
+                                      ? (isCurrent
+                                          ? Colors.blue.shade600
+                                          : Colors.grey.shade600)
+                                      : Colors.grey.shade400,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Chapter $c",
+                                  style: TextStyle(
+                                    fontWeight: isCurrent
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    fontSize: 14,
+                                    color: unlocked
+                                        ? (isCurrent
+                                            ? Colors.blue.shade700
+                                            : Colors.black87)
+                                        : Colors.grey.shade400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
-          SizedBox(height: itemSpacing),
-          _lesson(
-            title: 'Chapter 3: Models',
-            subtitle: 'Trees • Linear • KNN',
-            locked: true,
-            color: _cLocked,
-            icon: Icons.lock_rounded,
-          ),
-          SizedBox(height: itemSpacing),
-          _lesson(
-            title: 'Chapter 4: Neural Networks',
-            subtitle: 'Layers • Activation • Training',
-            locked: true,
-            color: _cLocked,
-            icon: Icons.lock_rounded,
-          ),
-          SizedBox(height: itemSpacing),
-          _lesson(
-            title: 'Chapter 5: Applications',
-            subtitle: 'Vision • Language • Agents',
-            locked: true,
-            color: _cLocked,
-            icon: Icons.lock_rounded,
+
+          const SizedBox(height: 20),
+
+          // ======= MAP =======
+          Expanded(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: 1800,
+                child: Stack(
+                  children: [
+                    CustomPaint(
+                      size: Size(MediaQuery.of(context).size.width, 1800),
+                      painter: PathPainter(),
+                    ),
+                    ..._buildLessonNodes(),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+
+  List<Widget> _buildLessonNodes() {
+    final positions = [
+      const Offset(150, 100),
+      const Offset(200, 300),
+      const Offset(120, 500),
+      const Offset(160, 700),
+      const Offset(80, 900),
+      const Offset(190, 1100),
+      const Offset(160, 1300),
+      const Offset(230, 1500),
+      const Offset(140, 1650),
+    ];
+
+    return List.generate(positions.length, (i) {
+      bool unlocked = i < 3;
+      return Positioned(
+        left: positions[i].dx,
+        top: positions[i].dy,
+        child: LessonNode(
+          unlocked: unlocked,
+          animation: _pulseController,
+        ),
+      );
+    });
+  }
+}
+
+// ========== NODE WIDGET ==========
+class LessonNode extends StatelessWidget {
+  final bool unlocked;
+  final Animation<double> animation;
+
+  const LessonNode({
+    super.key,
+    required this.unlocked,
+    required this.animation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: unlocked
+          ? Tween<double>(begin: 1.0, end: 1.15).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+            )
+          : AlwaysStoppedAnimation(1.0),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: unlocked
+              ? const LinearGradient(
+                  colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: unlocked ? null : Colors.grey.shade400,
+          border: Border.all(
+            color: unlocked ? Colors.blue.shade200 : Colors.grey.shade600,
+            width: 4,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            unlocked ? Icons.auto_awesome : Icons.lock,
+            color: Colors.white,
+            size: 32,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ========== PATH PAINTER ==========
+class PathPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black26
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    path.moveTo(190, 140);
+    path.quadraticBezierTo(300, 200, 240, 340);
+    path.quadraticBezierTo(100, 420, 140, 520);
+    path.quadraticBezierTo(260, 620, 210, 720);
+    path.quadraticBezierTo(50, 800, 100, 920);
+    path.quadraticBezierTo(300, 1000, 230, 1120);
+    path.quadraticBezierTo(100, 1200, 160, 1320);
+    path.quadraticBezierTo(280, 1400, 270, 1520);
+    path.quadraticBezierTo(100, 1600, 160, 1670);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
