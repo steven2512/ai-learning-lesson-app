@@ -18,6 +18,7 @@ class ChapterDropdown extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      width: double.infinity, // 🔑 fill whatever width parent SizedBox gives
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -30,13 +31,14 @@ class ChapterDropdown extends StatelessWidget {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: chapters.map((c) {
-          final unlocked = c <= 3; // first 3 unlocked
+          final unlocked = c <= 3;
           final isCurrent = c == currentChapter;
           return InkWell(
             onTap: unlocked ? () => onChapterSelected(c) : null,
             child: Container(
-              width: double.infinity,
+              width: double.infinity, // 🔑 each row fills full dropdown width
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Row(
                 children: [

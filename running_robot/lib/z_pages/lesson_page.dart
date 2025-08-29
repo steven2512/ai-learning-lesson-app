@@ -109,7 +109,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                   curve: Curves.easeInOut,
                   child: _dropdownOpen && _pillWidth != null
                       ? SizedBox(
-                          width: _pillWidth,
+                          width: _pillWidth! * 0.42,
                           child: ChapterDropdown(
                             chapters: chapters,
                             currentChapter: _currentChapter,
