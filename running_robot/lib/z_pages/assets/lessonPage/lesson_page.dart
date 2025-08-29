@@ -9,31 +9,24 @@ import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_pill.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/path_painter.dart';
+import 'package:running_robot/z_pages/assets/lessonPage/lesson_box.dart';
+import 'package:running_robot/core/app_router.dart';
 
 /// ===== Global gaps (map layout) =====
 const double kPillTopGap = 25.0;
 const double kMapTopGap = 100.0;
 
 /// ===== Focus animation settings =====
-const Duration kFocusDuration = Duration(milliseconds: 500);
+const Duration kFocusDuration = Duration(milliseconds: 650);
 const double kFocusedScale = 1.6;
 
-// Position of focused node (relative to screen)
+/// ===== Position of focused node (relative to screen) =====
 const double kTargetXFactor = 0.57;
-const double kTargetYFactor = 0.3;
+const double kTargetYFactor = 0.25;
 
 /// ===== Blur/opacity settings =====
 const double kMaxBlur = 6.0;
 const double kMinOpacity = 0.0;
-
-/// ===== Description box settings =====
-const EdgeInsets kBoxMargin = EdgeInsets.all(24);
-const EdgeInsets kBoxPadding = EdgeInsets.all(16);
-const double kBoxRadius = 16;
-const double kBoxShadowBlur = 12;
-const Color kBoxColor = Colors.white;
-const Color kBoxShadowColor = Colors.black26;
-const double kBoxFontSize = 16;
 
 /// ===== Light beam settings =====
 const double kBeamWidth = 120;
@@ -42,7 +35,12 @@ const Color kBeamColor = Colors.blueAccent;
 const double kBeamYOffset = 10;
 const double kBeamXOffset = -24;
 const Duration kBeamDelay = Duration(milliseconds: 200);
-const Duration kBeamDuration = Duration(milliseconds: 400);
+const Duration kBeamDuration = Duration(milliseconds: 600);
+
+/// ===== Box animation settings =====
+// CHANGE: longer fade, no “pop” feel
+const Duration kBoxDelay = Duration(milliseconds: 100); // smaller delay
+const Duration kBoxAnimDuration = Duration(milliseconds: 800); // smoother fade
 
 class LessonPage extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -63,8 +61,10 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   int? _selectedNodeIndex;
   late AnimationController _focusController;
   late AnimationController _beamController;
+  late AnimationController _boxController;
 
   bool _showBeam = false;
+  bool _showBox = false;
   bool _dropdownOpen = false;
   int _currentChapter = 1;
 
@@ -89,9 +89,24 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _beamController = AnimationController(
       vsync: this,
       duration: kBeamDuration,
+    )..addStatusListener((status) async {
+        if (status == AnimationStatus.completed) {
+          await Future.delayed(kBoxDelay);
+          setState(() => _showBox = true);
+          _boxController.forward(from: 0);
+        }
+      });
+
+    _boxController = AnimationController(
+      vsync: this,
+      duration: kBoxAnimDuration,
     );
 
+    // Precache image
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      precacheImage(
+          const AssetImage("assets/images/robot_family.jpg"), context);
+
       final renderBox =
           _pillKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
@@ -106,11 +121,15 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _scrollController.dispose();
     _focusController.dispose();
     _beamController.dispose();
+    _boxController.dispose();
     super.dispose();
   }
 
   Future<void> _focusOnNode(int index) async {
-    setState(() => _selectedNodeIndex = index);
+    setState(() {
+      _selectedNodeIndex = index;
+      _showBox = false;
+    });
     await _focusController.forward(from: 0);
     await Future.delayed(kBeamDelay);
     setState(() => _showBeam = true);
@@ -121,9 +140,11 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     setState(() {
       _selectedNodeIndex = null;
       _showBeam = false;
+      _showBox = false;
     });
     _beamController.reverse();
     _focusController.reverse();
+    _boxController.reset();
   }
 
   @override
@@ -184,6 +205,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 ),
               ),
             ),
+
+            // ===== FLOATING PILL + DROPDOWN =====
             Positioned(
               top: statusBar + kPillTopGap,
               left: 0,
@@ -224,29 +247,39 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            if (_selectedNodeIndex != null)
+
+            // ===== DESCRIPTION BOX (LessonBox appears after beam) =====
+            if (_selectedNodeIndex != null && _showBox)
               FadeTransition(
-                opacity: _focusController,
+                opacity: _boxController,
+                // CHANGE: just fade in, no scale “pop”
                 child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    margin: kBoxMargin,
-                    padding: kBoxPadding,
-                    decoration: BoxDecoration(
-                      color: kBoxColor,
-                      borderRadius: BorderRadius.circular(kBoxRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: kBoxShadowBlur,
-                          color: kBoxShadowColor,
-                          offset: const Offset(0, 4),
-                        )
+                  alignment: const Alignment(0, 0.6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: LessonBox(
+                      pictureLink: "assets/images/robot_family2.jpg",
+                      lessonTitle:
+                          "Lesson ${_selectedNodeIndex! + 1}.0 — Lesson ${_selectedNodeIndex! + 1} Title",
+                      buttonText: "Continue Lesson",
+                      onNavigate: () {
+                        widget.onNavigate(RouteLesson1());
+                      },
+                      imageHeight: 120,
+                      width: 280,
+                      height: 240,
+                      buttonColor: Colors.black,
+                      boxFill: Colors.white,
+                      textColors: [
+                        Colors.orange,
+                        Colors.white,
                       ],
-                    ),
-                    child: Text(
-                      "Lesson ${_selectedNodeIndex! + 1} description goes here...",
-                      style: TextStyle(fontSize: kBoxFontSize),
-                      textAlign: TextAlign.center,
+                      fontSizes: [18, 15],
+                      letterSpacings: [0.2, 0.1],
+                      fontWeights: [
+                        FontWeight.w700,
+                        FontWeight.w600,
+                      ],
                     ),
                   ),
                 ),
@@ -339,6 +372,9 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 }
 
+/// =========================
+/// LIGHT BEAM WIDGET
+/// =========================
 class LightBeam extends StatelessWidget {
   final Offset origin;
   final double width;
@@ -389,7 +425,6 @@ class _LightBeamPainter extends CustomPainter {
     final startX = origin.dx + kBeamXOffset;
     final startY = origin.dy + kBeamYOffset;
 
-    // Always draw full triangle, but clip vertically to reveal layer by layer
     final fullPath = Path()
       ..moveTo(startX, startY)
       ..lineTo(startX - width / 2, startY + height)

@@ -110,7 +110,9 @@ flutter:
     - assets/images/trophy_people.svg
     - assets/images/flame.png
     - assets/images/bell.png
-
+    - assets/images/robot_family.jpg
+    - assets/images/robot_family1.jpg
+    - assets/images/robot_family2.jpg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
