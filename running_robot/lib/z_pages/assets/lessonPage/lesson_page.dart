@@ -11,6 +11,7 @@ import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/path_painter.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_box.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/z_pages/assets/lessonPage/lesson_names.dart';
 
 /// ===== Global gaps (map layout) =====
 const double kPillTopGap = 25.0;
@@ -30,17 +31,16 @@ const double kMinOpacity = 0.0;
 
 /// ===== Light beam settings =====
 const double kBeamWidth = 120;
-const double kBeamHeight = 150;
+const double kBeamHeight = 130;
 const Color kBeamColor = Colors.blueAccent;
 const double kBeamYOffset = 10;
 const double kBeamXOffset = -24;
 const Duration kBeamDelay = Duration(milliseconds: 200);
-const Duration kBeamDuration = Duration(milliseconds: 600);
+const Duration kBeamDuration = Duration(milliseconds: 400);
 
 /// ===== Box animation settings =====
-// CHANGE: longer fade, no “pop” feel
-const Duration kBoxDelay = Duration(milliseconds: 100); // smaller delay
-const Duration kBoxAnimDuration = Duration(milliseconds: 800); // smoother fade
+const Duration kBoxDelay = Duration(milliseconds: 20);
+const Duration kBoxAnimDuration = Duration(milliseconds: 400);
 
 class LessonPage extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -248,37 +248,35 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
               ),
             ),
 
-            // ===== DESCRIPTION BOX (LessonBox appears after beam) =====
+            // ===== DESCRIPTION BOX =====
             if (_selectedNodeIndex != null && _showBox)
               FadeTransition(
                 opacity: _boxController,
-                // CHANGE: just fade in, no scale “pop”
                 child: Align(
                   alignment: const Alignment(0, 0.6),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: LessonBox(
                       pictureLink: "assets/images/robot_family2.jpg",
+                      // 🔥 CHANGED: Lesson title is now "Lesson 1.2"
                       lessonTitle:
-                          "Lesson ${_selectedNodeIndex! + 1}.0 — Lesson ${_selectedNodeIndex! + 1} Title",
+                          "Lesson $_currentChapter.${_selectedNodeIndex! + 1}",
+                      // Keep text title the same
+                      titleText:
+                          "${lessonTitles[_currentChapter - 1][_selectedNodeIndex!]}",
                       buttonText: "Continue Lesson",
                       onNavigate: () {
                         widget.onNavigate(RouteLesson1());
                       },
                       imageHeight: 120,
                       width: 280,
-                      height: 240,
+                      height: 280,
                       buttonColor: Colors.black,
                       boxFill: Colors.white,
                       textColors: [
+                        Colors.black,
                         Colors.orange,
                         Colors.white,
-                      ],
-                      fontSizes: [18, 15],
-                      letterSpacings: [0.2, 0.1],
-                      fontWeights: [
-                        FontWeight.w700,
-                        FontWeight.w600,
                       ],
                     ),
                   ),
