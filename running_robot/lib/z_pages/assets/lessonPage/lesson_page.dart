@@ -16,12 +16,11 @@ const double kMapTopGap = 100.0;
 
 /// ===== Focus animation settings =====
 const Duration kFocusDuration = Duration(milliseconds: 500);
-const double kFocusedScale = 1.6; // how big focused node gets
+const double kFocusedScale = 1.6;
 
 // Position of focused node (relative to screen)
-const double kTargetXFactor =
-    0.57; // 0 = far left, 0.5 = horizontal center, 1 = far right
-const double kTargetYFactor = 0.3; // 0 = top, 0.5 = vertical center, 1 = bottom
+const double kTargetXFactor = 0.57;
+const double kTargetYFactor = 0.3;
 
 /// ===== Blur/opacity settings =====
 const double kMaxBlur = 6.0;
@@ -35,6 +34,15 @@ const double kBoxShadowBlur = 12;
 const Color kBoxColor = Colors.white;
 const Color kBoxShadowColor = Colors.black26;
 const double kBoxFontSize = 16;
+
+/// ===== Light beam settings =====
+const double kBeamWidth = 120;
+const double kBeamHeight = 150;
+const Color kBeamColor = Colors.blueAccent;
+const double kBeamYOffset = 10;
+const double kBeamXOffset = -24;
+const Duration kBeamDelay = Duration(milliseconds: 200);
+const Duration kBeamDuration = Duration(milliseconds: 400);
 
 class LessonPage extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -52,9 +60,11 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late final ScrollController _scrollController;
 
-  int? _selectedNodeIndex; // which node is focused
+  int? _selectedNodeIndex;
   late AnimationController _focusController;
+  late AnimationController _beamController;
 
+  bool _showBeam = false;
   bool _dropdownOpen = false;
   int _currentChapter = 1;
 
@@ -76,6 +86,11 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
       duration: kFocusDuration,
     );
 
+    _beamController = AnimationController(
+      vsync: this,
+      duration: kBeamDuration,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final renderBox =
           _pillKey.currentContext?.findRenderObject() as RenderBox?;
@@ -90,16 +105,24 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _pulseController.dispose();
     _scrollController.dispose();
     _focusController.dispose();
+    _beamController.dispose();
     super.dispose();
   }
 
-  void _focusOnNode(int index) {
+  Future<void> _focusOnNode(int index) async {
     setState(() => _selectedNodeIndex = index);
-    _focusController.forward(from: 0);
+    await _focusController.forward(from: 0);
+    await Future.delayed(kBeamDelay);
+    setState(() => _showBeam = true);
+    _beamController.forward(from: 0);
   }
 
   void _clearFocus() {
-    setState(() => _selectedNodeIndex = null);
+    setState(() {
+      _selectedNodeIndex = null;
+      _showBeam = false;
+    });
+    _beamController.reverse();
     _focusController.reverse();
   }
 
@@ -136,7 +159,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         },
         child: Stack(
           children: [
-            // ===== MAP AREA =====
             Positioned.fill(
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -147,7 +169,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                     padding: const EdgeInsets.only(top: kMapTopGap),
                     child: Stack(
                       children: [
-                        // Background path fades when node is selected
                         AnimatedOpacity(
                           opacity: _selectedNodeIndex == null ? 1.0 : 0.0,
                           duration: const Duration(milliseconds: 400),
@@ -156,8 +177,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                             painter: PathPainter(path: path),
                           ),
                         ),
-
-                        // Nodes
                         ..._buildLessonNodes(nodes, screen),
                       ],
                     ),
@@ -165,8 +184,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-
-            // ===== FLOATING PILL + DROPDOWN =====
             Positioned(
               top: statusBar + kPillTopGap,
               left: 0,
@@ -207,8 +224,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-
-            // ===== DESCRIPTION BOX =====
             if (_selectedNodeIndex != null)
               FadeTransition(
                 opacity: _focusController,
@@ -242,9 +257,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     );
   }
 
-  // =========================
-  // LESSON NODES
-  // =========================
   List<Widget> _buildLessonNodes(List<Offset> centers, Size screen) {
     return List<Widget>.generate(centers.length, (i) {
       final unlocked = i < 3;
@@ -261,38 +273,54 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         },
       );
 
-      // Focused node → animate to global target position
       if (_selectedNodeIndex == i) {
-        return AnimatedBuilder(
-          animation: _focusController,
-          builder: (context, child) {
-            final t = _focusController.value;
-
-            final dx = lerpDouble(c.dx, screen.width * kTargetXFactor, t)!;
-            final dy = lerpDouble(c.dy, screen.height * kTargetYFactor, t)!;
-            final scale = lerpDouble(1.0, kFocusedScale, t)!;
-
-            return Positioned(
-              left: dx - 40 * scale,
-              top: dy - 40 * scale,
-              child: Transform.scale(
-                scale: scale,
-                child: child,
+        return Stack(
+          children: [
+            if (_showBeam)
+              AnimatedBuilder(
+                animation: _beamController,
+                builder: (context, _) {
+                  final t = _beamController.value;
+                  final dx =
+                      lerpDouble(c.dx, screen.width * kTargetXFactor, 1)!;
+                  final dy =
+                      lerpDouble(c.dy, screen.height * kTargetYFactor, 1)!;
+                  return Positioned.fill(
+                    child: LightBeam(
+                      origin: Offset(dx, dy),
+                      progress: t,
+                      width: kBeamWidth,
+                      height: kBeamHeight,
+                      color: kBeamColor,
+                    ),
+                  );
+                },
               ),
-            );
-          },
-          child: node,
+            AnimatedBuilder(
+              animation: _focusController,
+              builder: (context, child) {
+                final t = _focusController.value;
+                final dx = lerpDouble(c.dx, screen.width * kTargetXFactor, t)!;
+                final dy = lerpDouble(c.dy, screen.height * kTargetYFactor, t)!;
+                final scale = lerpDouble(1.0, kFocusedScale, t)!;
+                return Positioned(
+                  left: dx - 40 * scale,
+                  top: dy - 40 * scale,
+                  child: Transform.scale(scale: scale, child: child),
+                );
+              },
+              child: node,
+            ),
+          ],
         );
       }
 
-      // Non-focused nodes → blur + fade
       return AnimatedBuilder(
         animation: _focusController,
         builder: (context, child) {
           final t = _focusController.value;
           final blur = lerpDouble(0, kMaxBlur, t)!;
           final opacity = lerpDouble(1, kMinOpacity, t)!;
-
           return Positioned(
             left: c.dx - 40,
             top: c.dy - 40,
@@ -308,5 +336,97 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         child: node,
       );
     });
+  }
+}
+
+class LightBeam extends StatelessWidget {
+  final Offset origin;
+  final double width;
+  final double height;
+  final Color color;
+  final double progress;
+
+  const LightBeam({
+    super.key,
+    required this.origin,
+    required this.progress,
+    this.width = 200,
+    this.height = 300,
+    this.color = Colors.blueAccent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _LightBeamPainter(
+        origin: origin,
+        width: width,
+        height: height,
+        progress: progress,
+        color: color,
+      ),
+    );
+  }
+}
+
+class _LightBeamPainter extends CustomPainter {
+  final Offset origin;
+  final double width;
+  final double height;
+  final double progress;
+  final Color color;
+
+  _LightBeamPainter({
+    required this.origin,
+    required this.width,
+    required this.height,
+    required this.progress,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final startX = origin.dx + kBeamXOffset;
+    final startY = origin.dy + kBeamYOffset;
+
+    // Always draw full triangle, but clip vertically to reveal layer by layer
+    final fullPath = Path()
+      ..moveTo(startX, startY)
+      ..lineTo(startX - width / 2, startY + height)
+      ..lineTo(startX + width / 2, startY + height)
+      ..close();
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color.withOpacity(0.6), color.withOpacity(0.0)],
+      ).createShader(Rect.fromLTWH(
+        startX - width / 2,
+        startY,
+        width,
+        height,
+      ));
+
+    final visibleHeight = height * progress;
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(
+      startX - width / 2,
+      startY,
+      width,
+      visibleHeight,
+    ));
+    canvas.drawPath(fullPath, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _LightBeamPainter oldDelegate) {
+    return oldDelegate.origin != origin ||
+        oldDelegate.width != width ||
+        oldDelegate.height != height ||
+        oldDelegate.progress != progress ||
+        oldDelegate.color != color;
   }
 }
