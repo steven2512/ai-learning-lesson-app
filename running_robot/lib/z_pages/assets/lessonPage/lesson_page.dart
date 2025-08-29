@@ -30,17 +30,17 @@ const double kMaxBlur = 6.0;
 const double kMinOpacity = 0.0;
 
 /// ===== Light beam settings =====
-const double kBeamWidth = 120;
-const double kBeamHeight = 130;
+const double kBeamWidth = 100;
+const double kBeamHeight = 90;
 const Color kBeamColor = Colors.blueAccent;
 const double kBeamYOffset = 10;
 const double kBeamXOffset = -24;
 const Duration kBeamDelay = Duration(milliseconds: 200);
-const Duration kBeamDuration = Duration(milliseconds: 400);
+const Duration kBeamDuration = Duration(milliseconds: 300);
 
 /// ===== Box animation settings =====
-const Duration kBoxDelay = Duration(milliseconds: 20);
-const Duration kBoxAnimDuration = Duration(milliseconds: 400);
+const Duration kBoxDelay = Duration(milliseconds: 0);
+const Duration kBoxAnimDuration = Duration(milliseconds: 500);
 
 class LessonPage extends StatefulWidget {
   final AppNavigate onNavigate;
