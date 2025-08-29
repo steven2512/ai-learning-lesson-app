@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/z_pages/lesson_page.dart';
-import 'package:running_robot/z_pages/main_menu.dart';
+import 'package:running_robot/z_pages/assets/lessonPage/lesson_page.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
 
 /// RootNavScaffold
 /// - Hosts a bottom NavigationBar (Material 3)

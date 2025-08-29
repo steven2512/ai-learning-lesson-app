@@ -1,23 +1,24 @@
 // FILE: lib/z_pages/lesson_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:running_robot/core/app_router.dart'
-    show AppNavigate; // CHANGE: bring in AppNavigate
+import 'package:running_robot/core/app_router.dart' show AppNavigate;
+import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
+
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_pill.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
+import 'package:running_robot/z_pages/assets/lessonPage/path_painter.dart';
 
 /// ===== Global gaps (tweak these) =====
 const double kPillTopGap = 25.0;
 const double kMapTopGap = 100.0;
 
 class LessonPage extends StatefulWidget {
-  // CHANGE: accept onNavigate so children can trigger typed navigation
   final AppNavigate onNavigate;
 
   const LessonPage({
     super.key,
-    required this.onNavigate, // CHANGE: required
+    required this.onNavigate,
   });
 
   @override
@@ -61,6 +62,11 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     final chapters = List.generate(9, (i) => i + 1);
     final double statusBar = MediaQuery.of(context).padding.top;
 
+    // Fixed canvas size (height matches your original)
+    final mapSize = LessonMapGeometry.mapSize(context);
+    final path = LessonMapGeometry.pathFor(_currentChapter, mapSize);
+    final nodes = LessonMapGeometry.nodesFor(_currentChapter, mapSize);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFF3F4F6),
@@ -81,17 +87,17 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           Positioned.fill(
             child: SingleChildScrollView(
               child: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: 1800 + kMapTopGap,
+                width: mapSize.width,
+                height: mapSize.height + kMapTopGap,
                 child: Padding(
-                  padding: EdgeInsets.only(top: kMapTopGap),
+                  padding: const EdgeInsets.only(top: kMapTopGap),
                   child: Stack(
                     children: [
                       CustomPaint(
-                        size: Size(MediaQuery.of(context).size.width, 1800),
-                        painter: PathPainter(),
+                        size: mapSize,
+                        painter: PathPainter(path: path),
                       ),
-                      ..._buildLessonNodes(),
+                      ..._buildLessonNodes(nodes),
                     ],
                   ),
                 ),
@@ -140,39 +146,22 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 
   // =========================
-  // LESSON NODES
+  // LESSON NODES (HARDCODED CENTERS)
   // =========================
-  List<Widget> _buildLessonNodes() {
-    final positions = [
-      const Offset(165, 100),
-      const Offset(215, 310),
-      const Offset(120, 500),
-      const Offset(160, 700),
-      const Offset(80, 900),
-      const Offset(190, 1100),
-      const Offset(160, 1300),
-      const Offset(230, 1500),
-      const Offset(140, 1650),
-    ];
-
-    return List.generate(positions.length, (i) {
-      final unlocked = i < 3;
-
+  List<Widget> _buildLessonNodes(List<Offset> centers) {
+    return List<Widget>.generate(centers.length, (i) {
+      final unlocked = i < 3; // your rule
+      final c = centers[i];
       return Positioned(
-        left: positions[i].dx,
-        top: positions[i].dy,
+        left: c.dx - 40, // center the 80x80 node
+        top: c.dy - 40,
         child: LessonNode(
           unlocked: unlocked,
           animation: _pulseController,
-          onNavigate: widget.onNavigate, // CHANGE: pass down
-          // CHANGE: function that returns a function signature (stub for now)
-          // We'll wire the real preview → route flow next.
+          onNavigate: widget.onNavigate,
           onTapBuilder: (nav) {
             return () {
-              // TODO(next step): show preview sheet, then use:
-              // nav(RouteLesson1());  // example
-              // Keeping as a no-op placeholder to avoid coupling here.
-              // (Tap still works; does nothing yet.)
+              // TODO: preview → nav(RouteLesson1());
             };
           },
         ),

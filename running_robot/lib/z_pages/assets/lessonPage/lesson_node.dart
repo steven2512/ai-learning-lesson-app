@@ -65,32 +65,3 @@ class LessonNode extends StatelessWidget {
     );
   }
 }
-
-// =========================
-// PATH
-// =========================
-class PathPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black26
-      ..strokeWidth = 5
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    path.moveTo(200, 140);
-    path.quadraticBezierTo(320, 200, 260, 340);
-    path.quadraticBezierTo(100, 420, 140, 520);
-    path.quadraticBezierTo(260, 620, 210, 720);
-    path.quadraticBezierTo(50, 800, 100, 920);
-    path.quadraticBezierTo(300, 1000, 230, 1120);
-    path.quadraticBezierTo(100, 1200, 160, 1320);
-    path.quadraticBezierTo(280, 1400, 270, 1520);
-    path.quadraticBezierTo(100, 1600, 160, 1670);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
