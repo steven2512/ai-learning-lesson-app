@@ -1,6 +1,8 @@
 // FILE: lib/z_pages/lesson_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:running_robot/core/app_router.dart'
+    show AppNavigate; // CHANGE: bring in AppNavigate
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_pill.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
@@ -10,7 +12,13 @@ const double kPillTopGap = 25.0;
 const double kMapTopGap = 100.0;
 
 class LessonPage extends StatefulWidget {
-  const LessonPage({super.key});
+  // CHANGE: accept onNavigate so children can trigger typed navigation
+  final AppNavigate onNavigate;
+
+  const LessonPage({
+    super.key,
+    required this.onNavigate, // CHANGE: required
+  });
 
   @override
   State<LessonPage> createState() => _LessonPageState();
@@ -148,13 +156,25 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     ];
 
     return List.generate(positions.length, (i) {
-      bool unlocked = i < 3;
+      final unlocked = i < 3;
+
       return Positioned(
         left: positions[i].dx,
         top: positions[i].dy,
         child: LessonNode(
           unlocked: unlocked,
           animation: _pulseController,
+          onNavigate: widget.onNavigate, // CHANGE: pass down
+          // CHANGE: function that returns a function signature (stub for now)
+          // We'll wire the real preview → route flow next.
+          onTapBuilder: (nav) {
+            return () {
+              // TODO(next step): show preview sheet, then use:
+              // nav(RouteLesson1());  // example
+              // Keeping as a no-op placeholder to avoid coupling here.
+              // (Tap still works; does nothing yet.)
+            };
+          },
         ),
       );
     });

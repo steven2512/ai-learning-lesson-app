@@ -32,6 +32,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
     // HOME
     MainMenuPage(onNavigate: widget.onNavigate),
     LessonPage(
+      onNavigate: widget.onNavigate,
       key: const PageStorageKey('lessons_tab'),
     ),
     // LESSONS (stub for now — replace with your real page)
