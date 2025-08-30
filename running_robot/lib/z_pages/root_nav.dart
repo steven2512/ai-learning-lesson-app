@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_page.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
+import 'package:running_robot/z_pages/assets/settings/setting.dart';
 
 /// RootNavScaffold
 /// - Hosts a bottom NavigationBar (Material 3)
@@ -12,7 +13,7 @@ import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
 /// - Preserves tab state & scroll positions with PageStorage
 class RootNavScaffold extends StatefulWidget {
   final AppNavigate onNavigate;
-  final int initialIndex; // 0=Home, 1=Lessons, 2=Stats, 3=Settings
+  final int initialIndex; // 0=Home, 1=Lessons, 2=Puzzles, 3=Settings
 
   const RootNavScaffold({
     super.key,
@@ -31,30 +32,22 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
   late final List<Widget> _tabs = <Widget>[
     // HOME
     MainMenuPage(onNavigate: widget.onNavigate),
+
+    // LESSONS
     LessonPage(
       onNavigate: widget.onNavigate,
       key: const PageStorageKey('lessons_tab'),
     ),
-    // LESSONS (stub for now — replace with your real page)
+
+    // PUZZLES
     const _SimpleScaffold(
-      title: 'Lessons',
-      body: Center(child: Text('Lessons Hub')),
-      storageKey: PageStorageKey('lessons_tab'),
+      title: 'Puzzles',
+      body: Center(child: Text('Puzzle-solving games will appear here')),
+      storageKey: PageStorageKey('puzzles_tab'),
     ),
 
-    // STATS (stub)
-    const _SimpleScaffold(
-      title: 'Statistics',
-      body: Center(child: Text('Your stats will appear here')),
-      storageKey: PageStorageKey('stats_tab'),
-    ),
-
-    // SETTINGS (stub)
-    const _SimpleScaffold(
-      title: 'Settings',
-      body: Center(child: Text('Settings')),
-      storageKey: PageStorageKey('settings_tab'),
-    ),
+    // SETTINGS (now a full SettingsPage)
+    const SettingsPage(),
   ];
 
   @override
@@ -108,9 +101,9 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
               label: 'Lessons',
             ),
             NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart_rounded),
-              label: 'Stats',
+              icon: Icon(Icons.interests_outlined), // 🧩 puzzles vibe
+              selectedIcon: Icon(Icons.interests),
+              label: 'Puzzles',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
@@ -124,8 +117,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
   }
 }
 
-/// Lightweight placeholder scaffold for non-home tabs.
-/// Replace these with your real pages anytime.
+/// Still used for stub tabs (like Puzzles until you build it out)
 class _SimpleScaffold extends StatelessWidget {
   final String title;
   final Widget body;
