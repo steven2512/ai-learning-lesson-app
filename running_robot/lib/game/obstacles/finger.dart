@@ -1,4 +1,4 @@
-// finger.dart — WITH FADE IN/OUT + restart()
+// finger.dart — SHOW/HIDE WITH FADE ANIMATION
 import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -55,10 +55,10 @@ class Finger extends SimpleMover {
         right();
         break;
       case EventFinger.hide:
-        hide();
+        fadeOut();
         break;
       case EventFinger.show:
-        show();
+        fadeIn();
         break;
     }
   }
@@ -68,18 +68,7 @@ class Finger extends SimpleMover {
   void left() => velocity = Vector2(-speed, 0);
   void right() => velocity = Vector2(speed, 0);
 
-  void hide() {
-    isVisible = false;
-    velocity = Vector2.zero();
-  }
-
-  void show() {
-    isVisible = true;
-    opacity = 1.0;
-    velocity = Vector2.zero();
-  }
-
-  /// Kill: snap back, hide, and stop
+  /// Hard reset (kill instantly)
   void reset() {
     position = _originalPosition.clone();
     velocity = Vector2.zero();
@@ -88,12 +77,28 @@ class Finger extends SimpleMover {
     opacity = 0.0;
   }
 
-  /// Fade out → reset → fade in
-  Future<void> fadeOutAndRestart() async {
-    if (_fading) return; // avoid overlap
+  /// Smooth fade in
+  Future<void> fadeIn() async {
+    if (_fading) return;
+    _fading = true;
+    isVisible = true;
+
+    final steps = 20;
+    for (int i = 0; i <= steps; i++) {
+      opacity = (i / steps);
+      await Future.delayed(
+          Duration(milliseconds: (fadeDuration * 1000 / steps).round()));
+    }
+
+    opacity = 1.0;
+    _fading = false;
+  }
+
+  /// Smooth fade out
+  Future<void> fadeOut() async {
+    if (_fading) return;
     _fading = true;
 
-    // fade out
     final steps = 20;
     for (int i = 0; i <= steps; i++) {
       opacity = 1.0 - (i / steps);
@@ -101,17 +106,31 @@ class Finger extends SimpleMover {
           Duration(milliseconds: (fadeDuration * 1000 / steps).round()));
     }
 
-    // reset position instantly
+    opacity = 0.0;
+    isVisible = false;
+    _fading = false;
+  }
+
+  /// Fade out → reset → fade in (loop when hitting cutoffs)
+  Future<void> fadeOutAndRestart() async {
+    if (_fading) return;
+    _fading = true;
+
+    final steps = 20;
+    for (int i = 0; i <= steps; i++) {
+      opacity = 1.0 - (i / steps);
+      await Future.delayed(
+          Duration(milliseconds: (fadeDuration * 1000 / steps).round()));
+    }
+
     position = _originalPosition.clone();
 
-    // fade in
     for (int i = 0; i <= steps; i++) {
       opacity = (i / steps);
       await Future.delayed(
           Duration(milliseconds: (fadeDuration * 1000 / steps).round()));
     }
 
-    // keep moving in same direction
     switchPhase(currentEvent);
     _fading = false;
   }

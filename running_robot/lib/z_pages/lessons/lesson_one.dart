@@ -116,7 +116,7 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
     // Story text
     introTextBox = FancyTextBox(
       sequence: introText,
-      interval: 4.5,
+      interval: 4,
       fadeDuration: 0.5,
       position: Vector2(gameSize.x / 2, gameSize.y / 3),
       anchor: Anchor.center,
@@ -291,7 +291,7 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
     ]);
 
     // Kick off
-    await handlePhase();
+    handlePhase();
   }
 
   void close() {
@@ -314,6 +314,12 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
   Future<void> handlePhase() async {
     switch (phase) {
       case GamePhase.intro:
+        introTextBox.showText();
+        await Future.delayed(const Duration(seconds: 26));
+        arrowDown.switchPhase(EventHorizontalObstacle.startMoving);
+        await Future.delayed(const Duration(milliseconds: 3500));
+        arrowDown.switchPhase(EventHorizontalObstacle.stopMoving);
+        await Future.delayed(const Duration(seconds: 11));
         phase = GamePhase.waitingForSwipe;
         handlePhase();
         break;
@@ -324,6 +330,8 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
         break;
 
       case GamePhase.fisrtRun:
+        introTextBox.switchPhase(EventText.hideText);
+        finger.switchPhase(EventFinger.hide);
         robot.switchPhase(EventRobot.resume);
         ground.switchPhase(EventHorizontalObstacle.startMoving);
         clouds.forEach(
