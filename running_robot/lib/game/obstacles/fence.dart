@@ -121,7 +121,7 @@ class Fence extends SimpleMover
       _angVel = 0.0;
       angle = 0.0;
       // rebuild contacts if size/anchor changed (defensive)
-      _buildContactPoints();
+      _buildContactPoints(); // [FIX] now safe (does not reassign late final)
       // also ensure Y is reasonable after reset (in case caller places us near ground)
       position.y = groundY - _lowestLocalY(angle);
     }
@@ -136,7 +136,7 @@ class Fence extends SimpleMover
     // Build as if center-origin around the sprite's local center, but offset
     // by the component anchor so it's valid for any anchor.
     // These are local points relative to the component's origin (0,0).
-    _contactPts = [
+    final pts = <Vector2>[
       // body corners in local coords:
       // (We position corners relative to the sprite's visual center,
       // then shift them so (0,0) is at the component origin defined by anchor)
@@ -145,7 +145,15 @@ class Fence extends SimpleMover
       Vector2(hw + (size.x / 2 - origin.x), hh + (size.y / 2 - origin.y)),
       Vector2(-hw + (size.x / 2 - origin.x), hh + (size.y / 2 - origin.y)),
     ];
-    _contactsBuilt = true;
+
+    if (!_contactsBuilt) {
+      _contactPts = pts; // [FIX] initialize once (late final)
+      _contactsBuilt = true; // [FIX] mark as built
+    } else {
+      _contactPts // [FIX] mutate in-place on subsequent calls
+        ..clear()
+        ..addAll(pts);
+    }
   }
 
   double _lowestLocalY(double a) {
@@ -173,7 +181,7 @@ class Fence extends SimpleMover
 
     // Position back to spawn, then snap to ground for upright pose
     resetPosition(); // from SimpleMover
-    _buildContactPoints(); // defensive (in case size/anchor changed)
+    _buildContactPoints(); // [FIX] safe re-use (no late final reassign)
     position.y = groundY - _lowestLocalY(angle);
   }
 }

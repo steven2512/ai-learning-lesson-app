@@ -90,11 +90,11 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
 
     // Fence (barrel)
     barell = Fence(
-      initialPosition: Vector2(gameSize.x + 200, groundY - 45),
+      initialPosition: Vector2(gameSize.x + 200, groundY - 28),
       picturePath: 'barrell_red.png',
       groundY: groundY,
-      size: Vector2(90, 90),
-      velocity: Vector2(-70, 0),
+      size: Vector2(50, 60),
+      velocity: Vector2(-100, 0),
     );
 
     // Arrow
@@ -314,12 +314,12 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
   Future<void> handlePhase() async {
     switch (phase) {
       case GamePhase.intro:
-        introTextBox.showText();
-        await Future.delayed(const Duration(seconds: 26));
-        arrowDown.switchPhase(EventHorizontalObstacle.startMoving);
-        await Future.delayed(const Duration(milliseconds: 3500));
-        arrowDown.switchPhase(EventHorizontalObstacle.stopMoving);
-        await Future.delayed(const Duration(seconds: 11));
+        // introTextBox.showText();
+        // await Future.delayed(const Duration(seconds: 26));
+        // arrowDown.switchPhase(EventHorizontalObstacle.startMoving);
+        // await Future.delayed(const Duration(milliseconds: 3500));
+        // arrowDown.switchPhase(EventHorizontalObstacle.stopMoving);
+        // await Future.delayed(const Duration(seconds: 11));
         phase = GamePhase.waitingForSwipe;
         handlePhase();
         break;
@@ -338,38 +338,38 @@ class LessonOne extends FlameGame with PanDetector, HasCollisionDetection {
           (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
         );
 
-        await Future.delayed(const Duration(seconds: 4));
-        bird.switchPhase(EventHorizontalObstacle.startMoving);
+        // await Future.delayed(const Duration(seconds: 4));
+        // bird.switchPhase(EventHorizontalObstacle.startMoving);
 
-        await Future.delayed(const Duration(seconds: 4));
-        firstRunTextBox.switchPhase(EventText.showText);
-        ground.switchPhase(EventHorizontalObstacle.stopMoving);
-        clouds.forEach(
-          (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
-        );
-        await Future.delayed(const Duration(seconds: 3));
-        bird.switchPhase(EventHorizontalObstacle.stopMoving);
+        // await Future.delayed(const Duration(seconds: 4));
+        // firstRunTextBox.switchPhase(EventText.showText);
+        // ground.switchPhase(EventHorizontalObstacle.stopMoving);
+        // clouds.forEach(
+        //   (x) => x.switchPhase(EventHorizontalObstacle.stopMoving),
+        // );
+        // await Future.delayed(const Duration(seconds: 3));
+        // bird.switchPhase(EventHorizontalObstacle.stopMoving);
 
-        ground.switchPhase(EventHorizontalObstacle.startMoving);
-        clouds.forEach(
-          (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
-        );
+        // ground.switchPhase(EventHorizontalObstacle.startMoving);
+        // clouds.forEach(
+        //   (x) => x.switchPhase(EventHorizontalObstacle.startMoving),
+        // );
 
-        await Future.delayed(const Duration(seconds: 5));
-        cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
-        rainFall.forEach(
-          (x) => x.switchPhase(EventVerticalObstacle.startFalling),
-        );
+        // await Future.delayed(const Duration(seconds: 5));
+        // cloudRain.switchPhase(EventHorizontalObstacle.startMoving);
+        // rainFall.forEach(
+        //   (x) => x.switchPhase(EventVerticalObstacle.startFalling),
+        // );
 
-        await Future.delayed(const Duration(seconds: 12));
-        cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
-        rainFall.forEach(
-          (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
-        );
+        // await Future.delayed(const Duration(seconds: 12));
+        // cloudRain.switchPhase(EventHorizontalObstacle.stopMoving);
+        // rainFall.forEach(
+        //   (x) => x.switchPhase(EventVerticalObstacle.stopFalling),
+        // );
 
         barell.switchPhase(EventHorizontalObstacle.startMoving);
 
-        await Future.delayed(const Duration(seconds: 4));
+        await Future.delayed(const Duration(seconds: 2));
         robot.switchPhase(EventRobot.jump);
 
         await Future.delayed(const Duration(seconds: 4));

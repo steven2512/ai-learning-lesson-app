@@ -75,8 +75,8 @@ class Robot extends PositionComponent
 
   bool isHurt = false;
 
-  // Contact points (center-relative)
-  late final List<Vector2> _contactPts;
+  // Contact points (legacy cache; kept for debugging/consistency)
+  List<Vector2> _contactPts = [];
 
   // Pivot (right-most lowest corner) for final settle
   Vector2? _pivotLocal;
@@ -147,6 +147,7 @@ class Robot extends PositionComponent
   }
 
   void _buildContactPoints() {
+    // legacy cache (kept for debugging)
     final origin = (anchor.toVector2()..multiply(size));
     List<Vector2> rectCorners(SpriteComponent c) {
       final hw = c.size.x / 2, hh = c.size.y / 2;
@@ -167,36 +168,85 @@ class Robot extends PositionComponent
     ];
   }
 
+  // [FIX] Rotate a 2D vector by angle a (radians)
+  Vector2 _rot(Vector2 p, double a) => Vector2(
+      p.x * math.cos(a) - p.y * math.sin(a),
+      p.x * math.sin(a) + p.y * math.cos(a));
+
+  // [FIX] Enumerate *current* corners of all child sprites, including each child’s
+  // own rotation AND scale, in the Robot’s local coordinates (before parent rotation).
+  Iterable<Vector2> _iterCornersLocalUnparented() sync* {
+    final origin = (anchor.toVector2()..multiply(size));
+    Vector2 basePos(SpriteComponent c) => c.position - origin;
+
+    Iterable<Vector2> childCorners(SpriteComponent c) sync* {
+      // half-size with scale applied
+      final hw = (c.size.x / 2) * c.scale.x; // [FIX]
+      final hh = (c.size.y / 2) * c.scale.y; // [FIX]
+      final corners = <Vector2>[
+        Vector2(-hw, -hh),
+        Vector2(hw, -hh),
+        Vector2(hw, hh),
+        Vector2(-hw, hh),
+      ];
+      final pos = basePos(c);
+      final ang = c.angle;
+      if (ang == 0) {
+        for (final v in corners) {
+          yield v + pos;
+        }
+      } else {
+        for (final v in corners) {
+          yield _rot(v, ang) +
+              pos; // [FIX] rotate scaled corners by child angle
+        }
+      }
+    }
+
+    yield* childCorners(body);
+    yield* childCorners(leftTrack);
+    yield* childCorners(rightTrack);
+  }
+
+  // [FIX] Lowest y after applying *parent* rotation `a` to the local points
   double _lowestLocalY(double a) {
     final sinA = math.sin(a), cosA = math.cos(a);
     double lowest = -double.infinity;
-    for (final p in _contactPts) {
-      final y = p.x * sinA + p.y * cosA;
+    for (final p in _iterCornersLocalUnparented()) {
+      final y = p.x * sinA + p.y * cosA; // rotate by parent
       if (y > lowest) lowest = y;
     }
     return lowest;
   }
 
-  double _rotY(Vector2 p, double a) => p.x * math.sin(a) + p.y * math.cos(a);
-
+  // [FIX] Lock pivot among the *lowest* points (scaled geometry too), choosing the right-most
+  // in world (rotated) X.
   void _lockPivot(double a) {
-    final eps = 3.0;
     final sinA = math.sin(a), cosA = math.cos(a);
-    double lowest = -double.infinity;
-    for (final p in _contactPts) {
+
+    // find global lowest y'
+    double lowestY = -double.infinity;
+    for (final p in _iterCornersLocalUnparented()) {
       final y = p.x * sinA + p.y * cosA;
-      if (y > lowest) lowest = y;
+      if (y > lowestY) lowestY = y;
     }
+
+    const eps = 3.0;
     Vector2? best;
     double bestX = -double.infinity;
-    for (final p in _contactPts) {
-      final y = p.x * sinA + p.y * math.cos(a);
-      if (lowest - y <= eps && p.x > bestX) {
-        best = p;
-        bestX = p.x;
+
+    for (final p in _iterCornersLocalUnparented()) {
+      final y = p.x * sinA + p.y * cosA;
+      if (lowestY - y <= eps) {
+        final x = p.x * cosA - p.y * sinA; // rotated X
+        if (x > bestX) {
+          bestX = x;
+          best = p;
+        }
       }
     }
-    _pivotLocal = best ?? _contactPts.first;
+
+    _pivotLocal = best ?? _iterCornersLocalUnparented().first;
     _hasPivot = true;
   }
 
@@ -248,6 +298,7 @@ class Robot extends PositionComponent
     _settling = false;
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
+    // live geometry is used every frame
   }
 
   void stop() {
@@ -279,15 +330,14 @@ class Robot extends PositionComponent
 
   // ────────── HURT (NEW) ──────────
   void hurt() {
-    // NEW
     if (!isHurt) isHurt = true;
-    currentEvent = EventRobot.hurt; // NEW
-    pauseTracks = true; // NEW: tracks stop
-    _hurtElapsed = 0.0; // NEW
-    _hurtHoldElapsed = 0.0; // NEW
-    _hurtWiggleElapsed = 0.0; // NEW
-    _hurtStandingUp = false; // NEW
-    _hurtPhase = 0; // NEW
+    currentEvent = EventRobot.hurt;
+    pauseTracks = true;
+    _hurtElapsed = 0.0;
+    _hurtHoldElapsed = 0.0;
+    _hurtWiggleElapsed = 0.0;
+    _hurtStandingUp = false;
+    _hurtPhase = 0;
     add(
       Diziness(position: Vector2(70, _bodyBaseY - 5), delay: 1.5, duration: 4.0)
         ..anchor = Anchor.center,
@@ -343,7 +393,7 @@ class Robot extends PositionComponent
         _resetAll();
         break;
       case EventRobot.hurt:
-        _updateHurtMotion(dt); // NEW
+        _updateHurtMotion(dt);
         break;
       case EventRobot.electrocute:
         _updateElectrocuteMotion(dt);
@@ -362,8 +412,9 @@ class Robot extends PositionComponent
     _moveRobot(dt);
 
     final centerAtTouch = groundY - _lowestLocalY(angle);
+
     if (position.y >= centerAtTouch) {
-      position.y = centerAtTouch;
+      position.y = centerAtTouch; // clamp to true (scaled) silhouette
 
       if (velocity.y.abs() > minBounceSpeed) {
         velocity.y = -velocity.y * bounceE;
@@ -428,6 +479,9 @@ class Robot extends PositionComponent
     }
   }
 
+  // Helper for rotated Y of a local point
+  double _rotY(Vector2 p, double a) => p.x * math.sin(a) + p.y * math.cos(a);
+
   // ────────── Physics helpers
   void _applyGravity(double dt) {
     velocity.y += gravity * dt;
@@ -447,7 +501,7 @@ class Robot extends PositionComponent
   }
 
   void _checkLanding({bool resetOnLand = false, bool bounceOnLand = false}) {
-    final targetY = groundY - size.y / 2;
+    final targetY = groundY - _lowestLocalY(angle); // uses scaled silhouette
     if (position.y >= targetY) {
       position.y = targetY;
       if (bounceOnLand && velocity.y.abs() > 100) {
@@ -504,8 +558,6 @@ class Robot extends PositionComponent
 
   // ────────── HURT Motion (NEW) ──────────
   void _updateHurtMotion(double dt) {
-    // NEW
-    // 0) Ease body down by 10px
     if (_hurtPhase == 0) {
       _hurtElapsed += dt;
       final p = (_hurtElapsed / _hurtDownDur).clamp(0.0, 1.0);
@@ -519,12 +571,10 @@ class Robot extends PositionComponent
       return;
     }
 
-    // 1) Wiggle head back/forth ~3–4 times, then rest at +5°
     if (_hurtPhase == 1) {
       _hurtWiggleElapsed += dt;
       final wiggleTotal = _hurtWiggleCycles / _hurtWiggleHz;
       final t = _hurtWiggleElapsed;
-      // Pure ±5° wiggle (no decay for crisp “twitch”)
       final a = _hurtMaxRad * math.sin(2 * math.pi * _hurtWiggleHz * t);
       body.angle = a;
 
@@ -536,7 +586,6 @@ class Robot extends PositionComponent
       return;
     }
 
-    // 2) Hold lowered pose & +5° head tilt ~20s
     if (_hurtPhase == 2) {
       _hurtHoldElapsed += dt;
       if (_hurtHoldElapsed >= _hurtHoldDuration) {
@@ -547,19 +596,17 @@ class Robot extends PositionComponent
       return;
     }
 
-    // 3) Stand up smoothly, then resume
     if (_hurtPhase == 3 && _hurtStandingUp) {
       _hurtElapsed += dt;
       final p = (_hurtElapsed / _hurtStandDur).clamp(0.0, 1.0);
       final e = _smoothStep01(p);
-      // Ease Y back to base; ease angle back to 0
       body.position.y = _bodyBaseY + _hurtDownOffset * (1.0 - e);
       body.angle = _hurtMaxRad * (1.0 - e);
 
       if (p >= 1.0) {
         body.position.y = _bodyBaseY;
         body.angle = 0.0;
-        currentEvent = EventRobot.resume; // triggers _resetAll() path
+        currentEvent = EventRobot.resume;
       }
       return;
     }
@@ -611,7 +658,7 @@ class Robot extends PositionComponent
     angle = 0;
     body.position.y = _bodyBaseY;
     body.angle = 0;
-    pauseTracks = false; // resume tracks
+    pauseTracks = false;
     _settling = false;
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
@@ -619,44 +666,37 @@ class Robot extends PositionComponent
 
   // ────────── PUBLIC: Hard reset back to spawn state ──────────
   void reset() {
-    // Event + pose
     currentEvent = EventRobot.idle;
     position = initialPosition.clone();
     angle = 0.0;
     velocity.setZero();
     _angleDelta = 0.0;
 
-    // Sprites & tracks
     trackTimer = 0.0;
     trackFrame = 0;
-    pauseTracks = true; // as at start
+    pauseTracks = true;
     leftTrack.sprite = _track1;
     rightTrack.sprite = _track1;
 
-    // Child parts pose
     body.position = Vector2(20, _bodyBaseY);
     body.angle = 0.0;
     body.scale = Vector2.all(1.0);
     leftTrack.position = Vector2(-11, 84);
     rightTrack.position = Vector2(64, 84);
 
-    // Trip/settle state
     _settling = false;
     _hasPivot = false;
     _pivotLocal = null;
     _settleFloorY = double.negativeInfinity;
 
-    // Duck
     duckTimer = 0.0;
 
-    // Electrocute
     electrocuted = false;
     _electroElapsed = 0.0;
     electric1?.switchPhase(EventHorizontalObstacle.stopMoving);
     electric1?.removeFromParent();
     electric1 = null;
 
-    // Hurt
     isHurt = false;
     _hurtElapsed = 0.0;
     _hurtPhase = 0;
