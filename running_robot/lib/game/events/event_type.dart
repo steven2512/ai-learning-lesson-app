@@ -58,4 +58,13 @@ enum EventButton {
   hold,
 }
 
+enum EventFinger {
+  left,
+  right,
+  up,
+  down,
+  hide,
+  show,
+}
+
 enum EventFancyBox { hide, show, animate }

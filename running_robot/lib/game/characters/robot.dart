@@ -232,7 +232,7 @@ class Robot extends PositionComponent
     _settling = false;
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
-    velocity.y = -400;
+    velocity.y = -500;
   }
 
   void duck() {
