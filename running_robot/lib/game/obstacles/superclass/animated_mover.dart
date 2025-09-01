@@ -18,10 +18,10 @@ class AnimatedMover extends PositionComponent {
     required this.customSize,
     this.stepTime = 0.12,
   }) : super(
-         position: startPosition.clone(),
-         size: customSize,
-         anchor: Anchor.center,
-       );
+          position: startPosition.clone(),
+          size: customSize,
+          anchor: Anchor.center,
+        );
 
   @override
   Future<void> onLoad() async {
@@ -53,12 +53,10 @@ class AnimatedMover extends PositionComponent {
     final dx = endPosition.x - startPosition.x;
     final dy = endPosition.y - startPosition.y;
 
-    final passedX = dx >= 0
-        ? position.x >= endPosition.x
-        : position.x <= endPosition.x;
-    final passedY = dy >= 0
-        ? position.y >= endPosition.y
-        : position.y <= endPosition.y;
+    final passedX =
+        dx >= 0 ? position.x >= endPosition.x : position.x <= endPosition.x;
+    final passedY =
+        dy >= 0 ? position.y >= endPosition.y : position.y <= endPosition.y;
 
     return passedX && passedY;
   }

@@ -1,4 +1,3 @@
-// lib/my_app.dart
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart'; // transitions for route-level changes
 
@@ -10,7 +9,8 @@ import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
 
 // Game scenes
-import 'package:running_robot/z_pages/lessons/lesson_one.dart';
+import 'package:running_robot/z_pages/lessons/lesson_three.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart'; // ⬅️ updated import
 import 'package:running_robot/z_pages/root_nav.dart';
 
 class MyApp extends StatefulWidget {
@@ -20,53 +20,41 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // Start on Main Menu (now the tabs shell)
-  AppRoute _route = const RouteMainMenu(); // optionally: RouteMainMenu(tab: 0)
-
-  // Keeps transitions smooth and forces clean remounts for GameWidget pages
+  AppRoute _route = const RouteMainMenu();
   int _sceneKey = 0;
 
-  /// Single navigation API your children receive and call.
   void navigate(AppRoute route) {
     setState(() {
       _route = route;
-      _sceneKey++; // guarantees GameWidget remount & transition
+      _sceneKey++;
     });
   }
 
-  /// Unified page factory: returns either the tabs shell or a Scaffold+GameWidget.
   Widget _buildPage(AppRoute route) {
-    // TAB SHELL (Home/Lessons/Stats/Settings) — no route changes for tab taps
     if (route is RouteMainMenu) {
       return RootNavScaffold(
         onNavigate: navigate,
-        initialIndex: route.tab, // 0=Home, 1=Lessons, 2=Stats, 3=Settings
+        initialIndex: route.tab,
       );
     }
 
-    // LESSON 1 — Flame game page
+    // LESSON 1 — Flutter lesson page
     if (route is RouteLesson1) {
+      return LessonOne(onNavigate: navigate); // ✅ pass navigate
+    }
+
+    // LESSON 3 — Flame game page
+    if (route is RouteLesson3) {
       return Scaffold(
         backgroundColor: Colors.white,
         body: GameWidget(
-          key: ValueKey('lesson1_$_sceneKey'), // forces clean remount
-          game: LessonOne(onNavigate: navigate),
+          key: ValueKey('lesson3_$_sceneKey'),
+          game: LessonThree(onNavigate: navigate),
         ),
       );
     }
 
-    // LESSON 2 — TODO: replace with real LessonTwo when ready
-    if (route is RouteLesson2) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: GameWidget(
-          key: ValueKey('lesson2_$_sceneKey'),
-          game: LessonOne(onNavigate: navigate),
-        ),
-      );
-    }
-
-    // END LESSON — Flame “end screen” scene
+    // END LESSON
     if (route is RouteEndLesson) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -74,7 +62,7 @@ class _MyAppState extends State<MyApp> {
           key: ValueKey('endlesson_$_sceneKey'),
           game: EndLessonPage(
             onRepeat: () => navigate(const RouteLesson1()),
-            onNext: () => navigate(const RouteLesson2()),
+            onNext: () => navigate(const RouteLesson3()),
             onMainMenu: () => navigate(const RouteMainMenu(tab: 0)),
             xp: route.xp,
             streak: route.streak,
@@ -87,7 +75,6 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-    // Fallback: go to the tabs shell (Home)
     return RootNavScaffold(
       onNavigate: navigate,
       initialIndex: 0,
@@ -104,9 +91,8 @@ class _MyAppState extends State<MyApp> {
           secondaryAnimation: sa,
           child: child,
         ),
-        // Each top-level page (Tabs shell or Game) owns its own Scaffold/background
         child: KeyedSubtree(
-          key: ValueKey(_sceneKey), // ties the switcher to route/scene changes
+          key: ValueKey(_sceneKey),
           child: _buildPage(_route),
         ),
       ),

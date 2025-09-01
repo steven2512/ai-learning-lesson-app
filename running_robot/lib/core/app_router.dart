@@ -1,5 +1,3 @@
-// lib/core/app_router.dart
-
 /// All navigable pages as strongly-typed routes (no Map<String, dynamic>).
 abstract class AppRoute {
   const AppRoute();
@@ -7,6 +5,10 @@ abstract class AppRoute {
 
 class RouteLesson1 extends AppRoute {
   const RouteLesson1();
+}
+
+class RouteLesson3 extends AppRoute {
+  const RouteLesson3();
 }
 
 class RouteEndLesson extends AppRoute {
@@ -25,10 +27,6 @@ class RouteEndLesson extends AppRoute {
     required this.topText,
     this.illustrationPath,
   });
-}
-
-class RouteLesson2 extends AppRoute {
-  const RouteLesson2();
 }
 
 /// Entry to the tab shell (Home/Lessons/Stats/Settings).

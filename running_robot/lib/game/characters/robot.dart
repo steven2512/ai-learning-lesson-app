@@ -6,13 +6,13 @@ import 'package:flame/components.dart';
 import 'package:running_robot/game/characters/diziness.dart';
 import 'package:running_robot/game/characters/electric.dart';
 import 'package:running_robot/game/events/event_type.dart';
-import 'package:running_robot/z_pages/lessons/lesson_one.dart';
+import 'package:running_robot/z_pages/lessons/lesson_three.dart';
 import 'package:running_robot/game/obstacles/bird.dart';
 import 'package:running_robot/game/obstacles/fence.dart';
 import 'package:running_robot/game/obstacles/rain.dart';
 
 class Robot extends PositionComponent
-    with CollisionCallbacks, HasGameRef<LessonOne> {
+    with CollisionCallbacks, HasGameRef<LessonThree> {
   EventRobot currentEvent = EventRobot.idle;
   final double groundY;
 
@@ -42,7 +42,7 @@ class Robot extends PositionComponent
   final double settleBias = 4.1;
   final double angularDampSettle = 0.978;
 
-  // Right-corner settle helpers
+  // Legacy settle helpers (some kept/repurposed)
   final double pivotEarlyTouchPx = 6.0;
   final double _yLockRate = 42.0;
   final double _angleLockRate = 14.0;
@@ -78,29 +78,32 @@ class Robot extends PositionComponent
   // Contact points (legacy cache; kept for debugging/consistency)
   List<Vector2> _contactPts = [];
 
-  // Pivot (right-most lowest corner) for final settle
+  // Pivot (legacy)
   Vector2? _pivotLocal;
   bool _hasPivot = false;
 
   double _settleFloorY = double.negativeInfinity;
 
-  // ────────── Electrocute state ──────────
+  // Electrocute
   double _electroElapsed = 0.0;
   final double _electroDuration = 2;
 
-  // ────────── HURT state (NEW) ──────────
-  double _hurtElapsed = 0.0; // NEW
-  int _hurtPhase = 0; // NEW 0:down,1:wiggle,2:hold,3:stand
-  final double _hurtDownOffset = 10.0; // NEW (px)
-  final double _hurtDownDur = 0.35; // NEW
-  final double _hurtMaxRad = math.pi / 36; // NEW (~5° forward)
-  final double _hurtHoldDuration = 3.0; // NEW (seconds)
-  final double _hurtStandDur = 0.6; // NEW ease-up dur
-  final double _hurtWiggleHz = 3.0; // NEW ~3–4 cycles total
-  final double _hurtWiggleCycles = 3.5; // NEW
-  double _hurtHoldElapsed = 0.0; // NEW
-  double _hurtWiggleElapsed = 0.0; // NEW
-  bool _hurtStandingUp = false; // NEW
+  // HURT
+  double _hurtElapsed = 0.0;
+  int _hurtPhase = 0; // 0:down,1:wiggle,2:hold,3:stand
+  final double _hurtDownOffset = 10.0;
+  final double _hurtDownDur = 0.35;
+  final double _hurtMaxRad = math.pi / 36; // ~5°
+  final double _hurtHoldDuration = 3.0;
+  final double _hurtStandDur = 0.6;
+  final double _hurtWiggleHz = 3.0;
+  final double _hurtWiggleCycles = 3.5;
+  double _hurtHoldElapsed = 0.0;
+  double _hurtWiggleElapsed = 0.0;
+  bool _hurtStandingUp = false;
+
+  // Trip goal (final angle target)
+  double? _tripGoal; // face-down/head-on-ground target
 
   Robot({required this.initialPosition, required this.groundY})
       : super(size: Vector2.all(50), anchor: Anchor.center) {
@@ -147,7 +150,6 @@ class Robot extends PositionComponent
   }
 
   void _buildContactPoints() {
-    // legacy cache (kept for debugging)
     final origin = (anchor.toVector2()..multiply(size));
     List<Vector2> rectCorners(SpriteComponent c) {
       final hw = c.size.x / 2, hh = c.size.y / 2;
@@ -168,21 +170,20 @@ class Robot extends PositionComponent
     ];
   }
 
-  // [FIX] Rotate a 2D vector by angle a (radians)
+  // Rotate 2D vector by angle a (radians)
   Vector2 _rot(Vector2 p, double a) => Vector2(
       p.x * math.cos(a) - p.y * math.sin(a),
       p.x * math.sin(a) + p.y * math.cos(a));
 
-  // [FIX] Enumerate *current* corners of all child sprites, including each child’s
-  // own rotation AND scale, in the Robot’s local coordinates (before parent rotation).
+  // Enumerate current corners of all child sprites, including each child’s
+  // rotation & scale, in the Robot’s local coordinates (pre-parent rotation).
   Iterable<Vector2> _iterCornersLocalUnparented() sync* {
     final origin = (anchor.toVector2()..multiply(size));
     Vector2 basePos(SpriteComponent c) => c.position - origin;
 
     Iterable<Vector2> childCorners(SpriteComponent c) sync* {
-      // half-size with scale applied
-      final hw = (c.size.x / 2) * c.scale.x; // [FIX]
-      final hh = (c.size.y / 2) * c.scale.y; // [FIX]
+      final hw = (c.size.x / 2) * c.scale.x;
+      final hh = (c.size.y / 2) * c.scale.y;
       final corners = <Vector2>[
         Vector2(-hw, -hh),
         Vector2(hw, -hh),
@@ -197,8 +198,7 @@ class Robot extends PositionComponent
         }
       } else {
         for (final v in corners) {
-          yield _rot(v, ang) +
-              pos; // [FIX] rotate scaled corners by child angle
+          yield _rot(v, ang) + pos;
         }
       }
     }
@@ -208,23 +208,21 @@ class Robot extends PositionComponent
     yield* childCorners(rightTrack);
   }
 
-  // [FIX] Lowest y after applying *parent* rotation `a` to the local points
+  // Lowest local Y after applying parent rotation `a`
   double _lowestLocalY(double a) {
     final sinA = math.sin(a), cosA = math.cos(a);
     double lowest = -double.infinity;
     for (final p in _iterCornersLocalUnparented()) {
-      final y = p.x * sinA + p.y * cosA; // rotate by parent
+      final y = p.x * sinA + p.y * cosA;
       if (y > lowest) lowest = y;
     }
     return lowest;
   }
 
-  // [FIX] Lock pivot among the *lowest* points (scaled geometry too), choosing the right-most
-  // in world (rotated) X.
+  // Lock pivot among the lowest points (scaled geometry too), choosing right-most in rotated X.
   void _lockPivot(double a) {
     final sinA = math.sin(a), cosA = math.cos(a);
 
-    // find global lowest y'
     double lowestY = -double.infinity;
     for (final p in _iterCornersLocalUnparented()) {
       final y = p.x * sinA + p.y * cosA;
@@ -292,13 +290,14 @@ class Robot extends PositionComponent
 
   void trip() {
     currentEvent = EventRobot.trip;
-    _angleDelta = 3.6;
+    _angleDelta = 3.6; // forward spin impetus
     velocity.y = -60;
     pauseTracks = true;
     _settling = false;
     _hasPivot = false;
+    _pivotLocal = null;
     _settleFloorY = double.negativeInfinity;
-    // live geometry is used every frame
+    _tripGoal = null; // face-down will be set on first lock
   }
 
   void stop() {
@@ -328,7 +327,7 @@ class Robot extends PositionComponent
     electric1?.switchPhase(EventHorizontalObstacle.startMoving);
   }
 
-  // ────────── HURT (NEW) ──────────
+  // ────────── HURT (NEW)
   void hurt() {
     if (!isHurt) isHurt = true;
     currentEvent = EventRobot.hurt;
@@ -401,80 +400,102 @@ class Robot extends PositionComponent
     }
   }
 
-  // ────────── Trip Motion
+  // ────────── helpers for trip/ground clamp
+  double _bottomWorldYAt(double a) => position.y + _lowestLocalY(a);
+
+  double _pivotWorldYAt(double a) => (_hasPivot && _pivotLocal != null)
+      ? position.y + _rotY(_pivotLocal!, a)
+      : _bottomWorldYAt(a);
+
+  void _pinPivotToGround(double a) {
+    final pen = _pivotWorldYAt(a) - groundY;
+    if (pen >= 0) position.y -= pen; // only move upward; never sink
+  }
+
+  void _clampBottomToGround(double a) {
+    final pen = _bottomWorldYAt(a) - groundY;
+    if (pen >= 0) position.y -= pen;
+  }
+
+  // "Head" corner of the body in Robot-local space (front-right)
+  Vector2 _bodyHeadCornerLocal() {
+    final origin = (anchor.toVector2()..multiply(size));
+    final hw = (body.size.x / 2) * body.scale.x;
+    final hh = (body.size.y / 2) * body.scale.y;
+    final base = body.position - origin;
+    final local = Vector2(hw, hh); // bottom-right of the body sprite
+    return (body.angle == 0) ? base + local : _rot(local, body.angle) + base;
+  }
+
+  double _shortAngleTo(double target) =>
+      math.atan2(math.sin(target - angle), math.cos(target - angle));
+
+  // ────────── Trip Motion (forward tumble with pivot roll; finish head-on-ground)
   void _updateTripMotion(double dt) {
+    // airborne spin + damping
     angle += _angleDelta * dt;
     _angleDelta *= angularDampAir;
 
-    _applyGravity(dt);
-    _applyAirDrag(dt);
-    _clampTerminal();
-    _moveRobot(dt);
+    // gravity + air drag
+    velocity.y += gravity * dt;
+    final k = math.pow(airDrag, dt).toDouble();
+    velocity.y *= k;
+    if (velocity.y > vTerminal) velocity.y = vTerminal;
 
-    final centerAtTouch = groundY - _lowestLocalY(angle);
+    // integrate position
+    position += velocity * dt;
 
-    if (position.y >= centerAtTouch) {
-      position.y = centerAtTouch; // clamp to true (scaled) silhouette
+    // First contact via silhouette bottom
+    if (!_settling && _bottomWorldYAt(angle) >= groundY) {
+      _clampBottomToGround(angle);
 
       if (velocity.y.abs() > minBounceSpeed) {
+        // bounce a bit; keep spinning
         velocity.y = -velocity.y * bounceE;
         _angleDelta *= angularDampHit;
-        _settling = false;
-        _hasPivot = false;
-        _settleFloorY = double.negativeInfinity;
       } else {
+        // lock to ground and begin rolling
         velocity.y = 0;
         _settling = true;
-        if (!_hasPivot) _lockPivot(angle);
+        _tripGoal = math.pi / 2; // face-down (head on the ground)
+        _hasPivot =
+            false; // let _lockPivot choose current lowest (likely wheel)
       }
     }
 
     if (_settling) {
-      velocity.y = 0;
+      // refresh pivot to "roll" across edges
+      if (!_hasPivot) _lockPivot(angle);
 
-      final goal = _nearestPi(angle);
-      final bias = (goal - angle);
-
+      // torque toward goal angle
+      final bias = _shortAngleTo(_tripGoal!);
       _angleDelta += bias * settleBias * dt;
       _angleDelta *= angularDampSettle;
+      angle += _angleDelta * dt;
 
-      final centerTouch = groundY - _lowestLocalY(angle);
-      final pivotTouch = (_hasPivot && _pivotLocal != null)
-          ? groundY - _rotY(_pivotLocal!, angle)
-          : centerTouch;
-
-      final biasAbs = bias.abs();
-      final fade = _smoothStep(0.0, _pivotFadeBias, biasAbs);
-      final dynamicOffset = pivotEarlyTouchPx * fade;
-
-      final rawDesiredY = math.max(pivotTouch, centerTouch + dynamicOffset);
-
-      if (_settleFloorY == double.negativeInfinity) {
-        _settleFloorY = rawDesiredY;
-      } else {
-        _settleFloorY = math.max(_settleFloorY, rawDesiredY);
+      // switch pivot to HEAD once it becomes (nearly) the lowest point
+      final headLocal = _bodyHeadCornerLocal();
+      final headYLocal = _rotY(headLocal, angle);
+      final lowestLocal = _lowestLocalY(angle);
+      if (headYLocal >= lowestLocal - 0.5) {
+        // small epsilon
+        _pivotLocal = headLocal;
+        _hasPivot = true;
       }
 
-      final endZone = (bias.abs() < _biasStillEps && _angleDelta.abs() < 0.08);
+      // keep exact contact; never penetrate ground
+      _pinPivotToGround(angle);
+      _clampBottomToGround(angle);
 
-      final yRate = endZone ? _yEndRate : _yLockRate;
-      final aY = _ease(yRate, dt);
-      if (_settleFloorY > position.y) {
-        position.y += (_settleFloorY - position.y) * aY;
-      }
+      // finish when almost still & at goal
+      if (_angleDelta.abs() < 0.02 && bias.abs() < 0.02) {
+        angle = _tripGoal!;
+        _pivotLocal = headLocal; // ensure head is contact point in final pose
+        _hasPivot = true;
+        _pinPivotToGround(angle);
 
-      if (endZone) {
-        final aAng = _ease(_angleEndRate, dt);
-        angle += (goal - angle) * aAng;
-        _angleDelta *= 0.92;
-      }
-
-      if (endZone &&
-          (goal - angle).abs() <= _finalSnapEps &&
-          (_settleFloorY - position.y).abs() <= 0.12) {
-        _angleDelta = 0.0;
         _settling = false;
-        _hasPivot = false;
+        currentEvent = EventRobot.idle;
       }
     }
   }
@@ -539,24 +560,21 @@ class Robot extends PositionComponent
     rightTrack.position.y = 84 - math.sin(t * 55.0) * (0.5 * fade);
 
     if (_electroElapsed >= _electroDuration) {
-      // restore base pose
       body.position.y = _bodyBaseY;
       body.angle = 0;
       body.scale = Vector2.all(1);
       leftTrack.position.y = 84;
       rightTrack.position.y = 84;
 
-      // stop & remove electricity
       electric1?.switchPhase(EventHorizontalObstacle.stopMoving);
       electric1?.removeFromParent();
       electric1 = null;
 
-      // return to idle
       currentEvent = EventRobot.idle;
     }
   }
 
-  // ────────── HURT Motion (NEW) ──────────
+  // ────────── HURT Motion (NEW)
   void _updateHurtMotion(double dt) {
     if (_hurtPhase == 0) {
       _hurtElapsed += dt;
@@ -579,7 +597,7 @@ class Robot extends PositionComponent
       body.angle = a;
 
       if (t >= wiggleTotal) {
-        body.angle = _hurtMaxRad; // rest at +5° forward
+        body.angle = _hurtMaxRad; // rest at +5°
         _hurtPhase = 2;
         _hurtHoldElapsed = 0.0;
       }
@@ -662,6 +680,7 @@ class Robot extends PositionComponent
     _settling = false;
     _hasPivot = false;
     _settleFloorY = double.negativeInfinity;
+    _tripGoal = null;
   }
 
   // ────────── PUBLIC: Hard reset back to spawn state ──────────
@@ -703,5 +722,7 @@ class Robot extends PositionComponent
     _hurtHoldElapsed = 0.0;
     _hurtWiggleElapsed = 0.0;
     _hurtStandingUp = false;
+
+    _tripGoal = null;
   }
 }

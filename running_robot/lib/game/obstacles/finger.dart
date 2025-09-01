@@ -21,7 +21,7 @@ class Finger extends SimpleMover {
   // 👇 Global flag: fade duration in seconds (0 = instant)
   static double fadeDuration = 0.5;
 
-  double opacity = 1.0;
+  double opacity = 0.9;
   bool isVisible = false;
   bool _fading = false;
 
@@ -90,7 +90,7 @@ class Finger extends SimpleMover {
           Duration(milliseconds: (fadeDuration * 1000 / steps).round()));
     }
 
-    opacity = 1.0;
+    opacity = 1;
     _fading = false;
   }
 
