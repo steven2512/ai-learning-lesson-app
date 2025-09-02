@@ -7,10 +7,10 @@ import 'package:flame/game.dart';
 // Typed routes
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1.dart';
 
 // Game scenes
 import 'package:running_robot/z_pages/lessons/lesson_three.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart'; // ⬅️ updated import
 import 'package:running_robot/z_pages/root_nav.dart';
 
 class MyApp extends StatefulWidget {
