@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // ✅ SVG support
 import 'package:running_robot/z_pages/assets/lessonN/icon_button.dart';
+import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
 import 'package:running_robot/z_pages/assets/lessonN/progress_bar.dart';
 import 'package:running_robot/core/app_router.dart';
 
 // ────────── Global Styles ──────────
-const Color mainConceptColor = Color.fromARGB(255, 255, 111, 0);
-const FontWeight secondLineWeight = FontWeight.w600;
+const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
+const FontWeight secondLineWeight = FontWeight.w800;
 const double maxTextWidth = 350;
 
 class LessonOne extends StatefulWidget {
@@ -73,57 +74,43 @@ class _LessonOneState extends State<LessonOne> {
 
   Widget _buildLessonText() {
     return Positioned.fill(
-      top: 170,
+      top: 140,
       child: SingleChildScrollView(
         child: Padding(
-          padding:
-              const EdgeInsets.only(left: 30, right: 30), // ✅ balanced padding
+          padding: const EdgeInsets.only(left: 30, right: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSentence([
-                _word("What", Colors.black87, fontSize: 30),
-                _word("is", Colors.black87, fontSize: 30),
-                _word("classification?", mainConceptColor, fontSize: 30),
-              ]),
-              const SizedBox(height: 12),
-
-              // ✅ Definition line
-              _buildSentence([
-                Padding(
-                  padding: const EdgeInsets.only(top: 3, right: 2),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 26,
-                    color: Colors.black54,
-                  ),
+              // ✅ Title + Definition wrapped together
+              Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 30),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.black26, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    )
+                  ],
                 ),
-                _word("Classification", mainConceptColor,
-                    fontWeight: FontWeight.w800),
-                _word("is", Colors.black87, fontWeight: secondLineWeight),
-                _word("deciding", Colors.black87, fontWeight: secondLineWeight),
-                _word("which", Colors.black87, fontWeight: secondLineWeight),
-                _word("group", Colors.black87, fontWeight: secondLineWeight),
-                _word("something", Colors.black87,
-                    fontWeight: secondLineWeight, italic: true),
-                _word("belongs", Colors.black87, fontWeight: secondLineWeight),
-                _word("to.", Colors.black87, fontWeight: secondLineWeight),
-              ]),
-
-              const SizedBox(height: 40),
-              _buildSentence([
-                _word("Which", Colors.black87, fontSize: 24),
-                _word("one", Colors.black87, fontSize: 24),
-                _word("is", Colors.black87, fontSize: 24),
-                _word("a", Colors.black87, fontSize: 24),
-                _word(
-                  "dog?",
-                  Colors.green,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSentence([
+                      _word("What", Colors.black87, fontSize: 30),
+                      _word("is", Colors.black87, fontSize: 30),
+                      _word("classification?", mainConceptColor, fontSize: 30),
+                    ]),
+                    const SizedBox(height: 12),
+                    _buildDefinitionBlock(),
+                  ],
                 ),
-              ], alignment: WrapAlignment.center, constrainWidth: false),
-              const SizedBox(height: 12),
+              ),
+
               // ✅ Dog vs Cat row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -135,8 +122,7 @@ class _LessonOneState extends State<LessonOne> {
                       width: 170,
                       height: 250,
                       child: Container(
-                        padding:
-                            const EdgeInsets.all(8), // ✅ padding inside frame
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.black26, width: 1),
@@ -150,7 +136,7 @@ class _LessonOneState extends State<LessonOne> {
                     ),
                   ),
 
-                  const SizedBox(width: 15), // ✅ spacing
+                  const SizedBox(width: 15),
 
                   // 🐱 Cat
                   SizedBox(
@@ -174,13 +160,63 @@ class _LessonOneState extends State<LessonOne> {
 
               const SizedBox(height: 25),
 
-              // ✅ New centered sentence
-
-              const SizedBox(height: 24),
+              MCQBox(
+                question: _buildSentence([
+                  _word("Which", Colors.black87, fontSize: 24),
+                  _word("one", Colors.black87, fontSize: 24),
+                  _word("is", Colors.black87, fontSize: 24),
+                  _word("a", Colors.black87, fontSize: 24),
+                  _word(
+                    "dog?",
+                    Colors.green,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 24,
+                  ),
+                ], alignment: WrapAlignment.center, constrainWidth: false),
+                answers: ["Picture 1", "Picture 2"],
+                correctAnswer: 0,
+                width: double.infinity,
+                height: 250,
+                padding: [16, 15, 10, 16, 16, 16],
+                colorFill: Colors.white,
+                borderRadius: 12,
+                fontSize: 20,
+                textColor: Colors.black,
+                answerFill: Colors.white,
+                answerFontWeight: FontWeight.w500,
+                answerFontSize: 18,
+              )
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // ✅ Definition block text only (no sticky note)
+  Widget _buildDefinitionBlock() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10),
+      child: _buildSentence([
+        const Padding(
+          padding: EdgeInsets.only(top: 3, right: 1),
+          child: Icon(
+            Icons.arrow_forward_rounded,
+            size: 26,
+            color: Colors.black54,
+          ),
+        ),
+        _word("Classification", mainConceptColor, fontWeight: FontWeight.w800),
+        _word("is", const Color.fromARGB(221, 0, 0, 0),
+            fontWeight: secondLineWeight),
+        _word("deciding", Colors.black87, fontWeight: secondLineWeight),
+        _word("which", Colors.black87, fontWeight: secondLineWeight),
+        _word("group", Colors.black87, fontWeight: secondLineWeight),
+        _word("something", Colors.black87,
+            fontWeight: secondLineWeight, italic: true),
+        _word("belongs", Colors.black87, fontWeight: secondLineWeight),
+        _word("to.", Colors.black87, fontWeight: secondLineWeight),
+      ], constrainWidth: true),
     );
   }
 
@@ -205,17 +241,12 @@ class _LessonOneState extends State<LessonOne> {
     );
   }
 
-  // Helper to build a row of words with max width
-// Helper to build a row of words with max width (optional)
   Widget _buildSentence(
     List<Widget> words, {
     WrapAlignment alignment = WrapAlignment.start,
-    bool constrainWidth = true, // 👈 new param
+    bool constrainWidth = true,
   }) {
-    final content = Wrap(
-      alignment: alignment,
-      children: words,
-    );
+    final content = Wrap(alignment: alignment, children: words);
 
     if (constrainWidth) {
       return ConstrainedBox(
@@ -223,7 +254,7 @@ class _LessonOneState extends State<LessonOne> {
         child: content,
       );
     } else {
-      return Center(child: content); // 👈 full center
+      return Center(child: content);
     }
   }
 }
