@@ -203,9 +203,21 @@ class _MCQAnswersState extends State<MCQAnswers> {
                   width: isSelected ? 2 : 1,
                 ),
               ),
-              alignment: Alignment.centerLeft,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: widget.answers[index], // ✅ either styled Text or Widget
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: widget.answers[index]),
+
+                  // ✅ Tick appears when selected & correct
+                  if (isSelected && isCorrect)
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 22,
+                    ),
+                ],
+              ),
             ),
           ),
         );

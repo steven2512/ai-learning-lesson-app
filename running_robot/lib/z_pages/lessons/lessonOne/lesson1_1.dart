@@ -86,54 +86,37 @@ class _LessonStepZeroState extends State<LessonStepZero> {
               ),
             ),
 
-            // Dog vs Cat row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 170,
-                  height: 250,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black26, width: 1),
-                    ),
-                    clipBehavior: Clip.hardEdge,
-                    child:
-                        Image.asset('assets/images/dog.png', fit: BoxFit.cover),
-                  ),
+            // ✅ Single Dog Horizontal Image
+            Container(
+              width: double.infinity,
+              height: 250,
+              margin: const EdgeInsets.only(bottom: 15),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black26, width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(12), // ✅ image corner radius
+                child: Image.asset(
+                  'assets/images/dog_horizontal.png',
+                  fit: BoxFit.cover,
                 ),
-                const SizedBox(width: 15),
-                SizedBox(
-                  width: 165,
-                  height: 250,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black26, width: 1),
-                    ),
-                    clipBehavior: Clip.hardEdge,
-                    child:
-                        Image.asset('assets/images/cat.jpg', fit: BoxFit.cover),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 15),
 
             // MCQ
             MCQBox(
               question: _buildSentence([
-                _word("Which", Colors.black87, fontSize: 24),
-                _word("one", Colors.black87, fontSize: 24),
-                _word("is", Colors.black87, fontSize: 24),
-                _word("a", Colors.black87, fontSize: 24),
-                _word("dog?", Colors.green,
+                _word("Is this", Colors.black87, fontSize: 24),
+                _word("a dog", const Color.fromARGB(255, 78, 212, 83),
                     fontWeight: FontWeight.w600, fontSize: 24),
+                _word("or", Colors.black87, fontSize: 24),
+                _word("a cat?", const Color.fromARGB(221, 255, 51, 0),
+                    fontSize: 24),
               ], alignment: WrapAlignment.center, constrainWidth: false),
-              answers: ["Picture 1", "Picture 2"],
+              answers: ["Dog", "Cat"],
               correctAnswer: 0,
               width: double.infinity,
               height: 250,
