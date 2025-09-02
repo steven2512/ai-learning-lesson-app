@@ -5,15 +5,20 @@ import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
 const double maxTextWidth = 350;
 
 class LessonStepOne extends StatefulWidget {
-  final ValueNotifier<bool> answeredNotifier; // 👈 notify LessonOne
+  final ValueNotifier<bool>?
+      answeredNotifier; // ✅ For LessonOne to track answered state
 
-  const LessonStepOne({super.key, required this.answeredNotifier});
+  const LessonStepOne({super.key, this.answeredNotifier});
 
   @override
   State<LessonStepOne> createState() => _LessonStepOneState();
 }
 
 class _LessonStepOneState extends State<LessonStepOne> {
+  bool _answered = false;
+
+  bool get answered => _answered;
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -22,7 +27,7 @@ class _LessonStepOneState extends State<LessonStepOne> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Single Dog Horizontal Image
+            // ✅ Dog Image
             Container(
               width: double.infinity,
               height: 250,
@@ -65,8 +70,9 @@ class _LessonStepOneState extends State<LessonStepOne> {
               answerFontSize: 18,
               defaultAnimation: true,
               onAnswerTap: (_, __) {
-                if (!widget.answeredNotifier.value) {
-                  widget.answeredNotifier.value = true; // ✅ notify LessonOne
+                if (!_answered) {
+                  setState(() => _answered = true);
+                  widget.answeredNotifier?.value = true; // ✅ update LessonOne
                 }
               },
             ),

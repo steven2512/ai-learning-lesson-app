@@ -126,6 +126,7 @@ flutter:
     - assets/images/brain_mri3.png
     - assets/images/brain_mri4.png
     - assets/images/down_arrow.svg
+    - assets/images/tabular.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

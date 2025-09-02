@@ -6,6 +6,7 @@ import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_4.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_5.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_6.dart';
@@ -66,12 +67,13 @@ class _LessonOneState extends State<LessonOne> {
   // Each lesson can have its own vertical padding
   final Map<int, double> topOffsets = {
     0: 200,
-    1: 120,
+    1: 200,
     2: 140,
-    3: 160,
-    4: 120,
-    5: 180,
-    6: 130,
+    3: 140, // new LessonStepTwoTwo
+    4: 160,
+    5: 120,
+    6: 180,
+    7: 130,
   };
 
   // ✅ Notifier for LessonStepOne (MCQ answered state)
@@ -103,7 +105,7 @@ class _LessonOneState extends State<LessonOne> {
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
             child: LessonProgressBar(
-              totalStages: 7,
+              totalStages: 7, // ✅ increased from 6 → 7
               currentStage: currentStep,
             ),
           ),
@@ -115,29 +117,31 @@ class _LessonOneState extends State<LessonOne> {
             child: returnButton,
           ),
 
-          // ✅ Active step with shared Continue button
+          // ✅ Active step (content only, offset applied)
           Positioned.fill(
             top: topOffset,
-            child: Column(
-              children: [
-                Expanded(child: _buildCurrentStep()),
+            bottom: 100, // leave space for button
+            child: _buildCurrentStep(),
+          ),
 
-                // ✅ Continue button logic
-                ValueListenableBuilder<bool>(
-                  valueListenable: _stepOneAnswered,
-                  builder: (context, answered, _) {
-                    if (_showContinueButton(answered)) {
-                      return ContinueButton(
-                        onPressed: () =>
-                            setState(() => currentStep = currentStep + 1),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-
-                const SizedBox(height: 20),
-              ],
+          // ✅ Fixed Continue button at bottom
+          Positioned(
+            bottom: 40, // distance from bottom
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _stepOneAnswered,
+                builder: (context, answered, _) {
+                  if (_showContinueButton(answered)) {
+                    return ContinueButton(
+                      onPressed: () =>
+                          setState(() => currentStep = currentStep + 1),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           ),
         ],
@@ -154,12 +158,14 @@ class _LessonOneState extends State<LessonOne> {
       case 2:
         return const LessonStepTwo();
       case 3:
-        return const LessonStepThree();
+        return const LessonStepTwoTwo(); // ✅ inserted here
       case 4:
-        return const LessonStepFour();
+        return const LessonStepThree();
       case 5:
+        return const LessonStepFour();
+      case 6:
         return const LessonStepFive();
-      // case 6:
+      // case 7:
       //   return const LessonStepSix();
       default:
         return Container();
