@@ -48,7 +48,7 @@ class LessonStepOne extends StatelessWidget {
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
                     _word("has a", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("label.", labelColor,
+                    _word("label", labelColor,
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
                   ]),
                 ],
@@ -84,9 +84,9 @@ class LessonStepOne extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildSentence([
-                            _word("Data", mainConceptColor,
+                            _word("Data:", mainConceptColor,
                                 fontSize: 16, fontWeight: FontWeight.w800),
-                            _word("is the input we give the computer.",
+                            _word("the input we give the computer",
                                 Colors.black87,
                                 fontSize: 16, fontWeight: secondLineWeight),
                           ], constrainWidth: false),
@@ -107,9 +107,9 @@ class LessonStepOne extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildSentence([
-                            _word("Label", labelColor,
+                            _word("Label:", labelColor,
                                 fontSize: 16, fontWeight: FontWeight.w800),
-                            _word("is the correct answer for the data",
+                            _word("the correct answer for the data",
                                 Colors.black87,
                                 fontSize: 16, fontWeight: secondLineWeight),
                           ], constrainWidth: false),
