@@ -76,7 +76,8 @@ class _LessonOneState extends State<LessonOne> {
       top: 170,
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(left: 30),
+          padding:
+              const EdgeInsets.only(left: 30, right: 30), // ✅ balanced padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -109,10 +110,73 @@ class _LessonOneState extends State<LessonOne> {
                 _word("to.", Colors.black87, fontWeight: secondLineWeight),
               ]),
 
-              // ✅ SVG right after definition
-              // ✅ Fancy thin black line (adjust width as needed)
-
+              const SizedBox(height: 40),
+              _buildSentence([
+                _word("Which", Colors.black87, fontSize: 24),
+                _word("one", Colors.black87, fontSize: 24),
+                _word("is", Colors.black87, fontSize: 24),
+                _word("a", Colors.black87, fontSize: 24),
+                _word(
+                  "dog?",
+                  Colors.green,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                ),
+              ], alignment: WrapAlignment.center, constrainWidth: false),
               const SizedBox(height: 12),
+              // ✅ Dog vs Cat row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 🐶 Dog
+                  Container(
+                    padding: EdgeInsets.zero,
+                    child: SizedBox(
+                      width: 170,
+                      height: 250,
+                      child: Container(
+                        padding:
+                            const EdgeInsets.all(8), // ✅ padding inside frame
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.black26, width: 1),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: Image.asset(
+                          'assets/images/dog.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 15), // ✅ spacing
+
+                  // 🐱 Cat
+                  SizedBox(
+                    width: 165,
+                    height: 250,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.black26, width: 1),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: Image.asset(
+                        'assets/images/cat.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 25),
+
+              // ✅ New centered sentence
+
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -142,13 +206,24 @@ class _LessonOneState extends State<LessonOne> {
   }
 
   // Helper to build a row of words with max width
-  Widget _buildSentence(List<Widget> words) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: maxTextWidth),
-      child: Wrap(
-        alignment: WrapAlignment.start,
-        children: words,
-      ),
+// Helper to build a row of words with max width (optional)
+  Widget _buildSentence(
+    List<Widget> words, {
+    WrapAlignment alignment = WrapAlignment.start,
+    bool constrainWidth = true, // 👈 new param
+  }) {
+    final content = Wrap(
+      alignment: alignment,
+      children: words,
     );
+
+    if (constrainWidth) {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: maxTextWidth),
+        child: content,
+      );
+    } else {
+      return Center(child: content); // 👈 full center
+    }
   }
 }

@@ -114,6 +114,8 @@ flutter:
     - assets/images/robot_family1.jpg
     - assets/images/robot_family2.jpg
     - assets/images/finger.png
+    - assets/images/dog.png
+    - assets/images/cat.jpg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
