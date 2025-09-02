@@ -4,8 +4,49 @@ import 'package:running_robot/z_pages/assets/lessonN/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonN/progress_bar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lersson1_3.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_4.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_5.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_6.dart';
+
+/// ✅ Shared Continue Button widget
+class ContinueButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const ContinueButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.teal),
+            padding: MaterialStateProperty.all<EdgeInsets>(
+              const EdgeInsets.symmetric(horizontal: 38, vertical: 14),
+            ),
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
+          onPressed: onPressed,
+          child: Text(
+            'Continue',
+            style: GoogleFonts.lato(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class LessonOne extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -22,6 +63,20 @@ class LessonOne extends StatefulWidget {
 class _LessonOneState extends State<LessonOne> {
   int currentStep = 0;
 
+  // Each lesson can have its own vertical padding
+  final Map<int, double> topOffsets = {
+    0: 200,
+    1: 120,
+    2: 140,
+    3: 160,
+    4: 120,
+    5: 180,
+    6: 130,
+  };
+
+  // ✅ Notifier for LessonStepOne (MCQ answered state)
+  final ValueNotifier<bool> _stepOneAnswered = ValueNotifier(false);
+
   late IconButtonWidget<void> returnButton;
 
   @override
@@ -37,6 +92,8 @@ class _LessonOneState extends State<LessonOne> {
 
   @override
   Widget build(BuildContext context) {
+    final double topOffset = topOffsets[currentStep] ?? 120;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -46,7 +103,7 @@ class _LessonOneState extends State<LessonOne> {
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
             child: LessonProgressBar(
-              totalStages: 3,
+              totalStages: 7,
               currentStage: currentStep,
             ),
           ),
@@ -58,10 +115,30 @@ class _LessonOneState extends State<LessonOne> {
             child: returnButton,
           ),
 
-          // ✅ Active step
+          // ✅ Active step with shared Continue button
           Positioned.fill(
-            top: 120,
-            child: _buildCurrentStep(),
+            top: topOffset,
+            child: Column(
+              children: [
+                Expanded(child: _buildCurrentStep()),
+
+                // ✅ Continue button logic
+                ValueListenableBuilder<bool>(
+                  valueListenable: _stepOneAnswered,
+                  builder: (context, answered, _) {
+                    if (_showContinueButton(answered)) {
+                      return ContinueButton(
+                        onPressed: () =>
+                            setState(() => currentStep = currentStep + 1),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ],
       ),
@@ -71,19 +148,30 @@ class _LessonOneState extends State<LessonOne> {
   Widget _buildCurrentStep() {
     switch (currentStep) {
       case 0:
-        return LessonStepZero(
-          onContinue: () => setState(() => currentStep = 1),
-        );
+        return const LessonStepZero();
       case 1:
-        return LessonStepOne(
-          onContinue: () => setState(() => currentStep = 2),
-        );
+        return LessonStepOne(answeredNotifier: _stepOneAnswered);
       case 2:
-        return LessonStepTwo(
-          onContinue: () => setState(() => currentStep = 0), // loop back
-        );
+        return const LessonStepTwo();
+      case 3:
+        return const LessonStepThree();
+      case 4:
+        return const LessonStepFour();
+      case 5:
+        return const LessonStepFive();
+      // case 6:
+      //   return const LessonStepSix();
       default:
         return Container();
     }
+  }
+
+  /// Decides when to show the Continue button
+  bool _showContinueButton(bool stepOneAnswered) {
+    if (currentStep == 1) {
+      // ✅ Only show if MCQ is answered
+      return stepOneAnswered;
+    }
+    return true;
   }
 }

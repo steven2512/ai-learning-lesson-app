@@ -1,23 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const FontWeight secondLineWeight = FontWeight.w800;
 const double secondLineSize = 20.5;
 const double maxTextWidth = 350;
 
-class LessonStepZero extends StatefulWidget {
-  final VoidCallback onContinue;
-
-  const LessonStepZero({super.key, required this.onContinue});
-
-  @override
-  State<LessonStepZero> createState() => _LessonStepZeroState();
-}
-
-class _LessonStepZeroState extends State<LessonStepZero> {
-  bool _answered = false;
+class LessonStepZero extends StatelessWidget {
+  const LessonStepZero({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -85,89 +75,6 @@ class _LessonStepZeroState extends State<LessonStepZero> {
                 ],
               ),
             ),
-
-            // ✅ Single Dog Horizontal Image
-            Container(
-              width: double.infinity,
-              height: 250,
-              margin: const EdgeInsets.only(bottom: 15),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black26, width: 1),
-              ),
-              child: ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(12), // ✅ image corner radius
-                child: Image.asset(
-                  'assets/images/dog_horizontal.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-
-            // MCQ
-            MCQBox(
-              question: _buildSentence([
-                _word("Is this", Colors.black87, fontSize: 24),
-                _word("a dog", const Color.fromARGB(255, 78, 212, 83),
-                    fontWeight: FontWeight.w600, fontSize: 24),
-                _word("or", Colors.black87, fontSize: 24),
-                _word("a cat?", const Color.fromARGB(221, 255, 51, 0),
-                    fontSize: 24),
-              ], alignment: WrapAlignment.center, constrainWidth: false),
-              answers: ["Dog", "Cat"],
-              correctAnswer: 0,
-              width: double.infinity,
-              height: 250,
-              padding: [16, 15, 10, 16, 16, 16],
-              colorFill: Colors.white,
-              borderRadius: 12,
-              fontSize: 20,
-              textColor: Colors.black,
-              answerFill: Colors.white,
-              answerFontWeight: FontWeight.w500,
-              answerFontSize: 18,
-              defaultAnimation: true,
-              onAnswerTap: (_, __) {
-                if (!_answered) {
-                  setState(() => _answered = true);
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Continue button (only after answer chosen)
-            if (_answered)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(Colors.teal),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
-                        const EdgeInsets.symmetric(
-                            horizontal: 38, vertical: 14),
-                      ),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                    ),
-                    onPressed: widget.onContinue,
-                    child: Text(
-                      'Continue',
-                      style: GoogleFonts.lato(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
           ],
         ),
       ),
