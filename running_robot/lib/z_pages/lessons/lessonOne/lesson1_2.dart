@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 const Color mainConceptColor =
     Color.fromARGB(255, 255, 109, 12); // Classification color
-const Color binaryConceptColor =
-    Color.fromARGB(255, 12, 109, 255); // Binary Classification color
+const Color labelColor = Color.fromARGB(255, 12, 109, 255); // Label color
 const double maxTextWidth = 350;
 const double secondLineSize = 20.5;
 const FontWeight secondLineWeight = FontWeight.w800;
@@ -22,11 +21,11 @@ class LessonStepOne extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title + Definition
+            // Title box
             Container(
-              width: 420,
+              width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              margin: const EdgeInsets.only(bottom: 5, top: 5),
+              margin: const EdgeInsets.only(bottom: 20, top: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -43,36 +42,24 @@ class LessonStepOne extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSentence([
-                    _word("If", Colors.black87,
+                    _word("Each", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("a", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("classification", mainConceptColor,
+                    _word("data", mainConceptColor,
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    _word("task", Colors.black87,
+                    _word("has a", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("involves", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("only", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("2", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("labels,", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("it's", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("called", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("Binary Classification", binaryConceptColor,
+                    _word("label.", labelColor,
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
                   ]),
                 ],
               ),
             ),
-            SizedBox(height: 10),
-            // Second Box (Binary Classification examples)
+
+            // Explanation box (split row WITH divider)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 15),
+              width: double.infinity,
+              padding: const EdgeInsets.only(
+                  left: 15, right: 11, top: 15, bottom: 15),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -86,63 +73,110 @@ class LessonStepOne extends StatelessWidget {
                   )
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: IntrinsicHeight(
+                // ✅ ensures divider spans full height
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Data column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSentence([
+                            _word("Data", mainConceptColor,
+                                fontSize: 16, fontWeight: FontWeight.w800),
+                            _word("is the input we give the computer.",
+                                Colors.black87,
+                                fontSize: 16, fontWeight: secondLineWeight),
+                          ], constrainWidth: false),
+                        ],
+                      ),
+                    ),
+
+                    // Vertical divider
+                    Container(
+                      width: 1,
+                      color: Colors.black12, // ✅ faint border
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+
+                    // Label column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSentence([
+                            _word("Label", labelColor,
+                                fontSize: 16, fontWeight: FontWeight.w800),
+                            _word("is the correct answer for the data",
+                                Colors.black87,
+                                fontSize: 16, fontWeight: secondLineWeight),
+                          ], constrainWidth: false),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Table-like structure
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black26, width: 1),
+              ),
+              child: Table(
+                border: TableBorder.symmetric(
+                    inside: BorderSide(color: Colors.black12, width: 1)),
+                columnWidths: const {
+                  0: FixedColumnWidth(120), // Image column
+                  1: FlexColumnWidth(),
+                  2: FlexColumnWidth(),
+                },
                 children: [
-                  // Intro text (line 1)
-                  _buildSentence([
-                    _word("Binary Classification", binaryConceptColor,
-                        fontWeight: FontWeight.w800, fontSize: secondLineSize),
-                    _word("can go from", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                  ], alignment: WrapAlignment.center, constrainWidth: false),
-
-                  // Intro text (line 2) — centered Banana/Apple
-                  _buildSentence(
-                    [
-                      _word("Banana", Colors.black87,
-                          fontSize: secondLineSize,
-                          fontWeight: secondLineWeight,
-                          italic: true),
-                      _word("or", Colors.black87,
-                          fontSize: secondLineSize,
-                          fontWeight: secondLineWeight),
-                      _word("Apple? (simple)", Colors.black87,
-                          fontSize: secondLineSize,
-                          fontWeight: secondLineWeight,
-                          italic: true),
+                  // Header row
+                  TableRow(
+                    decoration: BoxDecoration(color: Colors.grey.shade100),
+                    children: [
+                      _tableCell("Input", bold: true),
+                      _tableCell("Dog", color: Colors.green, bold: true),
+                      _tableCell("Cat", color: Colors.red, bold: true),
                     ],
-                    alignment: WrapAlignment.center,
-                    constrainWidth: false,
                   ),
-                  const SizedBox(height: 16),
-
-                  // ✅ Big Banana Image (centered)
-                  _singleImageBox('assets/images/apple.jpg'),
-
-                  const SizedBox(height: 20),
-
-                  // Difficult Problem text (centered)
-                  _buildSentence(
-                    [
-                      _word("to", Colors.black87,
-                          fontSize: secondLineSize,
-                          fontWeight: secondLineWeight),
-                      _word("Cancer or Not Cancer? (complex)", Colors.black87,
-                          fontSize: secondLineSize,
-                          fontWeight: secondLineWeight,
-                          italic: true),
-                    ],
-                    alignment: WrapAlignment.center,
-                    constrainWidth: false,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ✅ Big Complex Example Image (centered)
-                  _singleImageBox('assets/images/brain_mri4.png'),
+                  // Row 1: Dog1
+                  TableRow(children: [
+                    _imageCell('assets/images/dog1.png'),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: _iconCell(true),
+                    ),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: _iconCell(false),
+                    ),
+                  ]),
+                  // Row 2: Cat1
+                  TableRow(children: [
+                    _imageCell('assets/images/cat1.jpg'),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: _iconCell(false),
+                    ),
+                    TableCell(
+                      verticalAlignment: TableCellVerticalAlignment.middle,
+                      child: _iconCell(true),
+                    ),
+                  ]),
                 ],
               ),
             ),
+
+            // Continue button
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -177,21 +211,6 @@ class LessonStepOne extends StatelessWidget {
     );
   }
 
-  // ✅ Single Image Box (centered full width with padding)
-  static Widget _singleImageBox(String assetPath) {
-    return Container(
-      width: double.infinity,
-      height: 180,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black26, width: 1),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Image.asset(assetPath, fit: BoxFit.cover),
-    );
-  }
-
   // helpers
   static Widget _word(String text, Color color,
       {FontWeight? fontWeight, bool italic = false, double? fontSize}) {
@@ -215,6 +234,50 @@ class LessonStepOne extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: maxTextWidth),
             child: content,
           )
-        : Center(child: content);
+        : content;
+  }
+
+  static Widget _tableCell(String text,
+      {Color color = Colors.black87, bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Center(
+        child: Text(
+          text,
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _imageCell(String assetPath, {double height = 140}) {
+    return Container(
+      height: 150,
+      padding: const EdgeInsets.all(6.0),
+      child: SizedBox(
+        height: height,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _iconCell(bool correct) {
+    return Center(
+      child: Icon(
+        correct ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: correct ? Colors.green : Colors.black26,
+        size: 40,
+      ),
+    );
   }
 }

@@ -4,6 +4,7 @@ import 'package:running_robot/z_pages/assets/lessonN/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonN/progress_bar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
+import 'package:running_robot/z_pages/lessons/lessonOne/lersson1_3.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
 
 class LessonOne extends StatefulWidget {
@@ -77,10 +78,10 @@ class _LessonOneState extends State<LessonOne> {
         return LessonStepOne(
           onContinue: () => setState(() => currentStep = 2),
         );
-      // case 2:
-      //   return LessonStepTwo(
-      //     onContinue: () => setState(() => currentStep = 0), // loop back
-      //   );
+      case 2:
+        return LessonStepTwo(
+          onContinue: () => setState(() => currentStep = 0), // loop back
+        );
       default:
         return Container();
     }

@@ -114,8 +114,9 @@ flutter:
     - assets/images/robot_family1.jpg
     - assets/images/robot_family2.jpg
     - assets/images/finger.png
-    - assets/images/dog.png
-    - assets/images/cat.jpg
+    - assets/images/dog1.png
+    - assets/images/cat1.jpg
+    - assets/images/cat2.jpg
     - assets/images/sticky_note.png
     - assets/images/note_yellow.png
     - assets/images/dog_horizontal.png
@@ -124,6 +125,8 @@ flutter:
     - assets/images/brain_mri2.png
     - assets/images/brain_mri3.png
     - assets/images/brain_mri4.png
+    - assets/images/down_arrow.svg
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
