@@ -3,8 +3,31 @@ import 'package:google_fonts/google_fonts.dart';
 
 const double maxTextWidth = 350;
 
-class LessonStepThree extends StatelessWidget {
-  const LessonStepThree({super.key});
+class LessonStepThree extends StatefulWidget {
+  final ValueNotifier<bool>? answeredNotifier; // ✅ notifier
+
+  const LessonStepThree({super.key, this.answeredNotifier});
+
+  @override
+  State<LessonStepThree> createState() => _LessonStepThreeState();
+}
+
+class _LessonStepThreeState extends State<LessonStepThree> {
+  String? dogRowSelection;
+  String? catRowSelection;
+  bool triedWrong = false; // track wrong attempt
+
+  void _checkAnswers() {
+    if (dogRowSelection != null && catRowSelection != null) {
+      if (dogRowSelection == "dog" && catRowSelection == "cat") {
+        widget.answeredNotifier?.value = true;
+        triedWrong = false;
+      } else {
+        widget.answeredNotifier?.value = false;
+        triedWrong = true;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +64,8 @@ class LessonStepThree extends StatelessWidget {
                   ),
                   Table(
                     border: const TableBorder.symmetric(
-                        inside: BorderSide(color: Colors.black12, width: 1)),
+                      inside: BorderSide(color: Colors.black12, width: 1),
+                    ),
                     columnWidths: const {
                       0: FixedColumnWidth(120),
                       1: FlexColumnWidth(),
@@ -58,24 +82,28 @@ class LessonStepThree extends StatelessWidget {
                       ),
                       TableRow(children: [
                         _imageCell('assets/images/dog1.png'),
-                        TableCell(
-                          verticalAlignment: TableCellVerticalAlignment.middle,
-                          child: _iconCell(true),
+                        _iconCell(
+                          selected: dogRowSelection == "dog",
+                          onTap: () => setState(
+                              () => {dogRowSelection = "dog", _checkAnswers()}),
                         ),
-                        TableCell(
-                          verticalAlignment: TableCellVerticalAlignment.middle,
-                          child: _iconCell(false),
+                        _iconCell(
+                          selected: dogRowSelection == "cat",
+                          onTap: () => setState(
+                              () => {dogRowSelection = "cat", _checkAnswers()}),
                         ),
                       ]),
                       TableRow(children: [
                         _imageCell('assets/images/cat1.jpg'),
-                        TableCell(
-                          verticalAlignment: TableCellVerticalAlignment.middle,
-                          child: _iconCell(false),
+                        _iconCell(
+                          selected: catRowSelection == "dog",
+                          onTap: () => setState(
+                              () => {catRowSelection = "dog", _checkAnswers()}),
                         ),
-                        TableCell(
-                          verticalAlignment: TableCellVerticalAlignment.middle,
-                          child: _iconCell(true),
+                        _iconCell(
+                          selected: catRowSelection == "cat",
+                          onTap: () => setState(
+                              () => {catRowSelection = "cat", _checkAnswers()}),
                         ),
                       ]),
                     ],
@@ -83,6 +111,29 @@ class LessonStepThree extends StatelessWidget {
                 ],
               ),
             ),
+
+            // ✅ Try Again message
+            if (triedWrong)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade200, width: 1),
+                ),
+                child: Text(
+                  "Try Again!",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+
             const SizedBox(height: 60),
           ],
         ),
@@ -125,12 +176,16 @@ class LessonStepThree extends StatelessWidget {
     );
   }
 
-  static Widget _iconCell(bool correct) {
+  static Widget _iconCell(
+      {required bool selected, required VoidCallback onTap}) {
     return Center(
-      child: Icon(
-        correct ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: correct ? Colors.green : Colors.black26,
-        size: 40,
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(
+          selected ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: selected ? Colors.green : Colors.black26,
+          size: 40,
+        ),
       ),
     );
   }
