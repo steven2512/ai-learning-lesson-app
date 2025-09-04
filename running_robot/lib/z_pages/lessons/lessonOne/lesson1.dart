@@ -7,13 +7,11 @@ import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_4.dart';
 
-/// ✅ Shared Continue Button widget
+/// ✅ Shared Continue Button
 class ContinueButton extends StatelessWidget {
   final VoidCallback onPressed;
-
   const ContinueButton({super.key, required this.onPressed});
 
   @override
@@ -22,15 +20,11 @@ class ContinueButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton(
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Colors.teal),
-            padding: MaterialStateProperty.all<EdgeInsets>(
-              const EdgeInsets.symmetric(horizontal: 38, vertical: 14),
-            ),
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
             ),
           ),
           onPressed: onPressed,
@@ -50,11 +44,7 @@ class ContinueButton extends StatelessWidget {
 
 class LessonOne extends StatefulWidget {
   final AppNavigate onNavigate;
-
-  const LessonOne({
-    super.key,
-    required this.onNavigate,
-  });
+  const LessonOne({super.key, required this.onNavigate});
 
   @override
   State<LessonOne> createState() => _LessonOneState();
@@ -63,16 +53,16 @@ class LessonOne extends StatefulWidget {
 class _LessonOneState extends State<LessonOne> {
   int currentStep = 0;
 
-  // Each lesson can have its own vertical padding
+  final GlobalKey<LessonStepOneState> _stepOneKey =
+      GlobalKey<LessonStepOneState>();
+
   final Map<int, double> topOffsets = {
-    0: 200,
+    0: 150,
     1: 200,
     2: 140,
     3: 140,
-    4: 220,
   };
 
-  // ✅ Notifiers
   final ValueNotifier<bool> _stepOneAnswered = ValueNotifier(false);
   final ValueNotifier<bool> _stepThreeAnswered = ValueNotifier(false);
 
@@ -102,26 +92,22 @@ class _LessonOneState extends State<LessonOne> {
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
             child: LessonProgressBar(
-              totalStages: 5,
+              totalStages: 4,
               currentStage: currentStep,
             ),
           ),
 
           // ✅ Close button
-          Positioned(
-            top: 69,
-            left: 30,
-            child: returnButton,
-          ),
+          Positioned(top: 69, left: 30, child: returnButton),
 
-          // ✅ Active step (content only, offset applied)
+          // ✅ Active step
           Positioned.fill(
             top: topOffset,
             bottom: 100,
             child: _buildCurrentStep(),
           ),
 
-          // ✅ Fixed Continue button at bottom
+          // ✅ Continue button
           Positioned(
             bottom: 40,
             left: 0,
@@ -133,8 +119,14 @@ class _LessonOneState extends State<LessonOne> {
                 builder: (context, step1, step3, _) {
                   if (_showContinueButton(step1, step3)) {
                     return ContinueButton(
-                      onPressed: () =>
-                          setState(() => currentStep = currentStep + 1),
+                      onPressed: () {
+                        if (currentStep == 1) {
+                          final state = _stepOneKey.currentState;
+                          if (state != null) state.nextRound();
+                        } else {
+                          setState(() => currentStep++);
+                        }
+                      },
                     );
                   }
                   return const SizedBox.shrink();
@@ -152,12 +144,14 @@ class _LessonOneState extends State<LessonOne> {
       case 0:
         return const LessonStepZero();
       case 1:
-        return LessonStepOne(answeredNotifier: _stepOneAnswered);
+        return LessonStepOne(
+          key: _stepOneKey,
+          answeredNotifier: _stepOneAnswered,
+          onRoundComplete: () => setState(() => currentStep++),
+        );
       case 2:
         return const LessonStepTwo();
       case 3:
-        return const LessonStepTwoTwo();
-      case 4:
         return LessonStepThree(answeredNotifier: _stepThreeAnswered);
       default:
         return Container();
@@ -166,7 +160,7 @@ class _LessonOneState extends State<LessonOne> {
 
   bool _showContinueButton(bool stepOneAnswered, bool stepThreeAnswered) {
     if (currentStep == 1) return stepOneAnswered;
-    if (currentStep == 4) return stepThreeAnswered;
+    if (currentStep == 3) return stepThreeAnswered;
     return true;
   }
 }

@@ -4,47 +4,132 @@ import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
 
 const double maxTextWidth = 350;
 
-class LessonStepOne extends StatefulWidget {
-  final ValueNotifier<bool>? answeredNotifier;
+/// Quiz item model
+class _QuizItem {
+  final String image;
+  final String question;
+  final List<String> answers;
+  final int correctIndex;
 
-  const LessonStepOne({super.key, this.answeredNotifier});
-
-  @override
-  State<LessonStepOne> createState() => _LessonStepOneState();
+  const _QuizItem({
+    required this.image,
+    required this.question,
+    required this.answers,
+    required this.correctIndex,
+  });
 }
 
-class _LessonStepOneState extends State<LessonStepOne> {
+class LessonStepOne extends StatefulWidget {
+  final ValueNotifier<bool>? answeredNotifier;
+  final VoidCallback? onRoundComplete;
+
+  const LessonStepOne({
+    super.key,
+    this.answeredNotifier,
+    this.onRoundComplete,
+  });
+
+  @override
+  LessonStepOneState createState() => LessonStepOneState();
+}
+
+class LessonStepOneState extends State<LessonStepOne> {
+  int currentRound = 0;
   bool _answeredCorrect = false;
   bool _triedWrong = false;
 
+  final List<_QuizItem> quizItems = const [
+    _QuizItem(
+      image: "assets/images/notebook.png",
+      question: "What is this data?",
+      answers: ["Text", "Audio"],
+      correctIndex: 0,
+    ),
+    _QuizItem(
+      image: "assets/images/cat1.jpg",
+      question: "What is this data?",
+      answers: ["Picture", "Video"],
+      correctIndex: 0,
+    ),
+    _QuizItem(
+      image: "assets/images/car.jpg",
+      question: "What is this data?",
+      answers: ["Audio", "Text"],
+      correctIndex: 0,
+    ),
+    _QuizItem(
+      image: "assets/images/recording.png",
+      question: "What is this data?",
+      answers: ["Video", "Picture"],
+      correctIndex: 0,
+    ),
+  ];
+
   void _handleAnswerTap(int selectedIndex) {
-    if (selectedIndex == 0) {
-      // Dog = correct
+    final current = quizItems[currentRound];
+    if (selectedIndex == current.correctIndex) {
       setState(() {
         _answeredCorrect = true;
         _triedWrong = false;
       });
       widget.answeredNotifier?.value = true;
     } else {
-      // Cat = wrong
       if (!_answeredCorrect) {
-        setState(() {
-          _triedWrong = true;
-        });
-        widget.answeredNotifier?.value = false;
+        setState(() => _triedWrong = true);
       }
+      widget.answeredNotifier?.value = false;
     }
   }
 
+  /// Called by LessonOne on "Continue"
+  void nextRound() {
+    if (_answeredCorrect && currentRound < quizItems.length - 1) {
+      setState(() {
+        currentRound++;
+        _answeredCorrect = false;
+        _triedWrong = false;
+      });
+      widget.answeredNotifier?.value = false;
+    } else if (currentRound == quizItems.length - 1) {
+      widget.onRoundComplete?.call(); // finished quiz
+    }
+  }
+
+  bool get isLastRound => currentRound == quizItems.length - 1;
+
   @override
   Widget build(BuildContext context) {
+    final current = quizItems[currentRound];
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Dog Image
+            // ✅ Heading
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black26, width: 1),
+              ),
+              child: Center(
+                child: Text(
+                  "What is this data?",
+                  style: GoogleFonts.lato(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+
+            // ✅ Image
             Container(
               width: double.infinity,
               height: 250,
@@ -57,24 +142,21 @@ class _LessonStepOneState extends State<LessonStepOne> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  'assets/images/dog_horizontal.png',
-                  fit: BoxFit.cover,
+                  current.image,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
 
             // ✅ MCQ
             MCQBox(
+              key: ValueKey(
+                  currentRound), // 👈 this forces Flutter to rebuild fresh each round
               question: _buildSentence([
-                _word("Is this", Colors.black87, fontSize: 24),
-                _word("a dog", const Color.fromARGB(255, 78, 212, 83),
-                    fontWeight: FontWeight.w600, fontSize: 24),
-                _word("or", Colors.black87, fontSize: 24),
-                _word("a cat?", const Color.fromARGB(221, 255, 51, 0),
-                    fontSize: 24),
+                _word(current.question, Colors.black87, fontSize: 22),
               ], alignment: WrapAlignment.center, constrainWidth: false),
-              answers: ["Dog", "Cat"],
-              correctAnswer: 0,
+              answers: current.answers,
+              correctAnswer: current.correctIndex,
               width: double.infinity,
               height: 250,
               padding: [16, 15, 10, 16, 16, 16],
@@ -86,52 +168,28 @@ class _LessonStepOneState extends State<LessonStepOne> {
               answerFontWeight: FontWeight.w500,
               answerFontSize: 18,
               defaultAnimation: true,
-              lockCorrectAnswer: true, // assumes your MCQBox supports this
+              lockCorrectAnswer: true,
               onAnswerTap: (index, _) => _handleAnswerTap(index),
             ),
 
             const SizedBox(height: 20),
 
-            // ✅ Try Again message
+            // ✅ Try Again
             if (_triedWrong && !_answeredCorrect)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade200, width: 1),
-                ),
-                child: Text(
-                  "Try Again!",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red.shade700,
-                  ),
-                ),
+              _feedbackBox(
+                "Try Again!",
+                Colors.red.shade50,
+                Colors.red.shade700,
               ),
 
-            // ✅ Congrats message
+            // ✅ Correct
             if (_answeredCorrect)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.shade200, width: 1),
-                ),
-                child: Text(
-                  "Congrats 🎉 You just finished your first classification task!",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade700,
-                  ),
-                ),
+              _feedbackBox(
+                isLastRound
+                    ? "🎉 Great job! You finished the quiz."
+                    : "Correct ✅ Tap Continue to move on",
+                Colors.green.shade50,
+                Colors.green.shade700,
               ),
           ],
         ),
@@ -139,15 +197,34 @@ class _LessonStepOneState extends State<LessonStepOne> {
     );
   }
 
-  // helpers
+  Widget _feedbackBox(String msg, Color bg, Color text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: text.withOpacity(0.4), width: 1),
+      ),
+      child: Text(
+        msg,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.lato(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: text,
+        ),
+      ),
+    );
+  }
+
   static Widget _word(String text, Color color,
-      {FontWeight? fontWeight, bool italic = false, double? fontSize}) {
+      {FontWeight? fontWeight, double? fontSize}) {
     return Text(
       "$text ",
       style: GoogleFonts.lato(
-        fontSize: fontSize ?? 22,
+        fontSize: fontSize ?? 20,
         fontWeight: fontWeight ?? FontWeight.w800,
-        fontStyle: italic ? FontStyle.italic : FontStyle.normal,
         color: color,
       ),
     );

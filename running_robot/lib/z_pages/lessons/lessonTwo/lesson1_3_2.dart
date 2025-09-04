@@ -6,14 +6,17 @@ const Color mainConceptColor =
 const Color keyConceptGreen =
     Color.fromARGB(255, 0, 163, 54); // Highlight key words
 const double maxTextWidth = 350;
-const double secondLineSize = 20.5;
+const double secondLineSize = 21.5;
 const FontWeight secondLineWeight = FontWeight.w800;
 
+/// ✅ Global font size for special highlighted words
+const double definitionSize = 22.0;
+
 /// ✅ Colors for the 4 key actions
-const Color storeColor = Color(0xFF1976D2); // Blue
-const Color processColor = Color(0xFFF57C00); // Orange
-const Color patternsColor = Color(0xFF8E24AA); // Purple
-const Color decisionsColor = Color(0xFF2E7D32); // Green
+const Color storeColor = Color.fromARGB(255, 119, 0, 115); // Blue
+const Color processColor = Color.fromARGB(255, 0, 180, 177); // Orange
+const Color patternsColor = Color.fromARGB(255, 0, 98, 196); // Purple
+const Color decisionsColor = Color.fromARGB(255, 255, 0, 0); // Green
 
 class LessonStepTwoTwo extends StatelessWidget {
   const LessonStepTwoTwo({super.key});
@@ -44,13 +47,13 @@ class LessonStepTwoTwo extends StatelessWidget {
                   _buildSentence([
                     _word("What", Colors.black87, fontSize: 30),
                     _word("can", Colors.black87, fontSize: 30),
-                    _word("computers", const Color.fromARGB(255, 0, 0, 0),
+                    _word("computers", const Color.fromARGB(255, 0, 187, 50),
                         fontSize: 30),
                     _word("do", Colors.black87, fontSize: 30),
                     _word("with", Colors.black87, fontSize: 30),
                     _word("data?", mainConceptColor, fontSize: 30),
                   ]),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 15),
                   // Answer (pipeline with arrows)
                   _buildSentence([
                     const Padding(
@@ -58,20 +61,23 @@ class LessonStepTwoTwo extends StatelessWidget {
                       child: Icon(Icons.arrow_forward_rounded,
                           size: 26, color: Colors.black54),
                     ),
-                    _word("Computers", const Color.fromARGB(255, 0, 0, 0),
+                    _word("They", const Color.fromARGB(255, 0, 0, 0),
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
                     _word("can", Colors.black,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
+
                     // Store
                     _word("store data,", storeColor,
-                        fontSize: secondLineSize,
+                        fontSize: definitionSize,
                         fontWeight: FontWeight.w800,
                         italic: true),
-                    // _word("", const Color.fromARGB(255, 0, 0, 0),
-                    //     fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    // // Process
-                    _word("process data,", const Color.fromARGB(255, 255, 0, 0),
-                        fontSize: secondLineSize,
+                    _word("process", processColor,
+                        fontSize: definitionSize,
+                        fontWeight: FontWeight.w800,
+                        italic: true),
+                    // Process
+                    _word("data,", processColor,
+                        fontSize: definitionSize,
                         fontWeight: FontWeight.w800,
                         italic: true),
 
@@ -80,7 +86,7 @@ class LessonStepTwoTwo extends StatelessWidget {
 
                     // Find patterns
                     _word("find patterns", patternsColor,
-                        fontSize: secondLineSize,
+                        fontSize: definitionSize,
                         fontWeight: FontWeight.w800,
                         italic: true),
 
@@ -89,7 +95,7 @@ class LessonStepTwoTwo extends StatelessWidget {
 
                     // Make decisions
                     _word("make decisions.", decisionsColor,
-                        fontSize: secondLineSize,
+                        fontSize: definitionSize,
                         fontWeight: FontWeight.w800,
                         italic: true),
                   ]),
@@ -124,7 +130,7 @@ class LessonStepTwoTwo extends StatelessWidget {
     return Text(
       "$text ",
       style: GoogleFonts.lato(
-        fontSize: fontSize ?? 22,
+        fontSize: fontSize ?? secondLineSize,
         fontWeight: fontWeight ?? FontWeight.w800,
         fontStyle: italic ? FontStyle.italic : FontStyle.normal,
         color: color,

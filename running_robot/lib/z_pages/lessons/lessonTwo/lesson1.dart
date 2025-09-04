@@ -5,9 +5,9 @@ import 'package:running_robot/z_pages/assets/lessonN/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonN/progress_bar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3_2.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_3_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_4.dart';
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_5.dart';
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_6.dart';
@@ -67,7 +67,7 @@ class _LessonOneState extends State<LessonOne> {
 
   // Each lesson can have its own vertical padding
   final Map<int, double> topOffsets = {
-    0: 200,
+    0: 50,
     1: 200,
     2: 140,
     3: 140, // new LessonStepTwoTwo
