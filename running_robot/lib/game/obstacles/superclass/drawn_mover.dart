@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:running_robot/z_pages/lessons/lesson_three.dart';
+import 'package:running_robot/z_pages/lessons/lessonThree/lesson_three.dart';
 
 class DrawnMover extends PositionComponent with HasGameRef<LessonThree> {
   final Vector2 startPosition;

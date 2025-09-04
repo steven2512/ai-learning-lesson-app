@@ -5,8 +5,7 @@ import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
 const double maxTextWidth = 350;
 
 class LessonStepOne extends StatefulWidget {
-  final ValueNotifier<bool>?
-      answeredNotifier; // ✅ For LessonOne to track answered state
+  final ValueNotifier<bool>? answeredNotifier;
 
   const LessonStepOne({super.key, this.answeredNotifier});
 
@@ -15,9 +14,27 @@ class LessonStepOne extends StatefulWidget {
 }
 
 class _LessonStepOneState extends State<LessonStepOne> {
-  bool _answered = false;
+  bool _answeredCorrect = false;
+  bool _triedWrong = false;
 
-  bool get answered => _answered;
+  void _handleAnswerTap(int selectedIndex) {
+    if (selectedIndex == 0) {
+      // Dog = correct
+      setState(() {
+        _answeredCorrect = true;
+        _triedWrong = false;
+      });
+      widget.answeredNotifier?.value = true;
+    } else {
+      // Cat = wrong
+      if (!_answeredCorrect) {
+        setState(() {
+          _triedWrong = true;
+        });
+        widget.answeredNotifier?.value = false;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,14 +86,53 @@ class _LessonStepOneState extends State<LessonStepOne> {
               answerFontWeight: FontWeight.w500,
               answerFontSize: 18,
               defaultAnimation: true,
-              onAnswerTap: (_, __) {
-                if (!_answered) {
-                  setState(() => _answered = true);
-                  widget.answeredNotifier?.value = true; // ✅ update LessonOne
-                }
-              },
+              lockCorrectAnswer: true, // assumes your MCQBox supports this
+              onAnswerTap: (index, _) => _handleAnswerTap(index),
             ),
+
             const SizedBox(height: 20),
+
+            // ✅ Try Again message
+            if (_triedWrong && !_answeredCorrect)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade200, width: 1),
+                ),
+                child: Text(
+                  "Try Again!",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+
+            // ✅ Congrats message
+            if (_answeredCorrect)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.shade200, width: 1),
+                ),
+                child: Text(
+                  "Congrats 🎉 You just finished your first classification task!",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

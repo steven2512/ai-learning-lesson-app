@@ -6,7 +6,7 @@ import 'package:flame/components.dart';
 import 'package:running_robot/game/characters/diziness.dart';
 import 'package:running_robot/game/characters/electric.dart';
 import 'package:running_robot/game/events/event_type.dart';
-import 'package:running_robot/z_pages/lessons/lesson_three.dart';
+import 'package:running_robot/z_pages/lessons/lessonThree/lesson_three.dart';
 import 'package:running_robot/game/obstacles/bird.dart';
 import 'package:running_robot/game/obstacles/fence.dart';
 import 'package:running_robot/game/obstacles/rain.dart';

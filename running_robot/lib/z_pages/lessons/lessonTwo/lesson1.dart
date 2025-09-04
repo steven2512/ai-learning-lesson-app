@@ -9,6 +9,8 @@ import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_3_2.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_4.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_5.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson1_6.dart';
 
 /// ✅ Shared Continue Button widget
 class ContinueButton extends StatelessWidget {
@@ -68,8 +70,11 @@ class _LessonOneState extends State<LessonOne> {
     0: 200,
     1: 200,
     2: 140,
-    3: 140,
+    3: 140, // new LessonStepTwoTwo
     4: 220,
+    5: 120,
+    6: 180,
+    7: 130,
   };
 
   // ✅ Notifiers
@@ -102,7 +107,7 @@ class _LessonOneState extends State<LessonOne> {
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
             child: LessonProgressBar(
-              totalStages: 5,
+              totalStages: 7,
               currentStage: currentStep,
             ),
           ),
@@ -117,7 +122,7 @@ class _LessonOneState extends State<LessonOne> {
           // ✅ Active step (content only, offset applied)
           Positioned.fill(
             top: topOffset,
-            bottom: 100,
+            bottom: 100, // leave space for button
             child: _buildCurrentStep(),
           ),
 
@@ -159,11 +164,16 @@ class _LessonOneState extends State<LessonOne> {
         return const LessonStepTwoTwo();
       case 4:
         return LessonStepThree(answeredNotifier: _stepThreeAnswered);
+      case 5:
+        return const LessonStepFour();
+      case 6:
+        return const LessonStepFive();
       default:
         return Container();
     }
   }
 
+  /// Decides when to show the Continue button
   bool _showContinueButton(bool stepOneAnswered, bool stepThreeAnswered) {
     if (currentStep == 1) return stepOneAnswered;
     if (currentStep == 4) return stepThreeAnswered;

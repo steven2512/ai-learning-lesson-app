@@ -9,6 +9,12 @@ const double maxTextWidth = 350;
 const double secondLineSize = 20.5;
 const FontWeight secondLineWeight = FontWeight.w800;
 
+/// ✅ Colors for the 4 key actions
+const Color storeColor = Color(0xFF1976D2); // Blue
+const Color processColor = Color(0xFFF57C00); // Orange
+const Color patternsColor = Color(0xFF8E24AA); // Purple
+const Color decisionsColor = Color(0xFF2E7D32); // Green
+
 class LessonStepTwoTwo extends StatelessWidget {
   const LessonStepTwoTwo({super.key});
 
@@ -38,39 +44,54 @@ class LessonStepTwoTwo extends StatelessWidget {
                   _buildSentence([
                     _word("What", Colors.black87, fontSize: 30),
                     _word("can", Colors.black87, fontSize: 30),
-                    _word("computers", keyConceptGreen, fontSize: 30),
+                    _word("computers", const Color.fromARGB(255, 0, 0, 0),
+                        fontSize: 30),
                     _word("do", Colors.black87, fontSize: 30),
                     _word("with", Colors.black87, fontSize: 30),
-                    _word("Data?", mainConceptColor, fontSize: 30),
+                    _word("data?", mainConceptColor, fontSize: 30),
                   ]),
                   const SizedBox(height: 12),
-                  // Answer (split word by word)
+                  // Answer (pipeline with arrows)
                   _buildSentence([
                     const Padding(
                       padding: EdgeInsets.only(top: 3, right: 1),
                       child: Icon(Icons.arrow_forward_rounded,
                           size: 26, color: Colors.black54),
                     ),
-                    _word("They", Colors.black87,
+                    _word("Computers", const Color.fromARGB(255, 0, 0, 0),
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("can", Colors.black87,
+                    _word("can", Colors.black,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("find", Colors.black87,
+                    // Store
+                    _word("store data,", storeColor,
+                        fontSize: secondLineSize,
+                        fontWeight: FontWeight.w800,
+                        italic: true),
+                    // _word("", const Color.fromARGB(255, 0, 0, 0),
+                    //     fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                    // // Process
+                    _word("process data,", const Color.fromARGB(255, 255, 0, 0),
+                        fontSize: secondLineSize,
+                        fontWeight: FontWeight.w800,
+                        italic: true),
+
+                    _word("then", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("patterns,", keyConceptGreen,
-                        fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    _word("make", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("decisions,", keyConceptGreen,
-                        fontSize: secondLineSize, fontWeight: FontWeight.w800),
+
+                    // Find patterns
+                    _word("find patterns", patternsColor,
+                        fontSize: secondLineSize,
+                        fontWeight: FontWeight.w800,
+                        italic: true),
+
                     _word("and", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("learn", keyConceptGreen,
-                        fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    _word("from", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("it.", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
+
+                    // Make decisions
+                    _word("make decisions.", decisionsColor,
+                        fontSize: secondLineSize,
+                        fontWeight: FontWeight.w800,
+                        italic: true),
                   ]),
                 ],
               ),

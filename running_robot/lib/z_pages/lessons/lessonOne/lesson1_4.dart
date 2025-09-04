@@ -15,16 +15,22 @@ class LessonStepThree extends StatefulWidget {
 class _LessonStepThreeState extends State<LessonStepThree> {
   String? dogRowSelection;
   String? catRowSelection;
-  bool triedWrong = false; // track wrong attempt
+  bool triedWrong = false;
+  bool locked = false; // ✅ lock once correct
 
   void _checkAnswers() {
     if (dogRowSelection != null && catRowSelection != null) {
       if (dogRowSelection == "dog" && catRowSelection == "cat") {
-        widget.answeredNotifier?.value = true;
-        triedWrong = false;
+        setState(() {
+          widget.answeredNotifier?.value = true;
+          triedWrong = false;
+          locked = true; // ✅ lock once correct
+        });
       } else {
-        widget.answeredNotifier?.value = false;
-        triedWrong = true;
+        setState(() {
+          widget.answeredNotifier?.value = false;
+          triedWrong = true;
+        });
       }
     }
   }
@@ -84,26 +90,42 @@ class _LessonStepThreeState extends State<LessonStepThree> {
                         _imageCell('assets/images/dog1.png'),
                         _iconCell(
                           selected: dogRowSelection == "dog",
-                          onTap: () => setState(
-                              () => {dogRowSelection = "dog", _checkAnswers()}),
+                          onTap: locked
+                              ? null
+                              : () => setState(() {
+                                    dogRowSelection = "dog";
+                                    _checkAnswers();
+                                  }),
                         ),
                         _iconCell(
                           selected: dogRowSelection == "cat",
-                          onTap: () => setState(
-                              () => {dogRowSelection = "cat", _checkAnswers()}),
+                          onTap: locked
+                              ? null
+                              : () => setState(() {
+                                    dogRowSelection = "cat";
+                                    _checkAnswers();
+                                  }),
                         ),
                       ]),
                       TableRow(children: [
                         _imageCell('assets/images/cat1.jpg'),
                         _iconCell(
                           selected: catRowSelection == "dog",
-                          onTap: () => setState(
-                              () => {catRowSelection = "dog", _checkAnswers()}),
+                          onTap: locked
+                              ? null
+                              : () => setState(() {
+                                    catRowSelection = "dog";
+                                    _checkAnswers();
+                                  }),
                         ),
                         _iconCell(
                           selected: catRowSelection == "cat",
-                          onTap: () => setState(
-                              () => {catRowSelection = "cat", _checkAnswers()}),
+                          onTap: locked
+                              ? null
+                              : () => setState(() {
+                                    catRowSelection = "cat";
+                                    _checkAnswers();
+                                  }),
                         ),
                       ]),
                     ],
@@ -113,7 +135,7 @@ class _LessonStepThreeState extends State<LessonStepThree> {
             ),
 
             // ✅ Try Again message
-            if (triedWrong)
+            if (triedWrong && !locked)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -130,6 +152,28 @@ class _LessonStepThreeState extends State<LessonStepThree> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+
+            // ✅ Correct explanation
+            if (locked)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.shade200, width: 1),
+                ),
+                child: Text(
+                  "Correct! ✅ Rule of thumb: Data is the information, and Label is the correct tag for that information.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green.shade700,
                   ),
                 ),
               ),
@@ -177,7 +221,7 @@ class _LessonStepThreeState extends State<LessonStepThree> {
   }
 
   static Widget _iconCell(
-      {required bool selected, required VoidCallback onTap}) {
+      {required bool selected, required VoidCallback? onTap}) {
     return Center(
       child: IconButton(
         onPressed: onTap,

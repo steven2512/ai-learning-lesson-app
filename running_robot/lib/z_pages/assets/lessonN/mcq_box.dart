@@ -30,8 +30,9 @@ class MCQBox extends StatelessWidget {
   final double? answerLetterSpacing;
   final TextAlign? answerAlignment;
 
-  // Default animation flag
+  // Flags
   final bool defaultAnimation;
+  final bool lockCorrectAnswer; // ✅ new
 
   const MCQBox({
     super.key,
@@ -56,6 +57,7 @@ class MCQBox extends StatelessWidget {
     this.answerLetterSpacing,
     this.answerAlignment,
     this.defaultAnimation = true,
+    this.lockCorrectAnswer = false, // ✅ default: off
   });
 
   @override
@@ -125,6 +127,7 @@ class MCQBox extends StatelessWidget {
             borderRadius: borderRadius,
             answerFill: answerFill,
             defaultAnimation: defaultAnimation,
+            lockCorrectAnswer: lockCorrectAnswer, // ✅ pass through
           ),
         ],
       ),
@@ -134,7 +137,7 @@ class MCQBox extends StatelessWidget {
 
 /// MCQAnswers: renders list of answers with optional default animation
 class MCQAnswers extends StatefulWidget {
-  final List<Widget> answers; // ✅ normalized to Widgets
+  final List<Widget> answers;
   final int correctAnswer;
   final void Function(int index, bool isCorrect)? onAnswerTap;
 
@@ -145,6 +148,7 @@ class MCQAnswers extends StatefulWidget {
   final Color answerFill;
 
   final bool defaultAnimation;
+  final bool lockCorrectAnswer; // ✅ new
 
   const MCQAnswers({
     super.key,
@@ -157,6 +161,7 @@ class MCQAnswers extends StatefulWidget {
     this.borderRadius = 12,
     this.answerFill = const Color(0xFFE0E0E0),
     this.defaultAnimation = true,
+    this.lockCorrectAnswer = false, // ✅ default: off
   });
 
   @override
@@ -165,10 +170,20 @@ class MCQAnswers extends StatefulWidget {
 
 class _MCQAnswersState extends State<MCQAnswers> {
   int? selectedIndex;
+  bool correctLocked = false;
 
   void _handleTap(int index) {
+    // ✅ If already locked on correct answer → ignore further taps
+    if (widget.lockCorrectAnswer && correctLocked) return;
+
     final isCorrect = index == widget.correctAnswer;
-    setState(() => selectedIndex = index);
+    setState(() {
+      selectedIndex = index;
+      if (widget.lockCorrectAnswer && isCorrect) {
+        correctLocked = true;
+      }
+    });
+
     widget.onAnswerTap?.call(index, isCorrect);
   }
 
