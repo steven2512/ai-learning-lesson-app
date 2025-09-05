@@ -6,10 +6,16 @@ abstract class AppRoute {
   const AppRoute();
 }
 
+/// ---------------- LESSON ROUTES ----------------
 class RouteLesson1 extends AppRoute {
   const RouteLesson1();
 }
 
+class RouteLesson2 extends AppRoute {
+  const RouteLesson2();
+}
+
+/// ---------------- END LESSON ROUTE ----------------
 class RouteEndLesson extends AppRoute {
   final int xp;
   final int streak;
@@ -26,6 +32,12 @@ class RouteEndLesson extends AppRoute {
   final String topText;
   final String? illustrationPath; // asset path (optional)
 
+  /// 🔹 Where to go if the user taps "Repeat".
+  final AppRoute repeatLesson;
+
+  /// 🔹 Where to go if the user taps "Next Lesson" (nullable if last lesson).
+  final AppRoute? nextLesson;
+
   const RouteEndLesson({
     required this.xp,
     required this.streak,
@@ -33,14 +45,13 @@ class RouteEndLesson extends AppRoute {
     required this.chapterProgress,
     required this.totalChapterLessons,
     required this.topText,
+    required this.repeatLesson,
+    this.nextLesson,
     this.illustrationPath,
   });
 }
 
-/// Entry to the tab shell (Home/Lessons/Stats/Settings).
-/// Tabs themselves are switched internally (no new routes),
-/// but this lets you jump straight to a specific tab from outside the shell.
-/// 0 = Home, 1 = Lessons, 2 = Stats, 3 = Settings
+/// ---------------- MAIN MENU & UTILS ----------------
 class RouteMainMenu extends AppRoute {
   final int tab;
   const RouteMainMenu({this.tab = 0});

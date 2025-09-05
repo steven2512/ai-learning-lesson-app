@@ -335,7 +335,7 @@ class LessonStepOneState extends State<LessonStepOne> {
   }
 }
 
-/// 🔥 Animated Bouncing Ball
+/// 🔥 Animated Bouncing Ball (no fading, infinite bounce)
 class BouncingBall extends StatefulWidget {
   const BouncingBall({super.key});
 
@@ -346,7 +346,6 @@ class BouncingBall extends StatefulWidget {
 class _BouncingBallState extends State<BouncingBall>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _fade;
   late final Animation<double> _bounce;
 
   static const double _centerY = 60;
@@ -361,21 +360,7 @@ class _BouncingBallState extends State<BouncingBall>
         Duration(milliseconds: 600 * bounceNo) + timeBeforeRepeatAnimation;
 
     _controller = AnimationController(vsync: this, duration: totalDuration)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _controller.reset();
-          _controller.forward();
-        }
-      });
-
-    // Fade in -> visible -> fade out
-    _fade = TweenSequence([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 80), // visible
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out
-    ]).animate(_controller);
+      ..repeat();
 
     // Bounce sequence (center ↔ floor)
     final List<TweenSequenceItem<double>> sequence = [];
@@ -394,8 +379,6 @@ class _BouncingBallState extends State<BouncingBall>
       ]);
     }
     _bounce = TweenSequence(sequence).animate(_controller);
-
-    _controller.forward();
   }
 
   @override
@@ -419,20 +402,17 @@ class _BouncingBallState extends State<BouncingBall>
           ),
         ),
 
-        // 🏀 Basketball bounce + fade
+        // 🏀 Basketball bounce (no fade)
         AnimatedBuilder(
           animation: _controller,
           builder: (_, __) {
             return Positioned(
               left: (maxTextWidth / 2) - _ballSize / 2,
               top: _bounce.value,
-              child: Opacity(
-                opacity: _fade.value,
-                child: Image.asset(
-                  "assets/images/basketball.png",
-                  width: _ballSize,
-                  height: _ballSize,
-                ),
+              child: Image.asset(
+                "assets/images/basketball.png",
+                width: _ballSize,
+                height: _ballSize,
               ),
             );
           },

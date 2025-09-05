@@ -266,7 +266,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                           "${lessonTitles[_currentChapter - 1][_selectedNodeIndex!]}",
                       buttonText: "Continue Lesson",
                       onNavigate: () {
-                        widget.onNavigate(RouteLesson1());
+                        widget.onNavigate(RouteLesson2());
                       },
                       imageHeight: 120,
                       width: 280,

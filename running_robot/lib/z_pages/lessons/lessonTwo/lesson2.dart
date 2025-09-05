@@ -8,76 +8,31 @@ import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
     as flutter_ui_bar;
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
-
-// 🔹 Flame progress bar (final bar to pass to EndLessonPage)
 import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_2.dart';
 
-/// ✅ Shared Continue Button
-// class ContinueButton extends StatelessWidget {
-//   final VoidCallback onPressed;
-//   const ContinueButton({super.key, required this.onPressed});
+import 'lesson2_1.dart'; // 👉 StepZero
+// later: import 'lesson2_2.dart', 'lesson2_3.dart', etc.
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.center,
-//       children: [
-//         ElevatedButton(
-//           style: ElevatedButton.styleFrom(
-//             backgroundColor: Colors.teal,
-//             padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 14),
-//             shape: RoundedRectangleBorder(
-//               borderRadius: BorderRadius.circular(30),
-//             ),
-//           ),
-//           onPressed: onPressed,
-//           child: Text(
-//             'Continue',
-//             style: GoogleFonts.lato(
-//               fontSize: 18,
-//               fontWeight: FontWeight.w600,
-//               color: Colors.white,
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
-
-class LessonOne extends StatefulWidget {
+class LessonTwo extends StatefulWidget {
   final AppNavigate onNavigate;
-  const LessonOne({super.key, required this.onNavigate});
+  const LessonTwo({super.key, required this.onNavigate});
 
   @override
-  State<LessonOne> createState() => _LessonOneState();
+  State<LessonTwo> createState() => _LessonTwoState();
 }
 
-class _LessonOneState extends State<LessonOne> {
+class _LessonTwoState extends State<LessonTwo> {
   int currentStep = 0;
-
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
-  /// ✅ Each step can define its own vertical offset
-  final Map<int, double> topOffsets = const {
-    0: 150, // StepZero
-    1: 150, // Quiz 1
-    2: 150, // Quiz 2
-    3: 150, // Quiz 3
-    4: 150, // Quiz 4
-    5: 150, // Quiz 5 (new Video quiz 🎥🏀)
-  };
+  /// 5 pages: 0–4
+  int get totalStages => 5;
 
-  int get totalStages => 1 + LessonStepOne.quizCount;
-
-  // Track "lesson completed" so the Flutter UI bar can render 100%
   bool _lessonCompleted = false;
-
   late IconButtonWidget<void> returnButton;
 
   @override
@@ -93,13 +48,11 @@ class _LessonOneState extends State<LessonOne> {
 
   @override
   Widget build(BuildContext context) {
-    final double topOffset = topOffsets[currentStep] ?? 120;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ✅ Progress bar (Flutter UI version for this page)
+          // ✅ Progress bar
           Positioned(
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
@@ -112,9 +65,9 @@ class _LessonOneState extends State<LessonOne> {
           // ✅ Close button
           Positioned(top: 69, left: 30, child: returnButton),
 
-          // ✅ Active step with offset applied
+          // ✅ Active step
           Positioned.fill(
-            top: topOffset,
+            top: 150,
             bottom: 100,
             child: _buildCurrentStep(),
           ),
@@ -140,26 +93,24 @@ class _LessonOneState extends State<LessonOne> {
                           _stepAnswered.value = false;
                         });
                       } else {
-                        // Final step: mark complete and route to end screen
+                        // Final step
                         setState(() {
                           _lessonCompleted = true;
                           _stepAnswered.value = false;
                         });
 
-                        // 🔹 Build the FINAL Flame progress bar (fully filled) to pass along.
                         final endBar = LessonProgressBar(
-                          position:
-                              Vector2.zero(), // EndLessonPage will position it
+                          position: Vector2.zero(),
                           stages: totalStages,
                         );
                         for (int i = 0; i < totalStages; i++) {
                           endBar.switchPhase(EventProgressBar.proceed);
                         }
 
-                        // 🔹 Hardcoded sample stats (wire real values later)
-                        const int xp = 50; // 10 XP per quiz × 5
-                        const int streak = 1; // stub
-                        const int chapterProgress = 1; // e.g., lesson 1 done
+                        // Stub values
+                        const int xp = 50;
+                        const int streak = 1;
+                        const int chapterProgress = 2; // e.g. lesson 2 done
                         const int totalChapterLessons = 10;
 
                         widget.onNavigate(
@@ -169,12 +120,11 @@ class _LessonOneState extends State<LessonOne> {
                             progressBar: endBar,
                             chapterProgress: chapterProgress,
                             totalChapterLessons: totalChapterLessons,
-                            topText: "Lesson 1 complete! 🎉",
-                            illustrationPath:
-                                null, // provide an asset path when ready    repeatLesson: const RouteLesson1(),   // 👈 repeat this lesson
+                            topText: "Lesson 2 complete! 🎉",
                             repeatLesson:
-                                const RouteLesson1(), // 👈 repeat this lesson
-                            nextLesson: const RouteLesson2(),
+                                const RouteLesson2(), // 👈 repeat this lesson
+                            nextLesson: const RouteMainMenu(),
+                            illustrationPath: null,
                           ),
                         );
                       }
@@ -191,15 +141,8 @@ class _LessonOneState extends State<LessonOne> {
 
   Widget _buildCurrentStep() {
     if (currentStep == 0) return const LessonStepZero();
-    final quizIndex = currentStep - 1;
-
-    return LessonStepOne(
-      key: ValueKey('quiz-$quizIndex'),
-      quizIndex: quizIndex,
-      onQuizCompleted: (index) {
-        debugPrint("Quiz $index completed");
-        _stepAnswered.value = true;
-      },
-    );
+    if (currentStep == 1) return const LessonStepOne();
+    // Later: hook up LessonStepOne, Two, Three, Four
+    return const SizedBox.shrink();
   }
 }
