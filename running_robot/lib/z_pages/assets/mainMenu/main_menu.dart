@@ -1,7 +1,7 @@
 /// FILE: lib/ui/main_menu.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/ui/buttons/avatar.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart'; // 👈 use new class

@@ -1,7 +1,7 @@
 /// FILE: lib/z_pages/assets/settings/settings_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/ui/buttons/avatar.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 
 class SettingsPage extends StatelessWidget {

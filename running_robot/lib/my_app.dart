@@ -10,7 +10,6 @@ import 'package:running_robot/z_pages/end_lesson.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1.dart';
 
 // Game scenes
-import 'package:running_robot/z_pages/lessons/lessonThree/lesson_three.dart';
 import 'package:running_robot/z_pages/root_nav.dart';
 
 class MyApp extends StatefulWidget {
@@ -43,18 +42,7 @@ class _MyAppState extends State<MyApp> {
       return LessonOne(onNavigate: navigate); // ✅ pass navigate
     }
 
-    // LESSON 3 — Flame game page
-    if (route is RouteLesson3) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: GameWidget(
-          key: ValueKey('lesson3_$_sceneKey'),
-          game: LessonThree(onNavigate: navigate),
-        ),
-      );
-    }
-
-    // END LESSON
+    // END LESSON — uses the new API (final progressBar + chapter progress)
     if (route is RouteEndLesson) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -62,12 +50,13 @@ class _MyAppState extends State<MyApp> {
           key: ValueKey('endlesson_$_sceneKey'),
           game: EndLessonPage(
             onRepeat: () => navigate(const RouteLesson1()),
-            onNext: () => navigate(const RouteLesson3()),
+            onNext: () => navigate(const RouteMainMenu(tab: 0)),
             onMainMenu: () => navigate(const RouteMainMenu(tab: 0)),
             xp: route.xp,
             streak: route.streak,
-            progressPercent: route.progressPercent,
-            stageProgress: route.stageProgress,
+            progressBar: route.progressBar, // 🔹 final prebuilt bar
+            chapterProgress: route.chapterProgress, // 🔹 X
+            totalChapterLessons: route.totalChapterLessons, // 🔹 Y
             topText: route.topText,
             illustrationPath: route.illustrationPath,
           ),

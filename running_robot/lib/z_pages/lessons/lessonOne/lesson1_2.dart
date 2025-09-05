@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double maxTextWidth = 350;
 
@@ -20,25 +20,19 @@ class _QuizItem {
 }
 
 class LessonStepOne extends StatefulWidget {
-  final ValueNotifier<bool>? answeredNotifier;
-  final VoidCallback? onRoundComplete;
+  final int quizIndex;
+  final void Function(int quizIndex) onQuizCompleted;
 
   const LessonStepOne({
     super.key,
-    this.answeredNotifier,
-    this.onRoundComplete,
+    required this.quizIndex,
+    required this.onQuizCompleted,
   });
 
-  @override
-  LessonStepOneState createState() => LessonStepOneState();
-}
+  static int get quizCount => _quizItems.length;
 
-class LessonStepOneState extends State<LessonStepOne> {
-  int currentRound = 0;
-  bool _answeredCorrect = false;
-  bool _triedWrong = false;
-
-  final List<_QuizItem> quizItems = const [
+  // 🔧 This stays your source of truth for quizzes
+  static const List<_QuizItem> _quizItems = [
     _QuizItem(
       image: "assets/images/notebook.png",
       question: "What is this data?",
@@ -65,47 +59,51 @@ class LessonStepOneState extends State<LessonStepOne> {
     ),
   ];
 
+  // 🔧 FIX #1: Per-quiz success messages (index-aligned with quizzes)
+  static const List<String> successMessages = [
+    "Nice start — it's TEXT. Tap Continue.",
+    "Yep — that's a PICTURE. Tap Continue.",
+    "Correct — this one's AUDIO. Tap Continue.",
+    "🎉 All correct — it's a VIDEO. Tap Continue to finish.",
+  ];
+
+  @override
+  State<LessonStepOne> createState() => LessonStepOneState();
+}
+
+class LessonStepOneState extends State<LessonStepOne> {
+  bool _answeredCorrect = false;
+  bool _triedWrong = false;
+
+  _QuizItem get current => LessonStepOne._quizItems[widget.quizIndex];
+  bool get isLastRound => widget.quizIndex == LessonStepOne.quizCount - 1;
+
   void _handleAnswerTap(int selectedIndex) {
-    final current = quizItems[currentRound];
     if (selectedIndex == current.correctIndex) {
       setState(() {
         _answeredCorrect = true;
         _triedWrong = false;
       });
-      widget.answeredNotifier?.value = true;
+      widget.onQuizCompleted(widget.quizIndex);
     } else {
       if (!_answeredCorrect) {
         setState(() => _triedWrong = true);
       }
-      widget.answeredNotifier?.value = false;
     }
   }
-
-  /// Called by LessonOne on "Continue"
-  void nextRound() {
-    if (_answeredCorrect && currentRound < quizItems.length - 1) {
-      setState(() {
-        currentRound++;
-        _answeredCorrect = false;
-        _triedWrong = false;
-      });
-      widget.answeredNotifier?.value = false;
-    } else if (currentRound == quizItems.length - 1) {
-      widget.onRoundComplete?.call(); // finished quiz
-    }
-  }
-
-  bool get isLastRound => currentRound == quizItems.length - 1;
 
   @override
   Widget build(BuildContext context) {
-    final current = quizItems[currentRound];
+    // Resolve per-quiz success message with safe fallback
+    final String successMsg =
+        (widget.quizIndex < LessonStepOne.successMessages.length)
+            ? LessonStepOne.successMessages[widget.quizIndex]
+            : "Correct ✅ Tap Continue to move on";
 
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ✅ Heading
             Container(
@@ -141,20 +139,15 @@ class LessonStepOneState extends State<LessonStepOne> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  current.image,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset(current.image, fit: BoxFit.contain),
               ),
             ),
 
             // ✅ MCQ
             MCQBox(
-              key: ValueKey(
-                  currentRound), // 👈 this forces Flutter to rebuild fresh each round
-              question: _buildSentence([
-                _word(current.question, Colors.black87, fontSize: 22),
-              ], alignment: WrapAlignment.center, constrainWidth: false),
+              key: ValueKey(widget.quizIndex),
+              question:
+                  Text(current.question, style: GoogleFonts.lato(fontSize: 22)),
               answers: current.answers,
               correctAnswer: current.correctIndex,
               width: double.infinity,
@@ -174,20 +167,13 @@ class LessonStepOneState extends State<LessonStepOne> {
 
             const SizedBox(height: 20),
 
-            // ✅ Try Again
             if (_triedWrong && !_answeredCorrect)
               _feedbackBox(
-                "Try Again!",
-                Colors.red.shade50,
-                Colors.red.shade700,
-              ),
+                  "Try Again!", Colors.red.shade50, Colors.red.shade700),
 
-            // ✅ Correct
             if (_answeredCorrect)
               _feedbackBox(
-                isLastRound
-                    ? "🎉 Great job! You finished the quiz."
-                    : "Correct ✅ Tap Continue to move on",
+                successMsg, // 🔧 FIX #1: per-quiz custom text
                 Colors.green.shade50,
                 Colors.green.shade700,
               ),
@@ -216,29 +202,5 @@ class LessonStepOneState extends State<LessonStepOne> {
         ),
       ),
     );
-  }
-
-  static Widget _word(String text, Color color,
-      {FontWeight? fontWeight, double? fontSize}) {
-    return Text(
-      "$text ",
-      style: GoogleFonts.lato(
-        fontSize: fontSize ?? 20,
-        fontWeight: fontWeight ?? FontWeight.w800,
-        color: color,
-      ),
-    );
-  }
-
-  static Widget _buildSentence(List<Widget> words,
-      {WrapAlignment alignment = WrapAlignment.start,
-      bool constrainWidth = true}) {
-    final content = Wrap(alignment: alignment, children: words);
-    return constrainWidth
-        ? ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: maxTextWidth),
-            child: content,
-          )
-        : Center(child: content);
   }
 }

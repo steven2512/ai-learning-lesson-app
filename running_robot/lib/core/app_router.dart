@@ -1,4 +1,7 @@
 /// All navigable pages as strongly-typed routes (no Map<String, dynamic>).
+
+import 'package:running_robot/game/decorations/progress_bar.dart';
+
 abstract class AppRoute {
   const AppRoute();
 }
@@ -7,23 +10,28 @@ class RouteLesson1 extends AppRoute {
   const RouteLesson1();
 }
 
-class RouteLesson3 extends AppRoute {
-  const RouteLesson3();
-}
-
 class RouteEndLesson extends AppRoute {
   final int xp;
   final int streak;
-  final int progressPercent; // 0..100
-  final List<int> stageProgress; // e.g. [1, 0, 0] => 3 stages, first filled
+
+  /// 🔹 The final, already-filled bar to display on the end screen.
+  final LessonProgressBar progressBar;
+
+  /// 🔹 Chapter aggregate progress (e.g., lessons completed in chapter).
+  final int chapterProgress;
+
+  /// 🔹 Total lessons in the chapter.
+  final int totalChapterLessons;
+
   final String topText;
-  final String? illustrationPath; // pass just an asset path
+  final String? illustrationPath; // asset path (optional)
 
   const RouteEndLesson({
     required this.xp,
     required this.streak,
-    required this.progressPercent,
-    required this.stageProgress,
+    required this.progressBar,
+    required this.chapterProgress,
+    required this.totalChapterLessons,
     required this.topText,
     this.illustrationPath,
   });

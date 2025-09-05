@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonN/mcq_box.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double maxTextWidth = 350;
 
