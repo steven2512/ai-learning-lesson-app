@@ -166,7 +166,7 @@ class LessonStepOne extends StatefulWidget {
             fontWeight: FontWeight.bold, fontSize: 20),
         LessonText.word("Movies,", Colors.orange,
             italic: true, fontSize: correctTextSize),
-        LessonText.word("YouTube clips,", Colors.purple,
+        LessonText.word("meeting recordings,", Colors.purple,
             italic: true, fontSize: correctTextSize),
         LessonText.word("animations", Colors.blue,
             italic: true, fontSize: correctTextSize),
