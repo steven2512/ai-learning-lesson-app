@@ -12,10 +12,9 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_2.dart';
 
-import 'lesson2_1.dart'; // 👉 StepZero
-// later: import 'lesson2_2.dart', 'lesson2_3.dart', etc.
+import 'lesson2_1.dart'; // StepZero
+import 'lesson2_2.dart'; // StepOne (more steps can be added later)
 
 class LessonTwo extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -29,7 +28,16 @@ class _LessonTwoState extends State<LessonTwo> {
   int currentStep = 0;
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
-  /// 5 pages: 0–4
+  /// Map of per-step top offsets
+  final Map<int, double> topOffsets = const {
+    0: 170, // StepZero
+    1: 170, // StepOne
+    2: 150, // StepTwo (later)
+    3: 150, // StepThree
+    4: 150, // StepFour
+  };
+
+  /// Total number of steps in this lesson
   int get totalStages => 5;
 
   bool _lessonCompleted = false;
@@ -48,6 +56,8 @@ class _LessonTwoState extends State<LessonTwo> {
 
   @override
   Widget build(BuildContext context) {
+    final double topOffset = topOffsets[currentStep] ?? 120;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -65,9 +75,9 @@ class _LessonTwoState extends State<LessonTwo> {
           // ✅ Close button
           Positioned(top: 69, left: 30, child: returnButton),
 
-          // ✅ Active step
+          // ✅ Active step with offset
           Positioned.fill(
-            top: 150,
+            top: topOffset,
             bottom: 100,
             child: _buildCurrentStep(),
           ),
@@ -82,7 +92,9 @@ class _LessonTwoState extends State<LessonTwo> {
                 valueListenable: _stepAnswered,
                 builder: (context, answered, _) {
                   if (_lessonCompleted) return const SizedBox.shrink();
-                  final showContinue = (currentStep == 0) ? true : answered;
+                  final showContinue =
+                      (currentStep == 0 || currentStep == 1) ? true : answered;
+
                   if (!showContinue) return const SizedBox.shrink();
 
                   return ContinueButton(
@@ -123,7 +135,7 @@ class _LessonTwoState extends State<LessonTwo> {
                             topText: "Lesson 2 complete! 🎉",
                             repeatLesson:
                                 const RouteLesson2(), // 👈 repeat this lesson
-                            nextLesson: const RouteMainMenu(),
+                            nextLesson: const RouteMainMenu(), // placeholder
                             illustrationPath: null,
                           ),
                         );
@@ -142,7 +154,7 @@ class _LessonTwoState extends State<LessonTwo> {
   Widget _buildCurrentStep() {
     if (currentStep == 0) return const LessonStepZero();
     if (currentStep == 1) return const LessonStepOne();
-    // Later: hook up LessonStepOne, Two, Three, Four
+    // Later: hook up StepTwo, StepThree, StepFour
     return const SizedBox.shrink();
   }
 }

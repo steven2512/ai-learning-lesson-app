@@ -43,7 +43,7 @@ class _LessonStepOneState extends State<LessonStepOne>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 5),
               decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("And when", Colors.black87, fontSize: 22),
@@ -59,6 +59,19 @@ class _LessonStepOneState extends State<LessonStepOne>
                 LessonText.word("song'.", keyConceptGreen,
                     fontSize: 22, fontWeight: FontWeight.w800),
               ]),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: _boxDecoration(),
+              child: Text(
+                "Again, no surprise here.",
+                style: GoogleFonts.lato(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
             ),
 
             // ✅ Musician with dialogue ABOVE
@@ -93,14 +106,14 @@ class _LessonStepOneState extends State<LessonStepOne>
                           Image.asset(
                             "assets/images/dialogue_box.png",
                             width: 240,
-                            height: 120,
+                            height: 115,
                             fit: BoxFit.contain,
                           ),
                           Padding(
                             padding: const EdgeInsets.only(
                                 bottom: 30, left: 5), // only for text
                             child: Text(
-                              "This is a\nbeautiful song!",
+                              "This is an\namazing song!",
                               textAlign: TextAlign.center,
                               style: GoogleFonts.lato(
                                 fontSize: 18,

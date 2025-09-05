@@ -43,7 +43,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: const EdgeInsets.only(top: 10, bottom: 7),
               decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("For", Colors.black87, fontSize: 22),
@@ -91,8 +91,8 @@ class _LessonStepZeroState extends State<LessonStepZero>
                     children: [
                       // Cameraman (base layer)
                       Positioned(
-                        bottom: 0,
-                        left: -5,
+                        bottom: 20,
+                        left: 20,
                         child: Image.asset(
                           "assets/images/cameraman.png",
                           width: 380,
@@ -103,7 +103,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
 
                       // Dialogue box (above, pointing to cameraman's head on right)
                       Positioned(
-                        top: 60,
+                        top: 40,
                         right: -50,
                         child: Stack(
                           alignment: Alignment.center,
@@ -118,7 +118,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
                               padding:
                                   const EdgeInsets.only(bottom: 20, left: 3),
                               child: Text(
-                                """That's a \nnice picture!""",
+                                """That's a \nnice photo!""",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lato(
                                     fontSize: 16,
