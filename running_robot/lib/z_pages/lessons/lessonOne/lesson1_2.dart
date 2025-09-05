@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double maxTextWidth = 350;
+const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 
 /// Quiz item model
 class _QuizItem {
@@ -19,6 +21,8 @@ class _QuizItem {
   });
 }
 
+const double correctTextSize = 20;
+
 class LessonStepOne extends StatefulWidget {
   final int quizIndex;
   final void Function(int quizIndex) onQuizCompleted;
@@ -31,7 +35,7 @@ class LessonStepOne extends StatefulWidget {
 
   static int get quizCount => _quizItems.length;
 
-  // 🔧 This stays your source of truth for quizzes
+  // 🔧 Quiz data
   static const List<_QuizItem> _quizItems = [
     _QuizItem(
       image: "assets/images/notebook.png",
@@ -40,31 +44,105 @@ class LessonStepOne extends StatefulWidget {
       correctIndex: 0,
     ),
     _QuizItem(
-      image: "assets/images/cat1.jpg",
-      question: "What is this data?",
-      answers: ["Picture", "Video"],
-      correctIndex: 0,
-    ),
-    _QuizItem(
       image: "assets/images/car.jpg",
       question: "What is this data?",
-      answers: ["Audio", "Text"],
+      answers: ["Image", "Sound"],
       correctIndex: 0,
     ),
     _QuizItem(
-      image: "assets/images/recording.png",
+      image: "assets/images/voice.png",
       question: "What is this data?",
-      answers: ["Video", "Picture"],
-      correctIndex: 0,
+      answers: ["Text", "Audio"],
+      correctIndex: 1,
+    ),
+    _QuizItem(
+      image: "assets/images/tabular.png",
+      question: "What is this data?",
+      answers: ["Video", "Table"],
+      correctIndex: 1,
     ),
   ];
 
-  // 🔧 FIX #1: Per-quiz success messages (index-aligned with quizzes)
-  static const List<String> successMessages = [
-    "Nice start — it's TEXT. Tap Continue.",
-    "Yep — that's a PICTURE. Tap Continue.",
-    "Correct — this one's AUDIO. Tap Continue.",
-    "🎉 All correct — it's a VIDEO. Tap Continue to finish.",
+  /// 🔧 Per-quiz success messages as widgets, consistent structure
+  static final List<List<Widget>> successMessages = [
+    // TEXT
+    [
+      LessonText.sentence([
+        LessonText.word("Correct", Colors.green.shade800,
+            fontSize: correctTextSize),
+        LessonText.word("🎉", Colors.green.shade800, fontSize: correctTextSize),
+      ]),
+      LessonText.sentence([
+        LessonText.word("Text Examples:", Colors.black87,
+            fontWeight: FontWeight.bold, fontSize: 20),
+        LessonText.word("Emails,", Colors.blue,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("books,", Colors.deepPurple,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("documents", Colors.teal,
+            italic: true, fontSize: correctTextSize),
+      ]),
+    ],
+
+    // IMAGE
+    [
+      LessonText.sentence([
+        LessonText.word("Very", Colors.green.shade800,
+            fontSize: correctTextSize),
+        LessonText.word("Good", Colors.green.shade800,
+            fontSize: correctTextSize),
+        LessonText.word("🎉", Colors.green.shade800, fontSize: correctTextSize),
+      ]),
+      LessonText.sentence([
+        LessonText.word("Image Examples:", Colors.black87,
+            fontWeight: FontWeight.bold, fontSize: 20),
+        LessonText.word("Everyday photos,", Colors.orange,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word(
+            "medical scans,", const Color.fromARGB(255, 107, 0, 195),
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("satellite images", Colors.blue,
+            italic: true, fontSize: correctTextSize),
+      ]),
+    ],
+
+    // TABULAR
+    [
+      LessonText.sentence([
+        LessonText.word("Excellent", Colors.green.shade800,
+            fontSize: correctTextSize),
+        LessonText.word("🎉", Colors.green.shade800, fontSize: correctTextSize),
+      ]),
+      LessonText.sentence([
+        LessonText.word("Audio Examples:", Colors.black87,
+            fontWeight: FontWeight.bold, fontSize: 20),
+        LessonText.word("Music,", Colors.deepPurple,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("speech,", Colors.orange,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("recordings", Colors.blue,
+            italic: true, fontSize: correctTextSize),
+      ]),
+    ],
+
+    // AUDIO
+    [
+      LessonText.sentence([
+        LessonText.word("Correct", Colors.green.shade800,
+            fontSize: correctTextSize),
+        LessonText.word("🎉", Colors.green.shade800, fontSize: correctTextSize),
+      ]),
+      LessonText.sentence([
+        LessonText.word("Table Examples:", Colors.black87,
+            fontWeight: FontWeight.bold, fontSize: 20),
+        LessonText.word("Transactions,", Colors.teal,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("financial reports,", Colors.orange,
+            italic: true, fontSize: correctTextSize),
+        LessonText.word("customer data", Colors.blue,
+            italic: true, fontSize: correctTextSize),
+      ]),
+    ],
   ];
 
   @override
@@ -94,11 +172,17 @@ class LessonStepOneState extends State<LessonStepOne> {
 
   @override
   Widget build(BuildContext context) {
-    // Resolve per-quiz success message with safe fallback
-    final String successMsg =
+    final List<Widget> successMsg =
         (widget.quizIndex < LessonStepOne.successMessages.length)
             ? LessonStepOne.successMessages[widget.quizIndex]
-            : "Correct ✅ Tap Continue to move on";
+            : [
+                LessonText.sentence([
+                  LessonText.word("Correct", Colors.green.shade800,
+                      fontSize: correctTextSize),
+                  LessonText.word("🎉", Colors.green.shade800,
+                      fontSize: correctTextSize),
+                ])
+              ];
 
     return SingleChildScrollView(
       child: Padding(
@@ -116,14 +200,12 @@ class LessonStepOneState extends State<LessonStepOne> {
                 border: Border.all(color: Colors.black26, width: 1),
               ),
               child: Center(
-                child: Text(
-                  "What is this data?",
-                  style: GoogleFonts.lato(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
+                child: LessonText.sentence([
+                  LessonText.word("What", Colors.black87, fontSize: 22),
+                  LessonText.word("is", Colors.black87, fontSize: 22),
+                  LessonText.word("this", Colors.black87, fontSize: 22),
+                  LessonText.word("data?", mainConceptColor, fontSize: 22),
+                ], alignment: WrapAlignment.center),
               ),
             ),
 
@@ -146,8 +228,6 @@ class LessonStepOneState extends State<LessonStepOne> {
             // ✅ MCQ
             MCQBox(
               key: ValueKey(widget.quizIndex),
-              question:
-                  Text(current.question, style: GoogleFonts.lato(fontSize: 22)),
               answers: current.answers,
               correctAnswer: current.correctIndex,
               width: double.infinity,
@@ -168,12 +248,12 @@ class LessonStepOneState extends State<LessonStepOne> {
             const SizedBox(height: 20),
 
             if (_triedWrong && !_answeredCorrect)
-              _feedbackBox(
+              _feedbackBoxText(
                   "Try Again!", Colors.red.shade50, Colors.red.shade700),
 
             if (_answeredCorrect)
-              _feedbackBox(
-                successMsg, // 🔧 FIX #1: per-quiz custom text
+              _feedbackBoxWidgets(
+                successMsg,
                 Colors.green.shade50,
                 Colors.green.shade700,
               ),
@@ -183,23 +263,43 @@ class LessonStepOneState extends State<LessonStepOne> {
     );
   }
 
-  Widget _feedbackBox(String msg, Color bg, Color text) {
+  Widget _feedbackBoxText(String msg, Color bg, Color borderColor) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: text.withOpacity(0.4), width: 1),
+        border: Border.all(color: borderColor.withOpacity(0.4), width: 1),
       ),
       child: Text(
         msg,
-        textAlign: TextAlign.center,
+        textAlign: TextAlign.start,
         style: GoogleFonts.lato(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: text,
+          color: borderColor,
         ),
+      ),
+    );
+  }
+
+  Widget _feedbackBoxWidgets(
+    List<Widget> msgs,
+    Color bg,
+    Color borderColor,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor.withOpacity(0.4), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // ✅ left aligned
+        children: msgs,
       ),
     );
   }

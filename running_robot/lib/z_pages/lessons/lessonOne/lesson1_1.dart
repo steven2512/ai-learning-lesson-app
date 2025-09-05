@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+// 👉 You will import your new helper file here later (LessonText)
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
@@ -154,35 +156,35 @@ class _LessonStepTwoState extends State<LessonStepZero>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSentence([
-                    _word("What", Colors.black87, fontSize: 30),
-                    _word("is", Colors.black87, fontSize: 30),
-                    _word("Data?", mainConceptColor, fontSize: 30),
+                  LessonText.sentence([
+                    LessonText.word("What", Colors.black87, fontSize: 30),
+                    LessonText.word("is", Colors.black87, fontSize: 30),
+                    LessonText.word("Data?", mainConceptColor, fontSize: 30),
                   ]),
                   const SizedBox(height: 12),
-                  _buildSentence([
+                  LessonText.sentence([
                     const Padding(
                       padding: EdgeInsets.only(top: 3, right: 1),
                       child: Icon(Icons.arrow_forward_rounded,
                           size: 26, color: Colors.black54),
                     ),
-                    _word("Data", mainConceptColor,
+                    LessonText.word("Data", mainConceptColor,
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    _word("is", Colors.black87,
+                    LessonText.word("is", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("the", Colors.black87,
+                    LessonText.word("the", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("information", keyConceptGreen,
+                    LessonText.word("information", keyConceptGreen,
                         fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    _word("we", Colors.black87,
+                    LessonText.word("we", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("feed", Colors.black87,
+                    LessonText.word("feed", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("into", Colors.black87,
+                    LessonText.word("into", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("a", Colors.black87,
+                    LessonText.word("a", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    _word("computer.", Colors.black87,
+                    LessonText.word("computer.", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
                   ]),
                 ],
@@ -265,30 +267,5 @@ class _LessonStepTwoState extends State<LessonStepZero>
         BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))
       ],
     );
-  }
-
-  static Widget _word(String text, Color color,
-      {FontWeight? fontWeight, bool italic = false, double? fontSize}) {
-    return Text(
-      "$text ",
-      style: GoogleFonts.lato(
-        fontSize: fontSize ?? 22,
-        fontWeight: fontWeight ?? FontWeight.w800,
-        fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-        color: color,
-      ),
-    );
-  }
-
-  static Widget _buildSentence(List<Widget> words,
-      {WrapAlignment alignment = WrapAlignment.start,
-      bool constrainWidth = true}) {
-    final content = Wrap(alignment: alignment, children: words);
-    return constrainWidth
-        ? ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: maxTextWidth),
-            child: content,
-          )
-        : Center(child: content);
   }
 }
