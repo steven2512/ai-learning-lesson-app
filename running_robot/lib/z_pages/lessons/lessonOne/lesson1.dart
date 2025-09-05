@@ -69,6 +69,7 @@ class _LessonOneState extends State<LessonOne> {
     2: 150, // Quiz 2
     3: 150, // Quiz 3
     4: 150, // Quiz 4
+    5: 150, // Quiz 5 (new Video quiz 🎥🏀)
   };
 
   int get totalStages => 1 + LessonStepOne.quizCount;
@@ -155,7 +156,7 @@ class _LessonOneState extends State<LessonOne> {
                         }
 
                         // 🔹 Hardcoded sample stats (wire real values later)
-                        const int xp = 40; // e.g., 10 XP per quiz
+                        const int xp = 50; // 10 XP per quiz × 5
                         const int streak = 1; // stub
                         const int chapterProgress = 1; // e.g., lesson 1 done
                         const int totalChapterLessons = 10;

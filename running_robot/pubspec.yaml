@@ -132,6 +132,8 @@ flutter:
     - assets/images/recording.png
     - assets/images/voice.png
     - assets/images/computer.png
+    - assets/images/basketball.png
+    - assets/images/record_icon.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
