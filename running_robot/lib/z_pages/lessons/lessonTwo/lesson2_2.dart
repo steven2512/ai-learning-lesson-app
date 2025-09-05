@@ -46,13 +46,13 @@ class _LessonStepOneState extends State<LessonStepOne>
               margin: const EdgeInsets.only(bottom: 20),
               decoration: _boxDecoration(),
               child: LessonText.sentence([
-                LessonText.word("When", Colors.black87, fontSize: 22),
+                LessonText.word("And when", Colors.black87, fontSize: 22),
                 LessonText.word("we", Colors.black87, fontSize: 22),
                 LessonText.word("listen", Colors.black87, fontSize: 22),
                 LessonText.word("to", Colors.black87, fontSize: 22),
                 LessonText.word("music,", mainConceptColor, fontSize: 22),
                 LessonText.word("we", Colors.black87, fontSize: 22),
-                LessonText.word("say", Colors.black87, fontSize: 22),
+                LessonText.word("think", Colors.black87, fontSize: 22),
                 LessonText.word("'That's", keyConceptGreen,
                     fontSize: 22, fontWeight: FontWeight.w800),
                 LessonText.word("a", keyConceptGreen, fontSize: 22),
@@ -63,40 +63,58 @@ class _LessonStepOneState extends State<LessonStepOne>
 
             // ✅ Musician with dialogue ABOVE
             Center(
-              child: Column(
-                children: [
-                  // Dialogue bubble ABOVE
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        "assets/images/dialogue_box.png",
-                        width: 280,
-                        height: 150,
+              child: SizedBox(
+                width: 400,
+                height: 350, // enough to hold both image + bubble
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 🎵 Musician image
+                    Positioned(
+                      bottom: -40,
+                      left: 0,
+                      right: 0,
+                      child: Image.asset(
+                        "assets/images/music_listening.png",
+                        width: 400,
+                        height: 290,
                         fit: BoxFit.contain,
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(bottom: 25),
-                        child: Text(
-                          "That's a beautiful song!",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                    ),
+
+                    // 💬 Dialogue bubble overlay
+                    // 💬 Dialogue bubble overlay
+                    Positioned(
+                      top: 5, // smaller value = higher up
+                      right: 40,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
+                            "assets/images/dialogue_box.png",
+                            width: 240,
+                            height: 120,
+                            fit: BoxFit.contain,
                           ),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                bottom: 30, left: 5), // only for text
+                            child: Text(
+                              "This is a\nbeautiful song!",
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.lato(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  // 🎵 Musician image (placeholder asset — replace if you have a specific one)
-                  Image.asset(
-                    "assets/images/musician.png",
-                    width: 380,
-                    height: 260,
-                    fit: BoxFit.contain,
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

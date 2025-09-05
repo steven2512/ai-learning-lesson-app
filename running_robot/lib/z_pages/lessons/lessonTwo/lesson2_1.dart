@@ -43,7 +43,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 8),
               decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("For", Colors.black87, fontSize: 22),
@@ -103,7 +103,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
 
                       // Dialogue box (above, pointing to cameraman's head on right)
                       Positioned(
-                        top: 30,
+                        top: 60,
                         right: -50,
                         child: Stack(
                           alignment: Alignment.center,
@@ -111,20 +111,20 @@ class _LessonStepZeroState extends State<LessonStepZero>
                             Image.asset(
                               "assets/images/dialogue_box.png",
                               width: 240,
-                              height: 130,
+                              height: 100,
                               fit: BoxFit.contain,
                             ),
                             Padding(
                               padding:
                                   const EdgeInsets.only(bottom: 20, left: 3),
                               child: Text(
-                                "That's a nice picture!",
+                                """That's a \nnice picture!""",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lato(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                    height: 1.1),
                               ),
                             ),
                           ],

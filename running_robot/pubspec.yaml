@@ -136,6 +136,7 @@ flutter:
     - assets/images/record_icon.png
     - assets/images/cameraman.png
     - assets/images/dialogue_box.png
+    - assets/images/music_listening.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
