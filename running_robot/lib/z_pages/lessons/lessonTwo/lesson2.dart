@@ -13,6 +13,7 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_3.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_4.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (quiz step)
@@ -34,7 +35,7 @@ class _LessonTwoState extends State<LessonTwo> {
     0: 160, // StepZero
     1: 170, // StepOne
     2: 160, // StepTwo
-    3: 150, // StepThree (future)
+    3: 250, // StepThree (future)
     4: 150, // StepFour (future)
   };
 
@@ -95,9 +96,10 @@ class _LessonTwoState extends State<LessonTwo> {
 
                   // Step 0 + Step 1 → always visible
                   // Step 2 → only visible when answered = true
-                  final showContinue = (currentStep == 0 || currentStep == 1)
-                      ? true
-                      : (currentStep == 2 ? answered : false);
+                  final showContinue =
+                      (currentStep == 0 || currentStep == 1 || currentStep == 3)
+                          ? true
+                          : (currentStep == 2 ? answered : false);
 
                   if (!showContinue) return const SizedBox.shrink();
 
@@ -164,6 +166,10 @@ class _LessonTwoState extends State<LessonTwo> {
         },
       );
     }
+    if (currentStep == 3) {
+      return LessonStepThree();
+    }
+
     return const SizedBox.shrink();
   }
 }

@@ -9,7 +9,7 @@ const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 
 /// 🔹 Global font sizes
 const double globalFontSize = 20;
-const double noteTextSize = 17.3; // 👈 new: used for final note/explanation box
+const double noteTextSize = 17.3; // final note/explanation box
 
 /// 🔹 Animation + layout constants
 const Duration typingInterval = Duration(milliseconds: 120);
@@ -79,7 +79,7 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
 
             // ✅ Second definition box
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 40),
               child: LessonText.sentence([
                 LessonText.word("To", Colors.black87, fontSize: globalFontSize),
                 LessonText.word("them,", Colors.black87,
@@ -137,9 +137,9 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 8),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(18),
                                 ),
-                                elevation: 4,
+                                elevation: 20,
                               ),
                               child: Text(
                                 "Start",
@@ -159,37 +159,37 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
             ),
 
             // ✅ Third definition box (note style)
-            LessonText.box(
-              margin: const EdgeInsets.only(top: 20, bottom: 10),
-              child: LessonText.sentence([
-                LessonText.word("These", Colors.black87,
-                    fontSize: noteTextSize),
-                LessonText.word("0s", keyConceptGreen,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("and", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("1s", keyConceptGreen,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("are", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("called", Colors.black87,
-                    fontSize: noteTextSize),
-                LessonText.word("binary", mainConceptColor,
-                    fontSize: noteTextSize,
-                    fontWeight: FontWeight.w800,
-                    italic: true),
-                LessonText.word("code,", mainConceptColor,
-                    fontSize: noteTextSize,
-                    fontWeight: FontWeight.w800,
-                    italic: true),
-                LessonText.word("the", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("fundamental", Colors.black87,
-                    fontSize: noteTextSize),
-                LessonText.word("language", Colors.black87,
-                    fontSize: noteTextSize),
-                LessonText.word("of", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("computers.", keyConceptGreen,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-              ]),
-            ),
+            // LessonText.box(
+            //   margin: const EdgeInsets.only(top: 20, bottom: 10),
+            //   child: LessonText.sentence([
+            //     LessonText.word("These", Colors.black87,
+            //         fontSize: noteTextSize),
+            //     LessonText.word("0s", keyConceptGreen,
+            //         fontSize: noteTextSize, fontWeight: FontWeight.w800),
+            //     LessonText.word("and", Colors.black87, fontSize: noteTextSize),
+            //     LessonText.word("1s", keyConceptGreen,
+            //         fontSize: noteTextSize, fontWeight: FontWeight.w800),
+            //     LessonText.word("are", Colors.black87, fontSize: noteTextSize),
+            //     LessonText.word("called", Colors.black87,
+            //         fontSize: noteTextSize),
+            //     LessonText.word("binary", mainConceptColor,
+            //         fontSize: noteTextSize,
+            //         fontWeight: FontWeight.w800,
+            //         italic: true),
+            //     LessonText.word("code,", mainConceptColor,
+            //         fontSize: noteTextSize,
+            //         fontWeight: FontWeight.w800,
+            //         italic: true),
+            //     LessonText.word("the", Colors.black87, fontSize: noteTextSize),
+            //     LessonText.word("fundamental", Colors.black87,
+            //         fontSize: noteTextSize),
+            //     LessonText.word("language", Colors.black87,
+            //         fontSize: noteTextSize),
+            //     LessonText.word("of", Colors.black87, fontSize: noteTextSize),
+            //     LessonText.word("computers.", keyConceptGreen,
+            //         fontSize: noteTextSize, fontWeight: FontWeight.w800),
+            //   ]),
+            // ),
           ],
         ),
       ),
@@ -216,18 +216,11 @@ class _BinaryTypingAnimationState extends State<BinaryTypingAnimation> {
   final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _cursorTimer = Timer.periodic(cursorBlinkInterval, (timer) {
-      setState(() => _showCursor = !_showCursor);
-    });
-  }
-
-  @override
   void didUpdateWidget(covariant BinaryTypingAnimation oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.enabled && !oldWidget.enabled) {
       _startTyping();
+      _startCursor(); // 👈 start flicker only after Start pressed
     }
   }
 
@@ -248,6 +241,12 @@ class _BinaryTypingAnimationState extends State<BinaryTypingAnimation> {
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
       });
+    });
+  }
+
+  void _startCursor() {
+    _cursorTimer = Timer.periodic(cursorBlinkInterval, (timer) {
+      setState(() => _showCursor = !_showCursor);
     });
   }
 
@@ -278,7 +277,8 @@ class _BinaryTypingAnimationState extends State<BinaryTypingAnimation> {
             child: SingleChildScrollView(
               controller: _scrollController,
               child: Text(
-                _binaryText + (_showCursor ? "|" : ""),
+                // 👇 cursor only visible once enabled
+                widget.enabled ? _binaryText + (_showCursor ? "|" : "") : "",
                 style: GoogleFonts.robotoMono(
                   fontSize: 16,
                   color: Colors.greenAccent,
