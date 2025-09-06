@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
-// 👉 You will import your new helper file here later (LessonText)
+import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // 👈 import the new LessonText helper
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
@@ -26,7 +26,6 @@ const double computerHeight = 200;
 const Offset computerOffset = Offset(70, 40);
 
 /// ✅ Global trajectories for each item
-/// Each entry has a `begin` and `end` Offset for its movement
 final List<Map<String, Offset>> itemTrajectories = [
   {"begin": const Offset(0, 0), "end": const Offset(1, 2.2)}, // voice
   {"begin": const Offset(0, 0), "end": const Offset(-1, 2.1)}, // notebook
@@ -39,10 +38,10 @@ class LessonStepZero extends StatefulWidget {
   const LessonStepZero({super.key});
 
   @override
-  State<LessonStepZero> createState() => _LessonStepTwoState();
+  State<LessonStepZero> createState() => _LessonStepZeroState();
 }
 
-class _LessonStepTwoState extends State<LessonStepZero>
+class _LessonStepZeroState extends State<LessonStepZero>
     with TickerProviderStateMixin {
   late final List<AnimationController> _controllers;
   late final List<Animation<double>> _fadeAnimations;
@@ -63,6 +62,7 @@ class _LessonStepTwoState extends State<LessonStepZero>
     const Offset(0, 100), // recording
     const Offset(120, 100), // car
   ];
+
   final List<Size> _itemSizes = [
     const Size(70, 70),
     const Size(70, 70),
@@ -105,13 +105,9 @@ class _LessonStepTwoState extends State<LessonStepZero>
     _moveAnimations = List.generate(_controllers.length, (i) {
       final begin = itemTrajectories[i]["begin"]!;
       final end = itemTrajectories[i]["end"]!;
-      return Tween<Offset>(
-        begin: begin,
-        end: end,
-      ).animate(CurvedAnimation(
-        parent: _controllers[i],
-        curve: Curves.easeIn,
-      ));
+      return Tween<Offset>(begin: begin, end: end).animate(
+        CurvedAnimation(parent: _controllers[i], curve: Curves.easeIn),
+      );
     });
 
     for (int i = 0; i < _controllers.length; i++) {
@@ -123,7 +119,7 @@ class _LessonStepTwoState extends State<LessonStepZero>
 
   void _startLoop(int i) {
     _controllers[i].forward().whenComplete(() async {
-      await Future.delayed(Duration(milliseconds: delayBetweenMs));
+      await Future.delayed(const Duration(milliseconds: delayBetweenMs));
       if (mounted) {
         _controllers[i].reset();
         _startLoop(i);
@@ -147,12 +143,9 @@ class _LessonStepTwoState extends State<LessonStepZero>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Definition box
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
+            // ✅ Definition box using LessonText
+            LessonText.box(
               margin: const EdgeInsets.only(bottom: 20),
-              decoration: _boxDecoration(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -255,17 +248,6 @@ class _LessonStepTwoState extends State<LessonStepZero>
           ),
         ),
       ),
-    );
-  }
-
-  BoxDecoration _boxDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.black26, width: 1),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))
-      ],
     );
   }
 }

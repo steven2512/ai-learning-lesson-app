@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ central LessonText here
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double maxTextWidth = 350;
@@ -217,16 +217,10 @@ class LessonStepOneState extends State<LessonStepOne> {
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
-            // ✅ Heading
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
+            // ✅ Heading (refactored to use LessonText.box)
+            LessonText.box(
               margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black26, width: 1),
-              ),
+              padding: const EdgeInsets.all(14),
               child: Center(
                 child: LessonText.sentence([
                   LessonText.word("What", Colors.black87, fontSize: 22),
@@ -237,7 +231,7 @@ class LessonStepOneState extends State<LessonStepOne> {
               ),
             ),
 
-            // ✅ Display zone
+            // ✅ Display zone (kept custom style, no background colorFill needed)
             Container(
               width: double.infinity,
               height: 250,
@@ -294,8 +288,7 @@ class LessonStepOneState extends State<LessonStepOne> {
   }
 
   Widget _feedbackBoxText(String msg, Color bg, Color borderColor) {
-    return Container(
-      width: double.infinity,
+    return LessonText.box(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,
@@ -319,8 +312,7 @@ class LessonStepOneState extends State<LessonStepOne> {
     Color bg,
     Color borderColor,
   ) {
-    return Container(
-      width: double.infinity,
+    return LessonText.box(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,

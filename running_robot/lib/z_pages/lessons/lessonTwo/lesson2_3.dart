@@ -7,41 +7,36 @@ import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 
-/// 🔹 Global font size
+/// 🔹 Global font sizes
 const double globalFontSize = 20;
+const double noteTextSize = 17.3; // 👈 new: used for final note/explanation box
 
-/// 🔹 Note font size (for smaller explanation text)
-const double noteFontSize = 18;
+/// 🔹 Animation + layout constants
+const Duration typingInterval = Duration(milliseconds: 120);
+const Duration cursorBlinkInterval = Duration(milliseconds: 500);
+const int maxBufferLength = 400;
+const int wrapEvery = 40;
+const double containerWidth = 260;
+const double containerHeight = 140;
+const double overlayOffsetX = 0;
+const double overlayOffsetY = -30;
 
-/// 🔹 Global animation controls
-const Duration typingInterval = Duration(milliseconds: 120); // speed of typing
-const Duration cursorBlinkInterval = Duration(milliseconds: 500); // blink speed
-const int maxBufferLength = 400; // keep only last N chars for performance
-const int wrapEvery = 40; // insert newline every N chars
-const double containerWidth = 260; // overlay width
-const double containerHeight = 140; // overlay height
-
+/// ✅ LessonStepTwo widget
 class LessonStepTwo extends StatefulWidget {
-  const LessonStepTwo({super.key});
+  final VoidCallback onStarted; // 👈 notifier to parent
+
+  const LessonStepTwo({super.key, required this.onStarted});
 
   @override
   State<LessonStepTwo> createState() => _LessonStepTwoState();
 }
 
 class _LessonStepTwoState extends State<LessonStepTwo> {
-  BoxDecoration _boxDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.black26, width: 1),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6,
-          offset: Offset(0, 3),
-        )
-      ],
-    );
+  bool _started = false;
+
+  void _handleStartPressed() {
+    setState(() => _started = true);
+    widget.onStarted(); // 👈 notify parent (LessonTwo) when started
   }
 
   @override
@@ -53,11 +48,8 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ✅ First definition box
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
+            LessonText.box(
               margin: const EdgeInsets.only(top: 10, bottom: 7),
-              decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("But", Colors.black87,
                     fontSize: globalFontSize),
@@ -86,11 +78,8 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
             ),
 
             // ✅ Second definition box
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
+            LessonText.box(
               margin: const EdgeInsets.only(bottom: 20),
-              decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("To", Colors.black87, fontSize: globalFontSize),
                 LessonText.word("them,", Colors.black87,
@@ -117,54 +106,88 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
               ]),
             ),
 
-            // ✅ Computer typing animation
+            // ✅ Monitor with overlay
             Center(
-              child: BinaryTypingAnimation(),
+              child: SizedBox(
+                width: 400,
+                height: 300,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    BinaryTypingAnimation(enabled: _started),
+                    if (!_started)
+                      Transform.translate(
+                        offset: Offset(overlayOffsetX, overlayOffsetY),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Click to start program",
+                              style: GoogleFonts.lato(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: _handleStartPressed,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: mainConceptColor,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: Text(
+                                "Start",
+                                style: GoogleFonts.lato(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
 
-            // ✅ Third definition box (binary code explanation, styled smaller)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
+            // ✅ Third definition box (note style)
+            LessonText.box(
               margin: const EdgeInsets.only(top: 20, bottom: 10),
-              decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("These", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize),
                 LessonText.word("0s", keyConceptGreen,
-                    fontSize: noteFontSize,
-                    fontWeight: FontWeight.w800,
-                    italic: true),
-                LessonText.word("and", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
+                LessonText.word("and", Colors.black87, fontSize: noteTextSize),
                 LessonText.word("1s", keyConceptGreen,
-                    fontSize: noteFontSize,
-                    fontWeight: FontWeight.w800,
-                    italic: true),
-                LessonText.word("are", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
+                LessonText.word("are", Colors.black87, fontSize: noteTextSize),
                 LessonText.word("called", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize),
                 LessonText.word("binary", mainConceptColor,
-                    fontSize: noteFontSize,
+                    fontSize: noteTextSize,
                     fontWeight: FontWeight.w800,
                     italic: true),
                 LessonText.word("code,", mainConceptColor,
-                    fontSize: noteFontSize,
+                    fontSize: noteTextSize,
                     fontWeight: FontWeight.w800,
                     italic: true),
-                LessonText.word("the", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                LessonText.word("the", Colors.black87, fontSize: noteTextSize),
                 LessonText.word("fundamental", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize),
                 LessonText.word("language", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
-                LessonText.word("of", Colors.black87,
-                    fontSize: noteFontSize, italic: true),
+                    fontSize: noteTextSize),
+                LessonText.word("of", Colors.black87, fontSize: noteTextSize),
                 LessonText.word("computers.", keyConceptGreen,
-                    fontSize: noteFontSize,
-                    fontWeight: FontWeight.w800,
-                    italic: true),
+                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
               ]),
             ),
           ],
@@ -174,9 +197,10 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
   }
 }
 
-/// 🔹 Binary typing widget with auto-scroll
+/// ✅ Binary typing animation widget
 class BinaryTypingAnimation extends StatefulWidget {
-  const BinaryTypingAnimation({super.key});
+  final bool enabled;
+  const BinaryTypingAnimation({super.key, required this.enabled});
 
   @override
   State<BinaryTypingAnimation> createState() => _BinaryTypingAnimationState();
@@ -194,38 +218,36 @@ class _BinaryTypingAnimationState extends State<BinaryTypingAnimation> {
   @override
   void initState() {
     super.initState();
-    _startTyping();
+    _cursorTimer = Timer.periodic(cursorBlinkInterval, (timer) {
+      setState(() => _showCursor = !_showCursor);
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant BinaryTypingAnimation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enabled && !oldWidget.enabled) {
+      _startTyping();
+    }
   }
 
   void _startTyping() {
-    // Start typing
     _typingTimer = Timer.periodic(typingInterval, (timer) {
       setState(() {
         _binaryText += _rng.nextBool() ? "0" : "1";
-
-        // Insert newline every wrapEvery chars
         if (_binaryText.replaceAll("\n", "").length % wrapEvery == 0) {
           _binaryText += "\n";
         }
-
-        // Trim buffer to avoid huge memory use
         if (_binaryText.length > maxBufferLength) {
           _binaryText =
               _binaryText.substring(_binaryText.length - maxBufferLength);
         }
       });
-
-      // Auto-scroll to bottom for rolling effect
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
       });
-    });
-
-    // Cursor blink
-    _cursorTimer = Timer.periodic(cursorBlinkInterval, (timer) {
-      setState(() => _showCursor = !_showCursor);
     });
   }
 
@@ -242,17 +264,14 @@ class _BinaryTypingAnimationState extends State<BinaryTypingAnimation> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // 🖥️ Monitor image
         Image.asset(
           "assets/images/monitor.png",
           width: 400,
           height: 300,
           fit: BoxFit.contain,
         ),
-
-        // 💻 Scrolling overlay with binary text
         Positioned(
-          top: 50, // adjust to match screen area inside monitor.png
+          top: 50,
           child: SizedBox(
             width: containerWidth,
             height: containerHeight,
