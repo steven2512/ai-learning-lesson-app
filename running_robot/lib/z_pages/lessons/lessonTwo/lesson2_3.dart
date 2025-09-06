@@ -10,6 +10,9 @@ const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 /// 🔹 Global font size
 const double globalFontSize = 20;
 
+/// 🔹 Note font size (for smaller explanation text)
+const double noteFontSize = 18;
+
 /// 🔹 Global animation controls
 const Duration typingInterval = Duration(milliseconds: 120); // speed of typing
 const Duration cursorBlinkInterval = Duration(milliseconds: 500); // blink speed
@@ -117,6 +120,52 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
             // ✅ Computer typing animation
             Center(
               child: BinaryTypingAnimation(),
+            ),
+
+            // ✅ Third definition box (binary code explanation, styled smaller)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
+              margin: const EdgeInsets.only(top: 20, bottom: 10),
+              decoration: _boxDecoration(),
+              child: LessonText.sentence([
+                LessonText.word("These", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("0s", keyConceptGreen,
+                    fontSize: noteFontSize,
+                    fontWeight: FontWeight.w800,
+                    italic: true),
+                LessonText.word("and", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("1s", keyConceptGreen,
+                    fontSize: noteFontSize,
+                    fontWeight: FontWeight.w800,
+                    italic: true),
+                LessonText.word("are", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("called", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("binary", mainConceptColor,
+                    fontSize: noteFontSize,
+                    fontWeight: FontWeight.w800,
+                    italic: true),
+                LessonText.word("code,", mainConceptColor,
+                    fontSize: noteFontSize,
+                    fontWeight: FontWeight.w800,
+                    italic: true),
+                LessonText.word("the", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("fundamental", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("language", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("of", Colors.black87,
+                    fontSize: noteFontSize, italic: true),
+                LessonText.word("computers.", keyConceptGreen,
+                    fontSize: noteFontSize,
+                    fontWeight: FontWeight.w800,
+                    italic: true),
+              ]),
             ),
           ],
         ),
