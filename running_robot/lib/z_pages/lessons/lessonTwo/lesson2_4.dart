@@ -6,8 +6,8 @@ const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 
 /// 🔹 Global font sizes
-const double globalFontSize = 20;
-const double noteTextSize = 20;
+const double globalFontSize = 22;
+const double noteTextSize = 20.3;
 
 class LessonStepThree extends StatelessWidget {
   const LessonStepThree({super.key});
@@ -20,82 +20,94 @@ class LessonStepThree extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Intro box
+            // ✅ First box: define binary numbers
             LessonText.box(
-              margin: const EdgeInsets.only(top: 10, bottom: 20),
+              margin: const EdgeInsets.only(top: 10, bottom: 15),
               child: LessonText.sentence([
-                LessonText.word("Let's", Colors.black87,
+                LessonText.word("Those", Colors.black87,
                     fontSize: globalFontSize),
-                LessonText.word("look", Colors.black87,
+                LessonText.word("0's", keyConceptGreen,
+                    fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                LessonText.word("and", Colors.black87,
                     fontSize: globalFontSize),
-                LessonText.word("at", Colors.black87, fontSize: globalFontSize),
-                LessonText.word("this", Colors.black87,
+                LessonText.word("1's", keyConceptGreen,
+                    fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                LessonText.word("are", Colors.black87,
                     fontSize: globalFontSize),
-                LessonText.word("sequence", mainConceptColor,
+                LessonText.word("called", Colors.black87,
+                    fontSize: globalFontSize),
+                LessonText.word("binary", mainConceptColor,
+                    fontSize: globalFontSize + 2, fontWeight: FontWeight.w800),
+                LessonText.word("numbers.", mainConceptColor,
+                    fontSize: globalFontSize),
+              ]),
+            ),
+
+            // ✅ Second box: binary means 2 values
+            LessonText.box(
+              margin: const EdgeInsets.only(bottom: 15),
+              child: LessonText.sentence([
+                LessonText.word("Binary", mainConceptColor,
+                    fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                LessonText.word("means", Colors.black87,
+                    fontSize: globalFontSize),
+                LessonText.word("we", Colors.black87, fontSize: globalFontSize),
+                LessonText.word("only", Colors.black87,
+                    fontSize: globalFontSize),
+                LessonText.word("use", Colors.black87,
+                    fontSize: globalFontSize),
+                LessonText.word("two values", keyConceptGreen,
                     fontSize: globalFontSize, fontWeight: FontWeight.w800),
               ]),
             ),
 
-            // ✅ Binary string box (softer black + surrounding container)
-            Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(8), // outer padding
-              decoration: BoxDecoration(
-                color: Colors.grey[200], // light surround
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Container(
-                width: double.infinity, // ✅ stretch to align with other boxes
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color:
-                      const Color.fromARGB(255, 37, 35, 35), // toned-down black
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "01001000 01100101",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "01101100 01101100 01101111",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ✅ Explanation box
+            // ✅ Third box: examples with Apple/Banana and Yes/No on new lines
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
-              child: LessonText.sentence([
-                LessonText.word("Believe", const Color.fromARGB(255, 0, 0, 0),
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("it", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("or", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("not,", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("this", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("is", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("how", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("computers", keyConceptGreen,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("store the word", Colors.black87,
-                    fontSize: noteTextSize, italic: true),
-                LessonText.word("'Hello'!", mainConceptColor,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LessonText.sentence([
+                    LessonText.word("Here", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("it", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("is", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("'0'", keyConceptGreen,
+                        fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("'1',", keyConceptGreen,
+                        fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                    LessonText.word("but", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("it", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("could", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("be", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("[Apple", mainConceptColor,
+                        fontSize: globalFontSize, italic: true),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("Banana].", mainConceptColor,
+                        fontSize: globalFontSize, italic: true),
+                  ]),
+                  const SizedBox(height: 6), // spacing between lines
+                  LessonText.sentence([
+                    LessonText.word("Or", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("[Yes", keyConceptGreen,
+                        fontSize: globalFontSize, italic: true),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("No].", keyConceptGreen,
+                        fontSize: globalFontSize, italic: true),
+                  ]),
+                ],
+              ),
             ),
           ],
         ),
