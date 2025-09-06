@@ -12,6 +12,7 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_3.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (more steps can be added later)
@@ -30,9 +31,9 @@ class _LessonTwoState extends State<LessonTwo> {
 
   /// Map of per-step top offsets
   final Map<int, double> topOffsets = const {
-    0: 170, // StepZero
+    0: 160, // StepZero
     1: 170, // StepOne
-    2: 150, // StepTwo (later)
+    2: 160, // StepTwo (later)
     3: 150, // StepThree
     4: 150, // StepFour
   };
@@ -93,7 +94,9 @@ class _LessonTwoState extends State<LessonTwo> {
                 builder: (context, answered, _) {
                   if (_lessonCompleted) return const SizedBox.shrink();
                   final showContinue =
-                      (currentStep == 0 || currentStep == 1) ? true : answered;
+                      (currentStep == 0 || currentStep == 1 || currentStep == 2)
+                          ? true
+                          : answered;
 
                   if (!showContinue) return const SizedBox.shrink();
 
@@ -154,6 +157,7 @@ class _LessonTwoState extends State<LessonTwo> {
   Widget _buildCurrentStep() {
     if (currentStep == 0) return const LessonStepZero();
     if (currentStep == 1) return const LessonStepOne();
+    if (currentStep == 2) return const LessonStepTwo();
     // Later: hook up StepTwo, StepThree, StepFour
     return const SizedBox.shrink();
   }

@@ -43,7 +43,7 @@ class _LessonStepOneState extends State<LessonStepOne>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
-              margin: const EdgeInsets.only(bottom: 5),
+              margin: const EdgeInsets.only(bottom: 7),
               decoration: _boxDecoration(),
               child: LessonText.sentence([
                 LessonText.word("And when", Colors.black87, fontSize: 22),
