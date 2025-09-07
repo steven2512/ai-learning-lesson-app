@@ -13,7 +13,7 @@ class LessonText {
     Color color, {
     FontWeight? fontWeight,
     bool italic = false,
-    bool underline = false, // ✅ NEW param
+    bool underline = false, // ✅ supports underline
     double? fontSize,
   }) {
     return Text(
@@ -60,8 +60,9 @@ class LessonText {
   }
 
   /// ✅ Convenience: wrap content in a styled box
-  /// By default uses `defaultBoxDecoration`, but you can override with `decoration:`
+  /// Now supports an optional [key] for AnimatedSwitcher / lists, etc.
   static Widget box({
+    Key? key, // 👈 added
     required Widget child,
     EdgeInsetsGeometry padding =
         const EdgeInsets.symmetric(vertical: 15, horizontal: 13),
@@ -69,6 +70,7 @@ class LessonText {
     BoxDecoration? decoration, // 👈 optional override
   }) {
     return Container(
+      key: key, // 👈 pass through
       width: double.infinity,
       padding: padding,
       margin: margin,
