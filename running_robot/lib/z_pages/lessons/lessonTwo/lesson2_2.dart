@@ -24,7 +24,7 @@ class _LessonStepOneState extends State<LessonStepOne>
           children: [
             // ✅ Definition box (using LessonText.box)
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 7),
+              margin: const EdgeInsets.only(bottom: 30),
               child: LessonText.sentence([
                 LessonText.word("And when", Colors.black87, fontSize: 22),
                 LessonText.word("we", Colors.black87, fontSize: 22),
@@ -42,18 +42,18 @@ class _LessonStepOneState extends State<LessonStepOne>
             ),
 
             // ✅ Small one-liner box
-            LessonText.box(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Text(
-                "Again, no surprise here.",
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
+            // LessonText.box(
+            //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            //   margin: const EdgeInsets.only(bottom: 20),
+            //   child: Text(
+            //     "Again, no surprise here.",
+            //     style: GoogleFonts.lato(
+            //       fontSize: 18,
+            //       fontWeight: FontWeight.w600,
+            //       color: Colors.black87,
+            //     ),
+            //   ),
+            // ),
 
             // ✅ Musician with dialogue ABOVE
             Center(

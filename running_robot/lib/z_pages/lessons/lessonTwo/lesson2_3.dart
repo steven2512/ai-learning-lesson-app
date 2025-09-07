@@ -12,7 +12,7 @@ const double globalFontSize = 20;
 const double noteTextSize = 17.3; // final note/explanation box
 
 /// 🔹 Animation + layout constants
-const Duration typingInterval = Duration(milliseconds: 120);
+const Duration typingInterval = Duration(milliseconds: 30);
 const Duration cursorBlinkInterval = Duration(milliseconds: 500);
 const int maxBufferLength = 400;
 const int wrapEvery = 40;

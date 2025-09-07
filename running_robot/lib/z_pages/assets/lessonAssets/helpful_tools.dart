@@ -13,6 +13,7 @@ class LessonText {
     Color color, {
     FontWeight? fontWeight,
     bool italic = false,
+    bool underline = false, // ✅ NEW param
     double? fontSize,
   }) {
     return Text(
@@ -21,6 +22,7 @@ class LessonText {
         fontSize: fontSize ?? defaultFontSize,
         fontWeight: fontWeight ?? FontWeight.w800,
         fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+        decoration: underline ? TextDecoration.underline : TextDecoration.none,
         color: color,
       ),
     );

@@ -68,11 +68,9 @@ class LessonStepThree extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   LessonText.sentence([
-                    LessonText.word("Here", Colors.black87,
+                    LessonText.word("Computers", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("it", Colors.black87,
-                        fontSize: globalFontSize),
-                    LessonText.word("is", Colors.black87,
+                    LessonText.word("use", Colors.black87,
                         fontSize: globalFontSize),
                     LessonText.word("'0'", keyConceptGreen,
                         fontSize: globalFontSize, fontWeight: FontWeight.w800),
@@ -82,28 +80,31 @@ class LessonStepThree extends StatelessWidget {
                         fontSize: globalFontSize, fontWeight: FontWeight.w800),
                     LessonText.word("but", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("it", Colors.black87,
+                    LessonText.word(
+                        "binary", const Color.fromARGB(255, 0, 0, 0),
                         fontSize: globalFontSize),
                     LessonText.word("could", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("be", Colors.black87,
-                        fontSize: globalFontSize),
-                    LessonText.word("[Apple", mainConceptColor,
+                    LessonText.word("be:", Colors.black87,
+                        fontSize: globalFontSize)
+                  ]),
+                  LessonText.sentence([
+                    LessonText.word(
+                        "[Blue", const Color.fromARGB(255, 7, 2, 255),
                         fontSize: globalFontSize, italic: true),
                     LessonText.word("and", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("Banana].", mainConceptColor,
+                    LessonText.word(
+                        "Red]", const Color.fromARGB(255, 255, 12, 12),
                         fontSize: globalFontSize, italic: true),
-                  ]),
-                  const SizedBox(height: 6), // spacing between lines
-                  LessonText.sentence([
-                    LessonText.word("Or", Colors.black87,
+                    LessonText.word("or", Colors.black87,
                         fontSize: globalFontSize),
                     LessonText.word("[Yes", keyConceptGreen,
                         fontSize: globalFontSize, italic: true),
                     LessonText.word("and", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("No].", keyConceptGreen,
+                    LessonText.word(
+                        "No]", const Color.fromARGB(255, 157, 0, 205),
                         fontSize: globalFontSize, italic: true),
                   ]),
                 ],

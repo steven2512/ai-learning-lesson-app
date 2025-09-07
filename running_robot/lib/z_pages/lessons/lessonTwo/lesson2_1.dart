@@ -45,18 +45,18 @@ class _LessonStepZeroState extends State<LessonStepZero>
             ),
 
             // ✅ Small one-line box
-            LessonText.box(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              margin: const EdgeInsets.only(bottom: 0),
-              child: Text(
-                "Obvious, right?",
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
+            // LessonText.box(
+            //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            //   margin: const EdgeInsets.only(bottom: 0),
+            //   child: Text(
+            //     "Obvious, right?",
+            //     style: GoogleFonts.lato(
+            //       fontSize: 18,
+            //       fontWeight: FontWeight.w600,
+            //       color: Colors.black87,
+            //     ),
+            //   ),
+            // ),
 
             // ✅ Cameraman + Dialogue in one Stack
             Padding(

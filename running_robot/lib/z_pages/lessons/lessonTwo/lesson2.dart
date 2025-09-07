@@ -15,6 +15,7 @@ import 'package:running_robot/game/events/event_type.dart'
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_3.dart';
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_4.dart';
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_5.dart';
+import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_6.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (quiz step)
@@ -37,10 +38,10 @@ class _LessonTwoState extends State<LessonTwo> {
     1: 170, // StepOne
     2: 180, // StepTwo
     3: 250, // StepThree (future)
-    4: 150, // StepFour (future)
+    4: 250, // StepFour (future)
   };
 
-  int get totalStages => 5;
+  int get totalStages => 6;
 
   bool _lessonCompleted = false;
   late IconButtonWidget<void> returnButton;
@@ -102,7 +103,9 @@ class _LessonTwoState extends State<LessonTwo> {
                           currentStep == 3 ||
                           currentStep == 4)
                       ? true
-                      : (currentStep == 2 ? answered : false);
+                      : ((currentStep == 2 || currentStep == 5)
+                          ? answered
+                          : false);
 
                   if (!showContinue) return const SizedBox.shrink();
 
@@ -174,6 +177,14 @@ class _LessonTwoState extends State<LessonTwo> {
     }
     if (currentStep == 4) {
       return LessonStepFour();
+    }
+// inside _buildCurrentStep()
+    if (currentStep == 5) {
+      return LessonStepFive(
+        onCompleted: () {
+          _stepAnswered.value = true; // 👈 unlock Continue
+        },
+      );
     }
 
     return const SizedBox.shrink();

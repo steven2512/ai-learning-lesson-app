@@ -25,14 +25,15 @@ class LessonStepFour extends StatelessWidget {
               margin: const EdgeInsets.only(top: 10, bottom: 20),
               child: LessonText.sentence([
                 LessonText.word("Let's", Colors.black87,
-                    fontSize: globalFontSize),
+                    fontSize: globalFontSize + 2),
                 LessonText.word("look", Colors.black87,
-                    fontSize: globalFontSize),
-                LessonText.word("at", Colors.black87, fontSize: globalFontSize),
+                    fontSize: globalFontSize + 2),
+                LessonText.word("at", Colors.black87,
+                    fontSize: globalFontSize + 2),
                 LessonText.word("this", Colors.black87,
-                    fontSize: globalFontSize),
+                    fontSize: globalFontSize + 2),
                 LessonText.word("sequence", mainConceptColor,
-                    fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                    fontSize: globalFontSize + 2, fontWeight: FontWeight.w800),
               ]),
             ),
 
@@ -96,6 +97,24 @@ class LessonStepFour extends StatelessWidget {
                 LessonText.word("'Hello'!", mainConceptColor,
                     fontSize: noteTextSize, fontWeight: FontWeight.w800),
               ]),
+            ),
+
+            // ✅ Small italic note underneath
+            Padding(
+              padding: const EdgeInsets.only(top: 4, right: 5),
+              child: LessonText.sentence(
+                [
+                  LessonText.word("Note:", Colors.black54,
+                      fontSize: 14, italic: true),
+                  LessonText.word(" this is done via", Colors.black54,
+                      fontSize: 14, italic: true),
+                  LessonText.word("Unicode encoding standard", Colors.black87,
+                      fontSize: 14,
+                      italic: true,
+                      underline: true), // 👈 underline supported now
+                ],
+                constrainWidth: false,
+              ),
             ),
           ],
         ),
