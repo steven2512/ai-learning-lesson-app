@@ -139,7 +139,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
               title: "Introduction to Artificial Intelligence",
               buttonText: "Continue Lesson",
               buttonIcon: Icons.arrow_forward_rounded,
-              onPressed: () => widget.onNavigate(const RouteLesson2()),
+              onPressed: () => widget.onNavigate(const RouteLesson3()),
               imageAsset: "assets/images/chat_bot_1.png",
               imageAspectRatio: 0.92,
               decoration: BoxDecoration(

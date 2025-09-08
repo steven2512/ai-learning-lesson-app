@@ -15,6 +15,10 @@ class RouteLesson2 extends AppRoute {
   const RouteLesson2();
 }
 
+class RouteLesson3 extends AppRoute {
+  const RouteLesson3();
+}
+
 /// ---------------- END LESSON ROUTE ----------------
 class RouteEndLesson extends AppRoute {
   final int xp;

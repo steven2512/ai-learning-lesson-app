@@ -5,6 +5,7 @@ import 'package:flame/game.dart';
 // Typed routes
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3.dart';
 import 'package:running_robot/z_pages/lessons/lessonOne/lesson1.dart';
 import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2.dart';
 
@@ -42,6 +43,10 @@ class _MyAppState extends State<MyApp> {
 
     if (route is RouteLesson2) {
       return LessonTwo(onNavigate: navigate);
+    }
+
+    if (route is RouteLesson3) {
+      return LessonThree(onNavigate: navigate);
     }
 
     if (route is RouteEndLesson) {
