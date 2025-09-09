@@ -1,0 +1,32 @@
+Slide 1+2 (recap):
+“Recap: In Lesson 1, we learnt data can be images, sounds, or text, etc. 
+And in Lesson 2: computers turn it all into 0s and 1s.”
+
+Slide 3 (ease-in question):
+"“But when humans analyze this data, whether images or sound, etc”
+“We don’t see just 0s and 1s.”
+“We look for meaning.”
+
+Slide 4 (quantitative):
+“That's why the first thing we ask is: is this data numbers or categories?”
+Animation
+
+Slide 5:
+What is quantitative data (big box)
+“Quantitative data is any information that is numbers”.
+"You can do math with it (add, average, compare)".
+
+Examples: height in centimeters, number of books, test scores, age.
+Give some nice animation
+
+Slide 6:
+Some exercises about numbers
+
+Slide 7 (transition):
+What is qualitative data?
+“Qualitative data is data that describes categories.”
+"You can group it or sort it, but you can’t do normal math on it."
+Examples: eye color, type of fruit, favorite subject, country of birth.
+
+Slide 8: exercises
+(Exercise here to practice spotting numbers vs categories)

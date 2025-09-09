@@ -10,6 +10,9 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_1.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_2.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_3.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_4.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -23,8 +26,8 @@ class _LessonThreeState extends State<LessonThree> {
   int currentStep = 0;
 
   final Map<int, double> topOffsets = const {
-    0: 100,
-    1: 170,
+    0: 160,
+    1: 270,
     2: 180,
     3: 250,
     4: 250,
@@ -125,12 +128,12 @@ class _LessonThreeState extends State<LessonThree> {
     switch (currentStep) {
       case 0:
         return const LessonStepZero();
-      // case 1:
-      //   return const LessonStepOne();
-      // case 2:
-      //   return const LessonStepTwo();
-      // case 3:
-      //   return const LessonStepThree();
+      case 1:
+        return const LessonStepOne();
+      case 2:
+        return const LessonStepTwo();
+      case 3:
+        return const LessonStepThree();
       // case 4:
       //   return const LessonStepFour();
       // case 5:
