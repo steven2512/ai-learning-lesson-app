@@ -14,6 +14,8 @@ import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_2.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_3.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_4.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_5.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_6.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_7.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -34,7 +36,7 @@ class _LessonThreeState extends State<LessonThree> {
     4: 180,
   };
 
-  int get totalStages => 6;
+  int get totalStages => 8;
   bool _lessonCompleted = false;
   late IconButtonWidget<void> returnButton;
 
@@ -137,8 +139,8 @@ class _LessonThreeState extends State<LessonThree> {
         return const LessonStepThree();
       case 4:
         return const LessonStepFour();
-      // case 5:
-      //   return const LessonStepFive();
+      case 5:
+        return const LessonStepFive();
     }
     return const SizedBox.shrink();
   }

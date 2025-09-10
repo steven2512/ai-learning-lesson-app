@@ -140,6 +140,7 @@ flutter:
     - assets/images/monitor.png
     - assets/images/data_chart.png
     - assets/images/happy_life.jpg
+    - assets/images/quantitative.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
