@@ -13,6 +13,7 @@ import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_1.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_2.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_3.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_4.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_5.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -29,8 +30,8 @@ class _LessonThreeState extends State<LessonThree> {
     0: 160,
     1: 270,
     2: 180,
-    3: 250,
-    4: 250,
+    3: 200,
+    4: 180,
   };
 
   int get totalStages => 6;
@@ -134,8 +135,8 @@ class _LessonThreeState extends State<LessonThree> {
         return const LessonStepTwo();
       case 3:
         return const LessonStepThree();
-      // case 4:
-      //   return const LessonStepFour();
+      case 4:
+        return const LessonStepFour();
       // case 5:
       //   return const LessonStepFive();
     }
