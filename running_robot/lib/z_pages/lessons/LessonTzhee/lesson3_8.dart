@@ -56,7 +56,7 @@ const int kScoreMissPenalty = -5;
 const int kTargetQualitative = 10;
 
 // ★ NEW: Global top margins you can tweak
-const double kHeaderBoxesTopMargin = 60.0; // header boxes (in-game) from top
+const double kHeaderBoxesTopMargin = 70.0; // header boxes (in-game) from top
 const double kIntroBoxesTopMargin = 12.0; // intro overlay space before 1st box
 
 /// ─────────────────────────────────────────────────────────────────
