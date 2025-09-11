@@ -1,3 +1,6 @@
+// lib/z_pages/lessons/LessonTzhee/lesson3.dart
+// ✅ LessonThree with conditional continue button only for StepFive
+
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
@@ -34,10 +37,14 @@ class _LessonThreeState extends State<LessonThree> {
     2: 180,
     3: 200,
     4: 180,
+    5: 120,
+    6: 150,
   };
 
   int get totalStages => 8;
   bool _lessonCompleted = false;
+  bool _stepFiveAnswered = false; // ✅ condition only for StepFive
+
   late IconButtonWidget<void> returnButton;
 
   @override
@@ -79,7 +86,7 @@ class _LessonThreeState extends State<LessonThree> {
             child: _buildCurrentStep(),
           ),
 
-          // ✅ Continue button (always shown until end)
+          // ✅ Continue button
           Positioned(
             bottom: 40,
             left: 0,
@@ -87,43 +94,52 @@ class _LessonThreeState extends State<LessonThree> {
             child: Center(
               child: _lessonCompleted
                   ? const SizedBox.shrink()
-                  : ContinueButton(
-                      onPressed: () {
-                        if (currentStep < totalStages - 1) {
-                          setState(() {
-                            currentStep++;
-                          });
-                        } else {
-                          setState(() => _lessonCompleted = true);
-
-                          final endBar = LessonProgressBar(
-                            position: Vector2.zero(),
-                            stages: totalStages,
-                          );
-                          for (int i = 0; i < totalStages; i++) {
-                            endBar.switchPhase(EventProgressBar.proceed);
-                          }
-
-                          widget.onNavigate(
-                            RouteEndLesson(
-                              xp: 50,
-                              streak: 1,
-                              progressBar: endBar,
-                              chapterProgress: 3,
-                              totalChapterLessons: 10,
-                              topText: "Lesson 3 complete! 🎉",
-                              repeatLesson: const RouteLesson3(),
-                              nextLesson: const RouteMainMenu(), // placeholder
-                              illustrationPath: null,
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                  : _buildContinueButton(),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildContinueButton() {
+    // For step 5 → only show after correct answer
+    if (currentStep == 5 && !_stepFiveAnswered) {
+      return const SizedBox.shrink();
+    }
+
+    return ContinueButton(
+      onPressed: () {
+        if (currentStep < totalStages - 1) {
+          setState(() {
+            currentStep++;
+          });
+        } else {
+          setState(() => _lessonCompleted = true);
+
+          final endBar = LessonProgressBar(
+            position: Vector2.zero(),
+            stages: totalStages,
+          );
+          for (int i = 0; i < totalStages; i++) {
+            endBar.switchPhase(EventProgressBar.proceed);
+          }
+
+          widget.onNavigate(
+            RouteEndLesson(
+              xp: 50,
+              streak: 1,
+              progressBar: endBar,
+              chapterProgress: 3,
+              totalChapterLessons: 10,
+              topText: "Lesson 3 complete! 🎉",
+              repeatLesson: const RouteLesson3(),
+              nextLesson: const RouteMainMenu(), // placeholder
+              illustrationPath: null,
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -140,7 +156,13 @@ class _LessonThreeState extends State<LessonThree> {
       case 4:
         return const LessonStepFour();
       case 5:
-        return const LessonStepFive();
+        return LessonStepFive(
+          onStepCompleted: () => setState(() => _stepFiveAnswered = true),
+        );
+      // case 6:
+      //   return const LessonStepSix();
+      // case 7:
+      //   return const LessonStepSeven();
     }
     return const SizedBox.shrink();
   }
