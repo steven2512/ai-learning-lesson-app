@@ -1,5 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3.dart
-// ✅ LessonThree with conditional continue button only for StepFive
+// ✅ LessonThree with conditional continue button for StepFive & StepSeven
 
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/material.dart';
@@ -19,6 +19,7 @@ import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_4.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_5.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_6.dart';
 import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_7.dart';
+import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_8.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -39,11 +40,13 @@ class _LessonThreeState extends State<LessonThree> {
     4: 180,
     5: 120,
     6: 150,
+    7: 50,
   };
 
   int get totalStages => 8;
   bool _lessonCompleted = false;
-  bool _stepFiveAnswered = false; // ✅ condition only for StepFive
+  bool _stepFiveAnswered = false;
+  bool _stepSevenAnswered = false;
 
   late IconButtonWidget<void> returnButton;
 
@@ -103,8 +106,13 @@ class _LessonThreeState extends State<LessonThree> {
   }
 
   Widget _buildContinueButton() {
-    // For step 5 → only show after correct answer
+    // Step 5 → only show after correct answer
     if (currentStep == 5 && !_stepFiveAnswered) {
+      return const SizedBox.shrink();
+    }
+
+    // Step 7 → only show after 10 qualitative words caught
+    if (currentStep == 7 && !_stepSevenAnswered) {
       return const SizedBox.shrink();
     }
 
@@ -159,10 +167,12 @@ class _LessonThreeState extends State<LessonThree> {
         return LessonStepFive(
           onStepCompleted: () => setState(() => _stepFiveAnswered = true),
         );
-      // case 6:
-      //   return const LessonStepSix();
-      // case 7:
-      //   return const LessonStepSeven();
+      case 6:
+        return const LessonStepSix();
+      case 7:
+        return LessonStepSeven(
+          onStepCompleted: () => setState(() => _stepSevenAnswered = true),
+        );
     }
     return const SizedBox.shrink();
   }

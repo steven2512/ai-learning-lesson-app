@@ -1,596 +1,820 @@
-// ✅ LessonStepSeven — Animation-only box
-// Self-contained: includes all logic, tokens, painters, globals.
+// lib/z_pages/lessons/LessonTzhee/lesson3_7.dart
+// ✅ LessonStepSeven — Falling Words Game (catch QUALITATIVE only)
+// ★ Uses LayoutBuilder so basket renders inside the constrained step area.
+// ★ Intro LessonText.box (narrow, colorful, with emojis) + Start Game just below.
+// ★ Larger word sizes, 100+ word pool, difficulty ramps over time.
+// ★ Miss penalty only when the missed word was QUALITATIVE.
 
-import 'dart:math' as math;
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:google_fonts/google_fonts.dart';
+// LessonText helpers (your file)
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
-/// ============================== GLOBALS ===============================
-const double kAnimBoxHeight = 420.0;
-const double kAnimOuterPadding = 20.0;
-const double kAnimTopLabelHeight = 34.0;
-const double kAnimDividerThickness = 2.0;
+/// ─────────────────────────────────────────────────────────────────
+/// 🔧 GLOBAL TUNING KNOBS
+/// ─────────────────────────────────────────────────────────────────
+const double kBasketWidth = 140;
+const double kBasketHeight = 60;
+const double kBasketBottomMargin = 40;
 
-const double kAnimBackgroundRadius = 18.0;
-const double kAnimBinRadius = 14.0;
+const double kBasketDragSensitivity = 1.0;
+const bool kSmoothTapMove = true;
+const double kBasketMoveSpeed = 560;
 
-const Color _numbersBlue = Color.fromARGB(255, 0, 113, 206);
-const Color _categoriesRed = Color.fromARGB(255, 200, 0, 0);
-const Color _labelInk = Colors.black87;
+// ★ WORD FONT RANGE
+const double kWordFontMin = 26;
+const double kWordFontMax = 34;
 
-const double _tokenFontSize = 15.0;
-const double _hGap = 12.0;
-const double _vGap = 12.0;
-const double _chipHPad = 12.0;
-const double _chipVPad = 7.0;
-const double _chipDot = 8.0;
-const double _chipDotGap = 8.0;
+// Base physics
+const double kFallSpeed = 140; // px/sec (base)
+const double kSpawnPerSecond = 1.2; // base spawns/sec
 
-/// =====================================================================
+// ★ Difficulty scaling
+const double kFallSpeedGrowthPerSec = 0.020; // +2% / sec
+const double kFallSpeedMaxMultiplier = 2.6; // cap
+const double kSpawnGrowthPerSec = 0.020; // +2% / sec
+const double kSpawnMaxPerSecond = 5.0; // cap
+const int kSpawnTickMs = 100; // scheduler tick
 
-class LessonStepSeven extends StatelessWidget {
-  const LessonStepSeven({super.key});
+const int kMaxActiveWords = 9;
+const double kMinHorizontalGap = 110;
+const double kSpawnSidePadding = 16;
+const double kSpawnStartY = -120;
+const double kFadeInDistance = 160;
+
+// ★ Scoring & win/lose
+const int kPointsToWin = 50;
+const int kPointsToLose = -50;
+const int kScoreCorrect = 5; // correct catch (qual)
+const int kScoreIncorrect = -5; // wrong catch (quant caught)
+const bool kPenaltyOnMiss = true; // only applies to QUAL (see logic)
+const int kScoreMissPenalty = -5;
+
+// kept for compatibility (continue button)
+const int kTargetQualitative = 10;
+
+// ★ NEW: Global top margins you can tweak
+const double kHeaderBoxesTopMargin = 60.0; // header boxes (in-game) from top
+const double kIntroBoxesTopMargin = 12.0; // intro overlay space before 1st box
+
+/// ─────────────────────────────────────────────────────────────────
+/// WORD POOLS (≈120 total)
+/// ─────────────────────────────────────────────────────────────────
+const List<String> _qualitativeWords = <String>[
+  "Color",
+  "Eye Color",
+  "Hair Color",
+  "Texture",
+  "Flavor",
+  "Scent",
+  "Mood",
+  "Emotion",
+  "Hobby",
+  "Sport",
+  "Team",
+  "Position",
+  "Role",
+  "Job Title",
+  "Department",
+  "College Major",
+  "Subject",
+  "Fruit",
+  "Vegetable",
+  "Animal",
+  "Bird",
+  "Fish",
+  "Flower",
+  "Tree",
+  "Season",
+  "Weather",
+  "Pattern",
+  "Shape",
+  "Style",
+  "Material",
+  "Brand",
+  "Model Name",
+  "OS",
+  "Browser",
+  "Device Type",
+  "File Type",
+  "Payment Method",
+  "Membership Tier",
+  "Subscription Plan",
+  "Status",
+  "Genre (Book)",
+  "Genre (Movie)",
+  "Genre (Game)",
+  "Music Instrument",
+  "Transport Mode",
+  "Station Name",
+  "Airport Code",
+  "Currency Code",
+  "Country",
+  "Country of Birth",
+  "City",
+  "Region",
+  "Continent",
+  "Language",
+  "Accent",
+  "Dialekt",
+  "Zodiac Sign",
+  "Blood Type",
+  "Yes/No",
+  "True/False",
+  "Priority",
+  "Risk Level",
+  "Access Level",
+  "Ticket Type",
+  "Seat Class",
+  "Meal Preference",
+  "Allergy Type",
+  "Pet Type",
+  "Coffee Roast",
+  "Tea Type",
+  "Ice Cream Flavor",
+  "Shirt Size (S/M/L)",
+  "Color Family",
+  "Fabric",
+  "Finish",
+  "Packaging Type",
+  "Warranty Type",
+  "Service Plan",
+  "Badge",
+  "Achievement",
+  "Label",
+  "Category",
+  "Tag",
+  "Brand Family",
+];
+
+const List<String> _quantitativeWords = <String>[
+  "Age",
+  "Height",
+  "Weight",
+  "Score",
+  "Count",
+  "Quantity",
+  "Steps",
+  "Calories",
+  "Time (s)",
+  "Speed",
+  "Distance",
+  "Price",
+  "Revenue",
+  "Cost",
+  "Profit",
+  "Margin %",
+  "Discount %",
+  "Tax %",
+  "Rate",
+  "Temperature",
+  "Humidity",
+  "Rainfall",
+  "Wind Speed",
+  "Voltage",
+  "Current",
+  "Power",
+  "Frequency",
+  "Bandwidth",
+  "Bitrate",
+  "File Size",
+  "Resolution Width",
+  "Resolution Height",
+  "Frame Rate",
+  "Pixels",
+  "Latitude",
+  "Longitude",
+  "Altitude",
+  "Pressure",
+  "Page Views",
+  "Clicks",
+  "CTR %",
+  "Impressions",
+  "Bounce %",
+  "GPA",
+  "Test Score",
+  "Queue Length",
+  "Wait Time",
+  "Service Time",
+  "Run Time",
+  "Compile Time",
+  "Memory (MB)",
+  "CPU %",
+  "GPU %",
+  "Ping (ms)",
+  "Latency (ms)",
+  "Throughput",
+  "Packets",
+  "Errors",
+  "Stars",
+  "Rating",
+  "Rank",
+  "Level",
+  "XP",
+  "Lives",
+  "Books Read",
+  "Tasks Done",
+  "Days",
+  "Hours",
+  "Minutes",
+  "Likes",
+  "Followers",
+  "Subscribers",
+  "Shares",
+  "Comments",
+  "Tickets",
+  "Orders",
+  "Units",
+  "Sessions",
+  "Installs",
+];
+
+final Random _rng = Random();
+
+class LessonStepSeven extends StatefulWidget {
+  final VoidCallback? onStepCompleted;
+  const LessonStepSeven({super.key, this.onStepCompleted});
 
   @override
-  Widget build(BuildContext context) {
-    return LessonText.box(
-      margin: const EdgeInsets.only(bottom: 14),
-      child: SizedBox(
-        height: kAnimBoxHeight,
-        width: double.infinity,
-        child: const NumbersVsCategoriesAnimation(),
-      ),
-    );
-  }
+  State<LessonStepSeven> createState() => _LessonStepSevenState();
 }
 
-/// ======================================================================
-/// NumbersVsCategoriesAnimation
-/// ======================================================================
-class NumbersVsCategoriesAnimation extends StatefulWidget {
-  const NumbersVsCategoriesAnimation({super.key});
+class _LessonStepSevenState extends State<LessonStepSeven>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ticker;
+  late final Timer _spawnTimer;
 
-  @override
-  State<NumbersVsCategoriesAnimation> createState() =>
-      _NumbersVsCategoriesAnimationState();
-}
+  final List<_FallingWord> _active = [];
+  final List<_FloatText> _fx = [];
 
-class _NumbersVsCategoriesAnimationState
-    extends State<NumbersVsCategoriesAnimation> with TickerProviderStateMixin {
-  late final AnimationController _timeline;
-  late final Ticker _ticker;
-  final math.Random _rng = math.Random();
+  double _basketX = 40;
+  double _basketTargetX = 40;
+  int _score = 0;
+  int _qualitativeCaught = 0;
 
-  late List<_Token> _tokens;
-  final List<_Particle> _particles = [];
-  final Map<int, double> _prevProgress = {};
-  double _elapsed = 0.0;
+  Duration? _lastTick;
+  double _vw = 0, _vh = 0;
 
-  TextStyle get _catTextStyle => TextStyle(
-        fontSize: _tokenFontSize,
-        fontWeight: FontWeight.w900,
-        color: Colors.black.withOpacity(0.85),
-      );
-  TextStyle get _numTextStyle => TextStyle(
-        fontSize: _tokenFontSize + 0.5,
-        fontWeight: FontWeight.w900,
-        color: Colors.black.withOpacity(0.90),
-      );
-  TextStyle get _unitTextStyle => TextStyle(
-        fontSize: _tokenFontSize - 0.5,
-        fontWeight: FontWeight.w700,
-        color: Colors.black.withOpacity(0.65),
-      );
+  // spawn scheduler (dynamic rate)
+  double _spawnAccumulator = 0;
+
+  // intro overlay state
+  bool _started = false;
+  bool _showIntro = true;
+  double _introOpacity = 1.0;
 
   @override
   void initState() {
     super.initState();
-    _tokens = _seedTokens();
-    _timeline = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3600),
-    )..addListener(_onTick);
+    _ticker =
+        AnimationController(vsync: this, duration: const Duration(days: 1))
+          ..addListener(_onTick)
+          ..forward();
 
-    _ticker = createTicker((elapsed) {
-      final dt = elapsed.inMicroseconds / 1e6 - _elapsed;
-      _elapsed += dt;
-      _updateParticles(dt);
-      setState(() {});
+    _spawnTimer =
+        Timer.periodic(const Duration(milliseconds: kSpawnTickMs), (_) {
+      if (!mounted || !_started) return;
+      final double t =
+          (_ticker.lastElapsedDuration?.inMilliseconds ?? 0) / 1000.0;
+      final double spawnRate = min(
+          kSpawnMaxPerSecond, kSpawnPerSecond * (1.0 + kSpawnGrowthPerSec * t));
+      _spawnAccumulator += spawnRate * (kSpawnTickMs / 1000.0);
+      int n = _spawnAccumulator.floor();
+      _spawnAccumulator -= n;
+      while (n-- > 0) _trySpawnWord();
     });
-
-    _start();
-  }
-
-  void _start() {
-    _particles.clear();
-    for (final t in _tokens) {
-      t.arrived = false;
-    }
-    _prevProgress.clear();
-    _elapsed = 0;
-    _timeline
-      ..reset()
-      ..forward();
-    _ticker.start();
   }
 
   @override
   void dispose() {
-    _ticker.stop();
+    _spawnTimer.cancel();
     _ticker.dispose();
-    _timeline.dispose();
     super.dispose();
   }
 
-  List<_Token> _seedTokens() {
-    final numbers = <_Token>[
-      _Token.number(id: 0, value: "170", unit: "cm"),
-      _Token.number(id: 1, value: "55", unit: "kg"),
-      _Token.number(id: 3, value: "37", unit: "°C"),
-      _Token.number(id: 4, value: "120", unit: "bpm"),
-      _Token.number(id: 6, value: "1.8", unit: "m"),
-      _Token.number(id: 7, value: "60", unit: "km/h"),
-      _Token.number(id: 8, value: "45", unit: "%"),
-    ];
-
-    final categories = ["Red", "Dog", "Jazz", "Banana", "Metal", "Cat", "Blue"]
-        .map((c) => _Token.category(text: c, id: 1000 + c.hashCode))
-        .toList();
-
-    final List<_Token> all = [...numbers, ...categories];
-    int idCounter = 2000;
-    for (final t in all) {
-      t.delay = 0.10 + _rand(0, 0.75);
-      t.duration = 0.90 + _rand(0.0, 0.45);
-      t.phase = _rand(0, math.pi * 2);
-      t.id = idCounter++;
-    }
-    all.shuffle(_rng);
-    return all;
-  }
-
-  double _rand(double a, double b) => a + _rng.nextDouble() * (b - a);
-
+  // ────────────────────────────────────────────────────────────────
+  // Game Loop
+  // ────────────────────────────────────────────────────────────────
   void _onTick() {
-    for (final t in _tokens) {
-      final prog = _normalizedProgress(t, _timeline.value);
-      final prev = _prevProgress[t.id] ?? 0.0;
-      if (!t.arrived && prev < 1.0 && prog >= 1.0) {
-        t.arrived = true;
-        final center = (t.finalPos ?? Offset.zero) +
-            Offset((t.size?.width ?? 0) / 2, (t.size?.height ?? 0) / 2);
-        _burstConfetti(center,
-            color: t.type == _TokenType.number ? _numbersBlue : _categoriesRed);
+    if (!_started) return;
+    if (_vw <= 0 || _vh <= 0) return;
+
+    final now = _ticker.lastElapsedDuration ?? Duration.zero;
+    final dtMs =
+        (_lastTick == null) ? 16 : max(1, (now - _lastTick!).inMilliseconds);
+    _lastTick = now;
+
+    final double dt = dtMs / 1000.0;
+    final double t = now.inMilliseconds / 1000.0;
+
+    // dynamic fall speed
+    final double speedMultiplier =
+        min(kFallSpeedMaxMultiplier, 1.0 + kFallSpeedGrowthPerSec * t);
+    final double dy = (kFallSpeed * speedMultiplier) * dt;
+
+    final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
+
+    setState(() {
+      // move basket
+      if (kSmoothTapMove) {
+        final double maxDx = kBasketMoveSpeed * dt;
+        final double dx = (_basketTargetX - _basketX);
+        _basketX =
+            (dx.abs() <= maxDx) ? _basketTargetX : _basketX + maxDx * dx.sign;
+      } else {
+        _basketX = _basketTargetX;
       }
-      _prevProgress[t.id] = prog;
-    }
 
-    if (_timeline.isCompleted && _particles.isEmpty) {
-      _ticker.stop();
-    }
-    setState(() {});
+      // update words
+      for (final w in _active) {
+        w.y += dy;
+        w.opacity = (((w.y - kSpawnStartY) / kFadeInDistance).clamp(0.0, 1.0));
+      }
+
+      // update FX
+      for (final f in _fx) {
+        f.ageMs += dtMs;
+        f.y -= 0.04 * dtMs;
+        f.opacity = (1.0 - f.ageMs / f.lifetimeMs).clamp(0.0, 1.0);
+      }
+      _fx.removeWhere((f) => f.ageMs >= f.lifetimeMs);
+
+      // collisions
+      final Rect basketRect =
+          Rect.fromLTWH(_basketX, basketTopY, kBasketWidth, kBasketHeight);
+
+      _active.removeWhere((w) {
+        final Rect wordRect =
+            Rect.fromLTWH(w.x, w.y, w.size.width, w.size.height);
+
+        // Caught
+        if (basketRect.overlaps(wordRect)) {
+          final bool isQual = _qualitativeWords.contains(w.text);
+          _score += isQual ? kScoreCorrect : kScoreIncorrect;
+          if (isQual) _qualitativeCaught++;
+
+          _spawnFx(
+            text: isQual ? "Correct ✅ +5" : "Wrong ❌ −5",
+            x: basketRect.center.dx,
+            y: basketRect.top - 10,
+            color: isQual ? Colors.green : Colors.red,
+          );
+
+          if (_score >= kPointsToWin) {
+            widget.onStepCompleted?.call(); // unlock continue
+            _spawnFx(
+                text: "You win! 🏆",
+                x: basketRect.center.dx,
+                y: basketRect.top - 40,
+                color: Colors.black);
+            _started = false;
+          } else if (_score <= kPointsToLose) {
+            _spawnFx(
+                text: "You lose! 💥",
+                x: basketRect.center.dx,
+                y: basketRect.top - 40,
+                color: Colors.black);
+            _started = false;
+            _showIntro = true;
+            _introOpacity = 1.0;
+          }
+          return true;
+        }
+
+        // Missed (only penalize if it was QUALITATIVE)
+        if (w.y + w.size.height >= basketTopY) {
+          final bool isQual = _qualitativeWords.contains(w.text);
+          if (kPenaltyOnMiss && isQual) {
+            _score += kScoreMissPenalty;
+            _spawnFx(
+              text: "Miss (Qual) −5",
+              x: w.x + w.size.width / 2,
+              y: basketTopY - 10,
+              color: Colors.black87,
+            );
+          } else {
+            _spawnFx(
+              text: "Miss",
+              x: w.x + w.size.width / 2,
+              y: basketTopY - 10,
+              color: Colors.black45,
+            );
+          }
+
+          if (_score <= kPointsToLose) {
+            _started = false;
+            _showIntro = true;
+            _introOpacity = 1.0;
+            _spawnFx(
+                text: "You lose! 💥",
+                x: _vw / 2,
+                y: basketTopY - 40,
+                color: Colors.black);
+          }
+          return true;
+        }
+        return false;
+      });
+    });
   }
 
-  double _normalizedProgress(_Token t, double g) {
-    final start = t.delay, end = (t.delay + t.duration).clamp(0.0, 1.0);
-    final v = g.clamp(0.0, 1.0);
-    if (v <= start) return 0.0;
-    if (v >= end) return 1.0;
-    return (v - start) / (end - start);
+  // ────────────────────────────────────────────────────────────────
+  // Spawning & Input
+  // ────────────────────────────────────────────────────────────────
+  void _spawnFx(
+      {required String text,
+      required double x,
+      required double y,
+      required Color color}) {
+    _fx.add(_FloatText(
+        text: text, x: x, y: y, color: color, lifetimeMs: 900, fontSize: 16));
   }
 
-  void _updateParticles(double dt) {
-    for (final p in _particles) {
-      p.life -= dt;
-      if (p.life <= 0) continue;
-      p.vel += Offset(0, 200) * dt;
-      p.pos += p.vel * dt;
-      p.angle += p.spin * dt;
-    }
-    _particles.removeWhere((p) => p.life <= 0);
-  }
+  void _trySpawnWord() {
+    if (!mounted) return;
+    if (_active.length >= kMaxActiveWords) return;
+    if (_vw <= 0) return;
 
-  void _burstConfetti(Offset at, {required Color color}) {
-    final n = 18 + _rng.nextInt(12);
-    for (int i = 0; i < n; i++) {
-      final speed = 90 + _rng.nextDouble() * 220;
-      final angle = _rng.nextDouble() * math.pi * 2;
-      final vel = Offset(math.cos(angle), math.sin(angle)) * speed;
-      _particles.add(_Particle(
-        pos: at,
-        vel: vel,
-        life: 0.7 + _rng.nextDouble() * 0.6,
-        color: color.withOpacity(0.9 - _rng.nextDouble() * 0.4),
-        size: 2.0 + _rng.nextDouble() * 3.0,
-        angle: _rng.nextDouble() * math.pi,
-        spin: (_rng.nextDouble() - 0.5) * 8.0,
-      ));
-    }
-  }
+    final bool pickQual = _rng.nextBool();
+    final List<String> pool = pickQual ? _qualitativeWords : _quantitativeWords;
+    final String text = pool[_rng.nextInt(pool.length)];
 
-  TextSpan _spanFor(_Token t) {
-    if (t.type == _TokenType.number) {
-      final hasUnit = (t.unit ?? "").isNotEmpty;
-      return TextSpan(
-        children: [
-          TextSpan(text: t.value ?? t.text, style: _numTextStyle),
-          if (hasUnit) const TextSpan(text: " "),
-          if (hasUnit) TextSpan(text: t.unit, style: _unitTextStyle),
-        ],
-      );
-    } else {
-      return TextSpan(text: t.text, style: _catTextStyle);
-    }
-  }
+    final double fontSize =
+        _rng.nextDouble() * (kWordFontMax - kWordFontMin) + kWordFontMin;
+    final Color color = Colors.primaries[_rng.nextInt(Colors.primaries.length)];
+    final TextStyle style = GoogleFonts.lato(
+        fontSize: fontSize, fontWeight: FontWeight.w800, color: color);
 
-  Size _measureChip(_Token t) {
-    final tp = TextPainter(
-      text: _spanFor(t),
-      maxLines: 1,
+    final TextPainter tp = TextPainter(
+      text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
+      maxLines: 1,
     )..layout();
-    final w = _chipHPad + _chipDot + _chipDotGap + tp.width + _chipHPad;
-    final h = _chipVPad + tp.height + _chipVPad;
-    return Size(w, h);
+    final Size wordSize = tp.size;
+
+    // choose non-overlapping horizontal slot
+    const int maxTries = 28;
+    double? xCandidate;
+
+    for (int i = 0; i < maxTries; i++) {
+      final double minX = kSpawnSidePadding;
+      final double maxX = max(minX, _vw - kSpawnSidePadding - wordSize.width);
+      final double x = _rng.nextDouble() * (maxX - minX) + minX;
+
+      final Rect newRect =
+          Rect.fromLTWH(x, kSpawnStartY, wordSize.width, wordSize.height);
+
+      bool overlaps = false;
+      for (final w in _active) {
+        final Rect r = Rect.fromLTWH(w.x, w.y, w.size.width, w.size.height);
+        final bool horizontalSeparated =
+            (newRect.right + kMinHorizontalGap <= r.left) ||
+                (r.right + kMinHorizontalGap <= newRect.left);
+        if (!horizontalSeparated) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (!overlaps) {
+        xCandidate = x;
+        break;
+      }
+    }
+
+    if (xCandidate == null) return;
+
+    setState(() {
+      _active.add(_FallingWord(
+        text: text,
+        x: xCandidate!,
+        y: kSpawnStartY,
+        size: wordSize,
+        painter: tp,
+        opacity: 0.0,
+      ));
+    });
   }
 
-  List<Offset> _flowLayout(Rect rect, List<_Token> tokens) {
-    final List<Offset> spots = [];
-    double x = rect.left + _hGap;
-    double y = rect.top + _vGap;
-    double rowH = 0;
-    for (final t in tokens) {
-      t.size ??= _measureChip(t);
-      final s = t.size!;
-      if (x + s.width > rect.right - _hGap) {
-        x = rect.left + _hGap;
-        y += rowH + _vGap;
-        rowH = 0;
-      }
-      spots.add(Offset(x, y));
-      x += s.width + _hGap;
-      rowH = math.max(rowH, s.height);
-    }
-    return spots;
+  void _moveBasketByDrag(double dx) {
+    final double next = (_basketTargetX + dx * kBasketDragSensitivity)
+        .clamp(0.0, (_vw - kBasketWidth).clamp(0.0, double.infinity));
+    setState(() => _basketTargetX = next);
+  }
+
+  void _moveBasketToTap(double tapDx) {
+    final double centered = (tapDx - kBasketWidth / 2)
+        .clamp(0.0, (_vw - kBasketWidth).clamp(0.0, double.infinity));
+    setState(() => _basketTargetX = centered);
+  }
+
+  void _startGame() {
+    setState(() {
+      _active.clear();
+      _fx.clear();
+      _score = 0;
+      _qualitativeCaught = 0;
+      _spawnAccumulator = 0;
+      _introOpacity = 0.0;
+    });
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      setState(() {
+        _showIntro = false;
+        _started = true;
+      });
+    });
+  }
+
+  // keep LessonText.box narrow like other lessons
+  Widget _narrowBox({required Widget child, Color? color}) {
+    final deco = LessonText.defaultBoxDecoration().copyWith(color: color);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: LessonText.maxTextWidth),
+        child: LessonText.box(decoration: deco, child: child),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _start,
-      child: SizedBox.expand(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final Size size = constraints.biggest;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          _vw = constraints.maxWidth;
+          _vh = constraints.maxHeight;
+          final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
 
-            final padding = kAnimOuterPadding;
-            final labelH = kAnimTopLabelHeight;
-            final dividerW = kAnimDividerThickness;
-
-            final leftRect = Rect.fromLTWH(
-              padding,
-              padding + labelH,
-              (size.width - padding * 2 - dividerW) / 2,
-              size.height - padding * 2 - labelH,
-            );
-            final rightRect = Rect.fromLTWH(
-              leftRect.right + dividerW,
-              padding + labelH,
-              (size.width - padding * 2 - dividerW) / 2,
-              size.height - padding * 2 - labelH,
-            );
-
-            final centerRect = Rect.fromCenter(
-              center: Offset(size.width / 2, size.height / 2),
-              width: size.width * 0.38,
-              height: size.height * 0.36,
-            );
-
-            final leftTokens =
-                _tokens.where((t) => t.type == _TokenType.number).toList();
-            final rightTokens =
-                _tokens.where((t) => t.type == _TokenType.category).toList();
-
-            final leftSpots = _flowLayout(leftRect, leftTokens);
-            final rightSpots = _flowLayout(rightRect, rightTokens);
-
-            int li = 0, ri = 0;
-            for (final t in _tokens) {
-              t.size ??= _measureChip(t);
-              final s = t.size!;
-              final startX = _rand(centerRect.left, centerRect.right - s.width);
-              final startY =
-                  _rand(centerRect.top, centerRect.bottom - s.height);
-              t.startPos ??= Offset(startX, startY);
-
-              if (t.type == _TokenType.number) {
-                t.finalPos = leftSpots[li % leftSpots.length];
-                li++;
-              } else {
-                t.finalPos = rightSpots[ri % rightSpots.length];
-                ri++;
-              }
-            }
-
-            return CustomPaint(
-              painter: _BackdropPainter(
-                leftRect: leftRect,
-                rightRect: rightRect,
-                dividerX: leftRect.right,
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: leftRect.left,
-                    top: padding - 2,
-                    child: Row(
-                      children: [
-                        _legendDot(_numbersBlue),
-                        const SizedBox(width: 6),
-                        Text("Numbers",
-                            style: TextStyle(
-                              color: _labelInk,
-                              fontWeight: FontWeight.w800,
-                            )),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: rightRect.left,
-                    top: padding - 2,
-                    child: Row(
-                      children: [
-                        _legendDot(_categoriesRed),
-                        const SizedBox(width: 6),
-                        Text("Categories",
-                            style: TextStyle(
-                              color: _labelInk,
-                              fontWeight: FontWeight.w800,
-                            )),
-                      ],
-                    ),
-                  ),
-                  ..._tokens.map((t) {
-                    final prog = _normalizedProgress(t, _timeline.value);
-                    final eased = Curves.easeOutBack.transform(prog);
-                    final lerp = Offset.lerp(t.startPos, t.finalPos, eased)!;
-
-                    final lift = (1 - (2 * prog - 1) * (2 * prog - 1)) * 22.0;
-                    final flyPos = lerp - Offset(0, lift);
-
-                    final bob = prog >= 1.0
-                        ? math.sin(_elapsed * 2.0 + t.phase) * 1.8
-                        : 0.0;
-
-                    final spawn =
-                        Curves.easeOut.transform(prog.clamp(0.0, 0.25) / 0.25);
-                    final scale = 0.9 + spawn * 0.2;
-                    final opacity = (0.2 + spawn * 0.8).clamp(0.0, 1.0);
-
-                    return Positioned(
-                      left: flyPos.dx,
-                      top: flyPos.dy + bob,
-                      child: Opacity(
-                        opacity: opacity,
-                        child: Transform.scale(
-                          scale: scale,
-                          alignment: Alignment.center,
-                          child: _TokenChip(
-                            token: t,
-                            color: t.type == _TokenType.number
-                                ? _numbersBlue
-                                : _categoriesRed,
-                            spanBuilder: _spanFor,
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanUpdate: (d) => _moveBasketByDrag(d.delta.dx),
+            onTapDown: (d) => _moveBasketToTap(d.localPosition.dx),
+            child: Stack(
+              children: [
+                // ── Header boxes (narrow, colorful) ──
+                Positioned(
+                  top: kHeaderBoxesTopMargin, // ★ uses global
+                  left: 0,
+                  right: 0,
+                  child: Column(
+                    children: [
+                      _narrowBox(
+                        color: const Color(0xFFE8F5E9), // light green
+                        child: Text(
+                          "Catch all Qualitative Words 🧺",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.lato(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.green.shade900,
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: _ConfettiPainter(_particles),
+                      const SizedBox(height: 8),
+                      _narrowBox(
+                        color: const Color(0xFFE3F2FD), // light blue
+                        child: Text(
+                          "Score: $_score    |    Qual caught: $_qualitativeCaught",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.lato(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.blueGrey.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Falling words
+                ..._active.map(
+                  (w) => Positioned(
+                    left: w.x,
+                    top: w.y,
+                    child: Opacity(
+                      opacity: w.opacity,
+                      child: SizedBox(
+                        width: w.size.width,
+                        height: w.size.height,
+                        child: CustomPaint(painter: _WordPainter(w)),
                       ),
                     ),
                   ),
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+
+                // Floating feedback
+                ..._fx.map(
+                  (f) => Positioned(
+                    left: f.x,
+                    top: f.y,
+                    child: Opacity(
+                      opacity: f.opacity,
+                      child: Text(
+                        f.text,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.lato(
+                          fontSize: f.fontSize,
+                          fontWeight: FontWeight.w700,
+                          color: f.color,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Basket
+                Positioned(
+                  left: _basketX,
+                  top: basketTopY,
+                  child: _UBasketPlaceholder(
+                      width: kBasketWidth, height: kBasketHeight),
+                ),
+
+                // ── Intro overlay (narrow boxes + button directly under rules) ──
+                if (_showIntro)
+                  Positioned.fill(
+                    child: AnimatedOpacity(
+                      opacity: _introOpacity,
+                      duration: const Duration(milliseconds: 250),
+                      child: Container(
+                        color: Colors.white.withOpacity(0.94),
+                        alignment: Alignment.topCenter,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                                height: kIntroBoxesTopMargin), // ★ uses global
+                            _narrowBox(
+                              color: const Color(0xFFFFF3E0), // light orange
+                              child: Text(
+                                "🎮 Mini-Game: Catch The Qualitative",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.lato(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.deepOrange.shade900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _narrowBox(
+                              color: const Color(0xFFF3E5F5), // light purple
+                              child: Text(
+                                "🧺 Use the basket at the bottom to catch as many Qualitative WORDS as possible.\n\n"
+                                "🏆 Reach 50 points to win.\n"
+                                "💥 Hit −50 points and you lose.\n\n"
+                                "✅ Correct catch (Qual): +5\n"
+                                "❌ Wrong catch (Quant): −5\n"
+                                "😬 Missed Qualitative: −5\n"
+                                "😌 Missed Quantitative: 0",
+                                textAlign: TextAlign.left,
+                                style: GoogleFonts.lato(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.35,
+                                  color: Colors.purple.shade900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                    maxWidth: LessonText.maxTextWidth),
+                                child: ElevatedButton(
+                                  onPressed: _startGame,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepOrange,
+                                    foregroundColor: Colors.white,
+                                    shape: const StadiumBorder(),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 28, vertical: 14),
+                                    textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900),
+                                    elevation: 3,
+                                  ),
+                                  child: const Text("Start Game"),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
-
-  Widget _legendDot(Color c) => Container(
-        width: 10,
-        height: 10,
-        decoration:
-            BoxDecoration(color: c, borderRadius: BorderRadius.circular(6)),
-      );
 }
 
-/// ==== Models & painters =================================================
-enum _TokenType { number, category }
-
-class _Token {
-  int id;
-  final _TokenType type;
+/// MODELS
+class _FallingWord {
   final String text;
-  final String? value;
-  final String? unit;
+  double x;
+  double y;
+  double opacity;
+  final Size size;
+  final TextPainter painter;
 
-  double delay;
-  double duration;
-  double phase;
-  bool arrived;
-
-  Offset? startPos;
-  Offset? finalPos;
-  Size? size;
-
-  _Token._({
-    required this.id,
-    required this.type,
+  _FallingWord({
     required this.text,
-    this.value,
-    this.unit,
-    this.delay = 0,
-    this.duration = 1,
-    this.phase = 0,
-    this.arrived = false,
-  });
-
-  factory _Token.category({required String text, required int id}) =>
-      _Token._(id: id, type: _TokenType.category, text: text);
-
-  factory _Token.number(
-          {required int id, required String value, String? unit}) =>
-      _Token._(
-          id: id, type: _TokenType.number, text: "", value: value, unit: unit);
-}
-
-class _Particle {
-  Offset pos;
-  Offset vel;
-  double life;
-  final Color color;
-  final double size;
-  double angle;
-  double spin;
-
-  _Particle({
-    required this.pos,
-    required this.vel,
-    required this.life,
-    required this.color,
+    required this.x,
+    required this.y,
     required this.size,
-    required this.angle,
-    required this.spin,
+    required this.painter,
+    this.opacity = 0.0,
   });
 }
 
-class _BackdropPainter extends CustomPainter {
-  final Rect leftRect;
-  final Rect rightRect;
-  final double dividerX;
-
-  _BackdropPainter({
-    required this.leftRect,
-    required this.rightRect,
-    required this.dividerX,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()
-      ..color = const Color(0xFFF7F9FC)
-      ..style = PaintingStyle.fill;
-
-    final binPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final binBorder = Paint()
-      ..color = const Color(0x22000000)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    final bgR = Radius.circular(kAnimBackgroundRadius);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Offset.zero & size, bgR),
-      bgPaint,
-    );
-
-    final rr = Radius.circular(kAnimBinRadius);
-    canvas.drawRRect(RRect.fromRectAndRadius(leftRect, rr), binPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(rightRect, rr), binPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(leftRect, rr), binBorder);
-    canvas.drawRRect(RRect.fromRectAndRadius(rightRect, rr), binBorder);
-
-    final divider = Paint()
-      ..color = const Color(0x11000000)
-      ..strokeWidth = kAnimDividerThickness;
-    canvas.drawLine(Offset(dividerX, leftRect.top - 16),
-        Offset(dividerX, rightRect.bottom + 6), divider);
-  }
-
-  @override
-  bool shouldRepaint(covariant _BackdropPainter oldDelegate) => true;
-}
-
-class _ConfettiPainter extends CustomPainter {
-  final List<_Particle> particles;
-  _ConfettiPainter(this.particles);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final p in particles) {
-      final t = p.life.clamp(0.0, 1.0);
-      final alpha = (t * 255).clamp(0, 255).toInt();
-      final paint = Paint()..color = p.color.withAlpha(alpha);
-      final s = p.size;
-
-      canvas.save();
-      canvas.translate(p.pos.dx, p.pos.dy);
-      canvas.rotate(p.angle);
-      final rect =
-          Rect.fromCenter(center: Offset.zero, width: s * 1.3, height: s);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(1.2)),
-        paint,
-      );
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ConfettiPainter oldDelegate) => true;
-}
-
-class _TokenChip extends StatelessWidget {
-  final _Token token;
+class _FloatText {
+  final String text;
+  final double fontSize;
   final Color color;
-  final TextSpan Function(_Token) spanBuilder;
+  final int lifetimeMs;
 
-  const _TokenChip({
-    super.key,
-    required this.token,
+  double x;
+  double y;
+  int ageMs = 0;
+  double opacity = 1.0;
+
+  _FloatText({
+    required this.text,
+    required this.x,
+    required this.y,
     required this.color,
-    required this.spanBuilder,
+    required this.lifetimeMs,
+    this.fontSize = 16,
   });
+}
+
+/// PAINTERS
+class _WordPainter extends CustomPainter {
+  final _FallingWord word;
+  _WordPainter(this.word);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    word.painter.paint(canvas, Offset.zero);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WordPainter oldDelegate) {
+    return oldDelegate.word.painter.text != word.painter.text;
+  }
+}
+
+/// Basket (bold black U)
+class _UBasketPlaceholder extends StatelessWidget {
+  final double width;
+  final double height;
+  const _UBasketPlaceholder({required this.width, required this.height});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: _chipHPad, vertical: _chipVPad),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          )
-        ],
-        border: Border.all(color: color.withOpacity(0.9), width: 1.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: _chipDot,
-            height: _chipDot,
-            decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(6)),
-          ),
-          const SizedBox(width: _chipDotGap),
-          RichText(text: spanBuilder(token)),
-        ],
-      ),
-    );
+    return CustomPaint(painter: _UBasketPainter(), size: Size(width, height));
   }
+}
+
+class _UBasketPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint stroke = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+
+    final Paint fill = Paint()
+      ..color = Colors.black.withOpacity(0.08)
+      ..style = PaintingStyle.fill;
+
+    final RRect bowl = RRect.fromRectAndCorners(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      topLeft: const Radius.circular(10),
+      topRight: const Radius.circular(10),
+      bottomLeft: const Radius.circular(18),
+      bottomRight: const Radius.circular(18),
+    );
+    canvas.drawRRect(bowl, fill);
+
+    final Path u = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height)
+      ..lineTo(size.width, size.height)
+      ..lineTo(size.width, 0);
+    canvas.drawPath(u, stroke);
+  }
+
+  @override
+  bool shouldRepaint(covariant _UBasketPainter oldDelegate) => false;
 }

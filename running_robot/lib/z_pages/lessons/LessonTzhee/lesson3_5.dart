@@ -70,8 +70,6 @@ class LessonStepFour extends StatelessWidget {
                       fontSize: lesson3FontSize),
                   LessonText.word("can", Colors.black87,
                       fontSize: lesson3FontSize),
-                  LessonText.word("also", Colors.black87,
-                      fontSize: lesson3FontSize),
                   LessonText.word("measure", keyConceptGreen,
                       fontSize: lesson3FontSize,
                       fontWeight: FontWeight.w900,
