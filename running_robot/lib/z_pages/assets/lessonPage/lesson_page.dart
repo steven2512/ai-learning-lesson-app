@@ -45,14 +45,18 @@ const Duration kBeamDuration = Duration(milliseconds: 300);
 const Duration kBoxDelay = Duration(milliseconds: 0);
 const Duration kBoxAnimDuration = Duration(milliseconds: 500);
 
-/// ===== UI fade/size knobs (direction-aware) =====
+/// ===== UI fade/size knobs (direction-aware & separated) =====
 /// Chapter pill
 const Duration kChapterTopPillFadeOutDuration = Duration(milliseconds: 300);
 const Duration kChapterTopPillFadeInDuration = Duration(milliseconds: 500);
 
-/// Map path / "other" layer
-const Duration kOtherFadeOutDuration = Duration(milliseconds: 200);
-const Duration kOtherFadeInDuration = Duration(milliseconds: 450);
+/// Map path ONLY
+const Duration kPathFadeOutDuration = Duration(milliseconds: 260);
+const Duration kPathFadeInDuration = Duration(milliseconds: 450);
+
+/// Non-selected lesson nodes ONLY (their blur/opacity)
+const Duration kNodeFadeOutDuration = Duration(milliseconds: 260);
+const Duration kNodeFadeInDuration = Duration(milliseconds: 450);
 
 /// Curve + dropdown size anim
 const Curve kUiFadeCurve = Curves.easeInOut;
@@ -158,6 +162,15 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _beamController.dispose();
     _boxController.dispose();
     super.dispose();
+  }
+
+  // Scales a 0..1 progress 'p' to finish in 'desiredDur' while the controller runs for 'animDur'
+  double _scaleProgress(double p, Duration animDur, Duration desiredDur) {
+    final int animMs = animDur.inMilliseconds;
+    final int wantMs = desiredDur.inMilliseconds;
+    if (wantMs <= 0) return p > 0 ? 1.0 : 0.0; // instant after first tick
+    final double scaled = p * (animMs / wantMs);
+    return scaled.clamp(0.0, 1.0);
   }
 
   Future<void> _focusOnNode(int index) async {
@@ -267,8 +280,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                       AnimatedOpacity(
                         opacity: _selectedNodeIndex == null ? 1.0 : 0.0,
                         duration: (_selectedNodeIndex == null)
-                            ? kOtherFadeInDuration
-                            : kOtherFadeOutDuration,
+                            ? kPathFadeInDuration
+                            : kPathFadeOutDuration,
                         curve: kUiFadeCurve,
                         child: CustomPaint(
                           size: mapSize,
@@ -466,14 +479,36 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         );
       }
 
-      // Other (non-selected) nodes blur/fade based on focus controller.
-      // Their fade-in speed is governed by kUnfocusZoomOutDuration via animateBack in _clearFocus.
+      // Other (non-selected) nodes: fade/blur independently of zoom duration
       return AnimatedBuilder(
         animation: _focusController,
         builder: (context, child) {
+          final status = _focusController.status;
           final t = _focusController.value;
-          final blur = lerpDouble(0, kMaxBlur, t)!;
-          final opacity = lerpDouble(1, kMinOpacity, t)!;
+
+          // Forward = focusing (fade OUT), Reverse = clearing focus (fade IN)
+          final bool isForward = status == AnimationStatus.forward ||
+              (status == AnimationStatus.completed && _isFocused);
+
+          double effectiveT;
+          if (isForward) {
+            // progress 0→1 during focus
+            final p = t;
+            final pScaled =
+                _scaleProgress(p, kFocusZoomInDuration, kNodeFadeOutDuration);
+            effectiveT = pScaled; // 0..1, controls fade OUT
+          } else {
+            // progress 0→1 while unfocusing; map to fade IN
+            final p = 1.0 - t; // 0..1 as we animate back
+            final pScaled =
+                _scaleProgress(p, kUnfocusZoomOutDuration, kNodeFadeInDuration);
+            effectiveT = 1.0 -
+                pScaled; // transform back to 1→0 (remove blur, restore opacity)
+          }
+
+          final blur = lerpDouble(0, kMaxBlur, effectiveT)!;
+          final opacity = lerpDouble(1, kMinOpacity, effectiveT)!;
+
           return Positioned(
             left: c.dx - 40,
             top: c.dy - 40,
