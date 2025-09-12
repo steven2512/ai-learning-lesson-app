@@ -39,7 +39,10 @@ class LessonStepFive extends StatelessWidget {
                       fontSize: lesson3FontSize,
                       fontWeight: FontWeight.w900,
                       italic: true),
-                  LessonText.word("with it.", Colors.black87,
+                  LessonText.word("with", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("quantitative data",
+                      const Color.fromARGB(221, 255, 115, 0),
                       fontSize: lesson3FontSize),
                 ]),
                 const SizedBox(height: 10),
@@ -54,13 +57,30 @@ class LessonStepFive extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ========== Examples ==========
-          Text(
-            "Examples",
-            style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.w900),
+          // ========== Examples Box ==========
+          LessonText.box(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LessonText.sentence([
+                  LessonText.word("Examples of", Colors.black, fontSize: 20),
+                  LessonText.word(
+                    "Quantitative Data",
+                    const Color.fromARGB(255, 255, 123, 0),
+                    fontSize: 20,
+                  ),
+                ]),
+                const SizedBox(height: 15),
+                const _ChipWrap(items: [
+                  "Height",
+                  "Distance",
+                  "Salary",
+                  "Population Size",
+                  "IQ Score"
+                ]),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          const _ChipWrap(items: ["170 cm", "3 books", "Score 92"]),
         ],
       ),
     );
@@ -129,18 +149,18 @@ class _ActionRow extends StatelessWidget {
 }
 
 class _ChipWrap extends StatelessWidget {
-  final List<String> items;
+  final List<String> items; // Just labels now
   const _ChipWrap({required this.items});
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
+      spacing: 4,
       runSpacing: 10,
       children: items
           .map(
-            (t) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            (label) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
@@ -153,10 +173,11 @@ class _ChipWrap extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Text(
-                t,
-                style:
-                    GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w900),
+              child: LessonText.word(
+                label,
+                Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
               ),
             ),
           )

@@ -145,7 +145,7 @@ class _LessonThreeState extends State<LessonThree> {
               totalChapterLessons: 10,
               topText: "Lesson 3 complete! 🎉",
               repeatLesson: const RouteLesson(3),
-              nextLesson: const RouteMainMenu(), // placeholder
+              nextLesson: const RouteLesson(4), // placeholder
               illustrationPath: null,
             ),
           );
