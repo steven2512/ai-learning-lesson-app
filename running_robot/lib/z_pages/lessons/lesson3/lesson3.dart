@@ -39,10 +39,10 @@ class _LessonThreeState extends State<LessonThree> {
     2: 180,
     3: 200,
     4: 180,
-    5: 180,
+    5: 250,
     6: 120,
     7: 150,
-    8: 150,
+    8: 250,
     9: 120,
   };
 

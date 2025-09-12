@@ -1,5 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3_5_quantitative.dart
-// ✅ LessonStepFive — Quantitative actions (measure, math, compare)
+// ✅ LessonStepFive — Quantitative actions (measure, math, compare) + examples
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -51,6 +51,16 @@ class LessonStepFive extends StatelessWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          // ========== Examples ==========
+          Text(
+            "Examples",
+            style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          const _ChipWrap(items: ["170 cm", "3 books", "Score 92"]),
         ],
       ),
     );
@@ -110,6 +120,43 @@ class _ActionRow extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ChipWrap extends StatelessWidget {
+  final List<String> items;
+  const _ChipWrap({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 10,
+      children: items
+          .map(
+            (t) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.black12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromARGB(20, 0, 0, 0),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                t,
+                style:
+                    GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w900),
               ),
             ),
           )

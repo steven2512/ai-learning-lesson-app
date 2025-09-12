@@ -1,5 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3_7_qualitative.dart
-// ✅ LessonStepSeven — Qualitative definition only
+// ✅ LessonStepSeven — Qualitative definition only + image
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,6 +50,18 @@ class LessonStepSeven extends StatelessWidget {
                       fontSize: lesson3FontSize),
                 ]),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ========== Qualitative Image ==========
+          LessonText.box(
+            child: Center(
+              child: Image.asset(
+                "assets/images/qualitative.png",
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],

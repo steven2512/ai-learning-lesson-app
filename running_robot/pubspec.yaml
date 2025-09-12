@@ -141,6 +141,7 @@ flutter:
     - assets/images/data_chart.png
     - assets/images/happy_life.jpg
     - assets/images/quantitative.png
+    - assets/images/qualitative.png
     - assets/images/quantitative_not.png
     - assets/images/qualitative_not.png
 
