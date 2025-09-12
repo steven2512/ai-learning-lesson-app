@@ -173,8 +173,8 @@ class _LessonOneState extends State<LessonOne> {
                             illustrationPath:
                                 null, // provide an asset path when ready    repeatLesson: const RouteLesson1(),   // 👈 repeat this lesson
                             repeatLesson:
-                                const RouteLesson1(), // 👈 repeat this lesson
-                            nextLesson: const RouteLesson2(),
+                                const RouteLesson(1), // 👈 repeat this lesson
+                            nextLesson: const RouteLesson(2),
                           ),
                         );
                       }

@@ -1,9 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3_7.dart
 // ✅ LessonStepSeven — Falling Words Game (catch QUALITATIVE only)
-// ★ Uses LayoutBuilder so basket renders inside the constrained step area.
-// ★ Intro LessonText.box (narrow, colorful, with emojis) + Start Game just below.
-// ★ Larger word sizes, 100+ word pool, difficulty ramps over time.
-// ★ Miss penalty only when the missed word was QUALITATIVE.
 
 import 'dart:async';
 import 'dart:math';
@@ -15,138 +11,93 @@ import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 /// ─────────────────────────────────────────────────────────────────
 /// 🔧 GLOBAL TUNING KNOBS
 /// ─────────────────────────────────────────────────────────────────
-const double kBasketWidth = 140;
+const double kBasketWidth = 110; // narrowed
 const double kBasketHeight = 60;
 const double kBasketBottomMargin = 40;
 
 const double kBasketDragSensitivity = 1.0;
-const bool kSmoothTapMove = true;
+const bool kSmoothTapMove = false;
 const double kBasketMoveSpeed = 560;
 
-// ★ WORD FONT RANGE
-const double kWordFontMin = 26;
-const double kWordFontMax = 34;
+// WORD FONT RANGE
+const double kWordFontMin = 22;
+const double kWordFontMax = 28;
 
 // Base physics
-const double kFallSpeed = 140; // px/sec (base)
-const double kSpawnPerSecond = 1.2; // base spawns/sec
+const double kFallSpeed = 120; // px/sec (base)
+const double kSpawnPerSecond = 0.5; // base spawns/sec
 
-// ★ Difficulty scaling
-const double kFallSpeedGrowthPerSec = 0.020; // +2% / sec
-const double kFallSpeedMaxMultiplier = 2.6; // cap
-const double kSpawnGrowthPerSec = 0.020; // +2% / sec
-const double kSpawnMaxPerSecond = 5.0; // cap
-const int kSpawnTickMs = 100; // scheduler tick
+// Difficulty scaling
+const double kFallSpeedGrowthPerSec = 0.020;
+const double kFallSpeedMaxMultiplier = 2.6;
+const double kSpawnGrowthPerSec = 0.005; // +0.5% per second
+const double kSpawnMaxPerSecond = 3.0;
+const int kSpawnTickMs = 100;
 
 const int kMaxActiveWords = 9;
 const double kMinHorizontalGap = 110;
 const double kSpawnSidePadding = 16;
 const double kSpawnStartY = -120;
 const double kFadeInDistance = 160;
+const double kMinVerticalGap = 100; // vertical spacing
 
-// ★ Scoring & win/lose
-const int kPointsToWin = 50;
-const int kPointsToLose = -50;
-const int kScoreCorrect = 5; // correct catch (qual)
-const int kScoreIncorrect = -5; // wrong catch (quant caught)
-const bool kPenaltyOnMiss = true; // only applies to QUAL (see logic)
-const int kScoreMissPenalty = -5;
+// Scoring
+const int kPointsToWin = 10;
+const int kPointsToLose = -10;
+const int kScoreCorrect = 10;
+const int kScoreIncorrect = -10;
+const int kScoreMissPenalty = -10;
 
-// kept for compatibility (continue button)
-const int kTargetQualitative = 10;
+// Layout
+const double kHeaderBoxesTopMargin = 70.0;
+const double kIntroBoxesTopMargin = 100.0;
 
-// ★ NEW: Global top margins you can tweak
-const double kHeaderBoxesTopMargin = 70.0; // header boxes (in-game) from top
-const double kIntroBoxesTopMargin = 12.0; // intro overlay space before 1st box
+/// 🧷 keep the top-left area (close button + progress bar) tappable
+const double kTopSafeInsetForClose = 108.0;
+
+/// 🎯 End-box & stats alignment (left icon/text gutter & right chip gutter)
+const double kStatsLeftGutter = 8.0;
+const double kStatsRightGutter = 8.0;
+const double kStatChipMinWidth = 36.0;
+
+/// ✨ End overlay choreography knobs
+const int kEndBoxFadeMs = 600; // general opacity fade for overlay
+const int kGlowDelayMs = 400; // ⏱️ glow before compact box shows
+const int kDelayBeforeFinalBoxMs = 0; // extra delay before compact box
+const int kFadeInTimeMs = 450; // compact box fade-in time
+const int kSlideUpDurationMs = 650; // slide up duration
+const int kRevealDownDurationMs = 500; // expand/reveal duration
+const double kSlideUpFromBottomPx = 120.0; // how far the compact box slides up
+
+/// 🔧 NEW (separate anchors): where the compact end box stops before unveiling
+/// (Y from the top of the step area below the close/progress zone)
+const double finalYPositionAfterSlideUpSuccess = 120.0;
+const double finalYPositionAfterSlideUpFail = 100.0;
+
+// End box font sizes (consistent win/lose)
+const double kEndTitleFont = 22;
+const double kEndScoreFont = 18;
+const double kEndBodyFont = 16;
 
 /// ─────────────────────────────────────────────────────────────────
-/// WORD POOLS (≈120 total)
+/// WORD POOLS
 /// ─────────────────────────────────────────────────────────────────
 const List<String> _qualitativeWords = <String>[
   "Color",
-  "Eye Color",
-  "Hair Color",
-  "Texture",
-  "Flavor",
-  "Scent",
   "Mood",
-  "Emotion",
-  "Hobby",
-  "Sport",
-  "Team",
-  "Position",
-  "Role",
-  "Job Title",
-  "Department",
-  "College Major",
-  "Subject",
+  "Job",
   "Fruit",
-  "Vegetable",
   "Animal",
-  "Bird",
-  "Fish",
-  "Flower",
-  "Tree",
-  "Season",
-  "Weather",
-  "Pattern",
-  "Shape",
+  "Sport",
   "Style",
-  "Material",
-  "Brand",
-  "Model Name",
-  "OS",
-  "Browser",
-  "Device Type",
-  "File Type",
-  "Payment Method",
-  "Membership Tier",
-  "Subscription Plan",
-  "Status",
-  "Genre (Book)",
-  "Genre (Movie)",
-  "Genre (Game)",
-  "Music Instrument",
-  "Transport Mode",
-  "Station Name",
-  "Airport Code",
-  "Currency Code",
-  "Country",
-  "Country of Birth",
+  "Team",
+  "Role",
+  "Genre",
   "City",
-  "Region",
-  "Continent",
-  "Language",
-  "Accent",
-  "Dialekt",
-  "Zodiac Sign",
-  "Blood Type",
-  "Yes/No",
-  "True/False",
-  "Priority",
-  "Risk Level",
-  "Access Level",
-  "Ticket Type",
-  "Seat Class",
-  "Meal Preference",
-  "Allergy Type",
-  "Pet Type",
-  "Coffee Roast",
-  "Tea Type",
-  "Ice Cream Flavor",
-  "Shirt Size (S/M/L)",
-  "Color Family",
-  "Fabric",
-  "Finish",
-  "Packaging Type",
-  "Warranty Type",
-  "Service Plan",
-  "Badge",
-  "Achievement",
-  "Label",
-  "Category",
-  "Tag",
-  "Brand Family",
+  "Country",
+  "Season",
+  "Shape",
+  "Brand",
 ];
 
 const List<String> _quantitativeWords = <String>[
@@ -154,81 +105,17 @@ const List<String> _quantitativeWords = <String>[
   "Height",
   "Weight",
   "Score",
-  "Count",
-  "Quantity",
   "Steps",
-  "Calories",
-  "Time (s)",
   "Speed",
-  "Distance",
+  "Time",
   "Price",
-  "Revenue",
-  "Cost",
-  "Profit",
-  "Margin %",
-  "Discount %",
-  "Tax %",
-  "Rate",
-  "Temperature",
-  "Humidity",
-  "Rainfall",
-  "Wind Speed",
-  "Voltage",
-  "Current",
-  "Power",
-  "Frequency",
-  "Bandwidth",
-  "Bitrate",
-  "File Size",
-  "Resolution Width",
-  "Resolution Height",
-  "Frame Rate",
-  "Pixels",
-  "Latitude",
-  "Longitude",
-  "Altitude",
-  "Pressure",
-  "Page Views",
-  "Clicks",
-  "CTR %",
-  "Impressions",
-  "Bounce %",
-  "GPA",
-  "Test Score",
-  "Queue Length",
-  "Wait Time",
-  "Service Time",
-  "Run Time",
-  "Compile Time",
-  "Memory (MB)",
-  "CPU %",
-  "GPU %",
-  "Ping (ms)",
-  "Latency (ms)",
-  "Throughput",
-  "Packets",
-  "Errors",
-  "Stars",
-  "Rating",
-  "Rank",
   "Level",
-  "XP",
-  "Lives",
-  "Books Read",
-  "Tasks Done",
+  "Rank",
   "Days",
-  "Hours",
-  "Minutes",
+  "XP",
+  "Rate",
   "Likes",
-  "Followers",
-  "Subscribers",
-  "Shares",
-  "Comments",
-  "Tickets",
-  "Orders",
   "Units",
-  "Sessions",
-  "Installs",
 ];
 
 final Random _rng = Random();
@@ -242,7 +129,7 @@ class LessonStepSeven extends StatefulWidget {
 }
 
 class _LessonStepSevenState extends State<LessonStepSeven>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _ticker;
   late final Timer _spawnTimer;
 
@@ -252,18 +139,33 @@ class _LessonStepSevenState extends State<LessonStepSeven>
   double _basketX = 40;
   double _basketTargetX = 40;
   int _score = 0;
+
+  // Stats
   int _qualitativeCaught = 0;
+  int _quantitativeCaught = 0;
+  int _qualitativeMissed = 0;
+  int _quantitativeAvoided = 0;
 
   Duration? _lastTick;
   double _vw = 0, _vh = 0;
-
-  // spawn scheduler (dynamic rate)
   double _spawnAccumulator = 0;
 
-  // intro overlay state
-  bool _started = false;
-  bool _showIntro = true;
-  double _introOpacity = 1.0;
+  bool _started = false; // playing? shows HUD + basket + input plane
+  bool _showEndBox = false;
+  bool _didWin = false;
+
+  // Prevents the pre-game pane flash during end sequence
+  bool _inEndSequence = false;
+
+  // Fade choreography
+  bool _fadeScene = false; // fades header/words/basket/FX when overlay shows
+  double _endBoxOpacity = 0.0; // fades end box container in
+  bool _glowNow = false; // basket edge green before overlay appears
+
+  // Compact → slide → expand
+  bool _compactVisible = false; // first small box visible
+  bool _compactSlidUp = false; // small box slid upward
+  bool _revealed = false; // expanded content revealed
 
   @override
   void initState() {
@@ -309,7 +211,6 @@ class _LessonStepSevenState extends State<LessonStepSeven>
     final double dt = dtMs / 1000.0;
     final double t = now.inMilliseconds / 1000.0;
 
-    // dynamic fall speed
     final double speedMultiplier =
         min(kFallSpeedMaxMultiplier, 1.0 + kFallSpeedGrowthPerSec * t);
     final double dy = (kFallSpeed * speedMultiplier) * dt;
@@ -352,71 +253,118 @@ class _LessonStepSevenState extends State<LessonStepSeven>
         // Caught
         if (basketRect.overlaps(wordRect)) {
           final bool isQual = _qualitativeWords.contains(w.text);
-          _score += isQual ? kScoreCorrect : kScoreIncorrect;
-          if (isQual) _qualitativeCaught++;
+          if (isQual) {
+            _score += kScoreCorrect;
+            _qualitativeCaught++;
+          } else {
+            _score += kScoreIncorrect;
+            _quantitativeCaught++;
+          }
 
           _spawnFx(
-            text: isQual ? "Correct ✅ +5" : "Wrong ❌ −5",
+            text: isQual ? "+10 ✅" : "−10 ❌",
             x: basketRect.center.dx,
             y: basketRect.top - 10,
             color: isQual ? Colors.green : Colors.red,
           );
 
           if (_score >= kPointsToWin) {
-            widget.onStepCompleted?.call(); // unlock continue
-            _spawnFx(
-                text: "You win! 🏆",
-                x: basketRect.center.dx,
-                y: basketRect.top - 40,
-                color: Colors.black);
-            _started = false;
+            _endGame(true); // defer onStepCompleted until reveal finishes
           } else if (_score <= kPointsToLose) {
-            _spawnFx(
-                text: "You lose! 💥",
-                x: basketRect.center.dx,
-                y: basketRect.top - 40,
-                color: Colors.black);
-            _started = false;
-            _showIntro = true;
-            _introOpacity = 1.0;
+            _endGame(false);
           }
           return true;
         }
 
-        // Missed (only penalize if it was QUALITATIVE)
+        // Missed (passed the basket level)
         if (w.y + w.size.height >= basketTopY) {
-          final bool isQual = _qualitativeWords.contains(w.text);
-          if (kPenaltyOnMiss && isQual) {
+          if (_qualitativeWords.contains(w.text)) {
             _score += kScoreMissPenalty;
+            _qualitativeMissed++;
             _spawnFx(
-              text: "Miss (Qual) −5",
+              text: "Miss −10",
               x: w.x + w.size.width / 2,
               y: basketTopY - 10,
               color: Colors.black87,
             );
           } else {
-            _spawnFx(
-              text: "Miss",
-              x: w.x + w.size.width / 2,
-              y: basketTopY - 10,
-              color: Colors.black45,
-            );
+            _quantitativeAvoided++;
           }
-
-          if (_score <= kPointsToLose) {
-            _started = false;
-            _showIntro = true;
-            _introOpacity = 1.0;
-            _spawnFx(
-                text: "You lose! 💥",
-                x: _vw / 2,
-                y: basketTopY - 40,
-                color: Colors.black);
-          }
+          if (_score <= kPointsToLose) _endGame(false);
           return true;
         }
         return false;
       });
+    });
+  }
+
+  void _endGame(bool didWin) {
+    setState(() {
+      _inEndSequence = true; // ← prevents pre-game flash
+      _started = false;
+      _didWin = didWin;
+
+      // basket glow; scene still visible
+      _glowNow = didWin;
+
+      // reset end overlay states
+      _showEndBox = false;
+      _compactVisible = false;
+      _compactSlidUp = false;
+      _revealed = false;
+      _fadeScene = false;
+      _endBoxOpacity = 0.0;
+    });
+
+    // 1) Wait for glow to be visible before showing the first compact box
+    Future.delayed(
+        Duration(milliseconds: kGlowDelayMs + kDelayBeforeFinalBoxMs), () {
+      if (!mounted) return;
+
+      // start fading scene and show compact box
+      setState(() {
+        _fadeScene = true;
+        _showEndBox = true;
+      });
+
+      // fade in the compact box
+      Future.delayed(const Duration(milliseconds: 30), () {
+        if (!mounted) return;
+        setState(() {
+          _endBoxOpacity = 1.0;
+          _compactVisible = true;
+        });
+      });
+
+      // 2) Hold compact box briefly, then slide it up to its anchor
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        setState(() {
+          _compactSlidUp = true;
+        });
+
+        // 3) After slide finishes, reveal expanded stats/advice downward
+        Future.delayed(Duration(milliseconds: kSlideUpDurationMs), () {
+          if (!mounted) return;
+          setState(() {
+            _revealed = true;
+          });
+
+          // Only after reveal finishes, allow the lesson "Continue" to appear
+          if (_didWin && widget.onStepCompleted != null) {
+            Future.delayed(
+              Duration(milliseconds: kRevealDownDurationMs + 150),
+              () => widget.onStepCompleted?.call(),
+            );
+          }
+        });
+      });
+    });
+
+    // Turn glow off once scene starts fading (just in case)
+    Future.delayed(Duration(milliseconds: kGlowDelayMs), () {
+      if (!mounted) return;
+      setState(() => _glowNow = false);
     });
   }
 
@@ -454,7 +402,6 @@ class _LessonStepSevenState extends State<LessonStepSeven>
     )..layout();
     final Size wordSize = tp.size;
 
-    // choose non-overlapping horizontal slot
     const int maxTries = 28;
     double? xCandidate;
 
@@ -472,7 +419,10 @@ class _LessonStepSevenState extends State<LessonStepSeven>
         final bool horizontalSeparated =
             (newRect.right + kMinHorizontalGap <= r.left) ||
                 (r.right + kMinHorizontalGap <= newRect.left);
-        if (!horizontalSeparated) {
+        final bool verticalSeparated =
+            (newRect.top >= r.bottom + kMinVerticalGap) ||
+                (r.top >= newRect.bottom + kMinVerticalGap);
+        if (!(horizontalSeparated || verticalSeparated)) {
           overlaps = true;
           break;
         }
@@ -511,23 +461,27 @@ class _LessonStepSevenState extends State<LessonStepSeven>
 
   void _startGame() {
     setState(() {
+      _inEndSequence = false; // we’re starting fresh; allow pre-game next time
       _active.clear();
       _fx.clear();
       _score = 0;
       _qualitativeCaught = 0;
+      _quantitativeCaught = 0;
+      _qualitativeMissed = 0;
+      _quantitativeAvoided = 0;
       _spawnAccumulator = 0;
-      _introOpacity = 0.0;
-    });
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (!mounted) return;
-      setState(() {
-        _showIntro = false;
-        _started = true;
-      });
+      _showEndBox = false;
+      _fadeScene = false;
+      _endBoxOpacity = 0.0;
+      _compactVisible = false;
+      _compactSlidUp = false;
+      _revealed = false;
+      _glowNow = false;
+
+      _started = true; // 🎬 fade in HUD & basket, enable input plane
     });
   }
 
-  // keep LessonText.box narrow like other lessons
   Widget _narrowBox({required Widget child, Color? color}) {
     final deco = LessonText.defaultBoxDecoration().copyWith(color: color);
     return Center(
@@ -538,31 +492,33 @@ class _LessonStepSevenState extends State<LessonStepSeven>
     );
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // UI
+  // ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          _vw = constraints.maxWidth;
-          _vh = constraints.maxHeight;
-          final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _vw = constraints.maxWidth;
+        _vh = constraints.maxHeight;
+        final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
 
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onPanUpdate: (d) => _moveBasketByDrag(d.delta.dx),
-            onTapDown: (d) => _moveBasketToTap(d.localPosition.dx),
-            child: Stack(
-              children: [
-                // ── Header boxes (narrow, colorful) ──
-                Positioned(
-                  top: kHeaderBoxesTopMargin, // ★ uses global
-                  left: 0,
-                  right: 0,
+        return Stack(
+          children: [
+            // HUD: title + score (hidden until Start Game)
+            Positioned(
+              top: kHeaderBoxesTopMargin,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                ignoring: true,
+                child: AnimatedOpacity(
+                  opacity: (!_fadeScene && _started) ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 350),
                   child: Column(
                     children: [
                       _narrowBox(
-                        color: const Color(0xFFE8F5E9), // light green
+                        color: const Color(0xFFE8F5E9),
                         child: Text(
                           "Catch all Qualitative Words 🧺",
                           textAlign: TextAlign.center,
@@ -575,9 +531,9 @@ class _LessonStepSevenState extends State<LessonStepSeven>
                       ),
                       const SizedBox(height: 8),
                       _narrowBox(
-                        color: const Color(0xFFE3F2FD), // light blue
+                        color: const Color(0xFFE3F2FD),
                         child: Text(
-                          "Score: $_score    |    Qual caught: $_qualitativeCaught",
+                          "Score: $_score",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.lato(
                             fontSize: 18,
@@ -589,118 +545,182 @@ class _LessonStepSevenState extends State<LessonStepSeven>
                     ],
                   ),
                 ),
+              ),
+            ),
 
-                // Falling words
-                ..._active.map(
-                  (w) => Positioned(
-                    left: w.x,
-                    top: w.y,
-                    child: Opacity(
-                      opacity: w.opacity,
-                      child: SizedBox(
-                        width: w.size.width,
-                        height: w.size.height,
-                        child: CustomPaint(painter: _WordPainter(w)),
-                      ),
+            // Falling words (fade out on end)
+            ..._active.map(
+              (w) => Positioned(
+                left: w.x,
+                top: w.y,
+                child: AnimatedOpacity(
+                  opacity: _fadeScene ? 0.0 : w.opacity,
+                  duration: const Duration(milliseconds: kEndBoxFadeMs),
+                  child: SizedBox(
+                    width: w.size.width,
+                    height: w.size.height,
+                    child: CustomPaint(painter: _WordPainter(w)),
+                  ),
+                ),
+              ),
+            ),
+
+            // Floating feedback (fade out on end)
+            ..._fx.map(
+              (f) => Positioned(
+                left: f.x,
+                top: f.y,
+                child: AnimatedOpacity(
+                  opacity: _fadeScene ? 0.0 : f.opacity,
+                  duration: const Duration(milliseconds: kEndBoxFadeMs),
+                  child: Text(
+                    f.text,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.lato(
+                      fontSize: f.fontSize,
+                      fontWeight: FontWeight.w700,
+                      color: f.color,
                     ),
                   ),
                 ),
+              ),
+            ),
 
-                // Floating feedback
-                ..._fx.map(
-                  (f) => Positioned(
-                    left: f.x,
-                    top: f.y,
-                    child: Opacity(
-                      opacity: f.opacity,
-                      child: Text(
-                        f.text,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.lato(
-                          fontSize: f.fontSize,
-                          fontWeight: FontWeight.w700,
-                          color: f.color,
+            // Basket (hidden until Start Game; glows green briefly on win)
+            Positioned(
+              left: _basketX,
+              top: basketTopY,
+              child: AnimatedOpacity(
+                opacity: (_fadeScene || !_started) ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 350),
+                child: _UBasketPlaceholder(
+                  width: kBasketWidth,
+                  height: kBasketHeight,
+                  glowGreen: _glowNow,
+                ),
+              ),
+            ),
+
+            // INPUT PLANE — full-screen, only while playing
+            if (_started && !_showEndBox)
+              Positioned.fill(
+                child: Listener(
+                  behavior: HitTestBehavior.opaque,
+                  onPointerDown: (e) =>
+                      _moveBasketToTap(e.localPosition.dx), // quick snap-to
+                  onPointerMove: (e) =>
+                      _moveBasketByDrag(e.delta.dx), // buttery follow
+                ),
+              ),
+
+            // PRE-GAME PANE (only middle two boxes + Start button)
+            if (!_started && !_showEndBox && !_inEndSequence)
+              Positioned.fill(
+                top: kTopSafeInsetForClose,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: kIntroBoxesTopMargin),
+                        _narrowBox(
+                          color: const Color(0xFFFFF3E0),
+                          child: Text(
+                            "🎮 Catch the Qualitative!",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.lato(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.deepOrange.shade900,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 10),
+                        _narrowBox(
+                          color: const Color(0xFFF3E5F5),
+                          child: Text(
+                            "🏆 Reach 100 points to win.\n"
+                            "✅ Qualitative +10\n"
+                            "❌ Quantitative −10\n"
+                            "💥 Hit −100 and you lose.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
+                              color: Colors.purple.shade900,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _startGame,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 6,
+                            backgroundColor: Colors.deepOrange,
+                            foregroundColor: Colors.white,
+                            textStyle: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          child: const Text("🚀 Start Game"),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
 
-                // Basket
-                Positioned(
-                  left: _basketX,
-                  top: basketTopY,
-                  child: _UBasketPlaceholder(
-                      width: kBasketWidth, height: kBasketHeight),
-                ),
+            // End Game Overlay (compact → slide up to fixed Y → reveal downward)
+            if (_showEndBox)
+              Positioned.fill(
+                child: Stack(
+                  children: [
+                    // soft scrim
+                    const IgnorePointer(
+                      ignoring: true,
+                      child: ColoredBox(color: Color(0xF0FFFFFF)),
+                    ),
 
-                // ── Intro overlay (narrow boxes + button directly under rules) ──
-                if (_showIntro)
-                  Positioned.fill(
-                    child: AnimatedOpacity(
-                      opacity: _introOpacity,
-                      duration: const Duration(milliseconds: 250),
-                      child: Container(
-                        color: Colors.white.withOpacity(0.94),
-                        alignment: Alignment.topCenter,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                    // Overlay content below safe zone
+                    Positioned.fill(
+                      top: kTopSafeInsetForClose,
+                      child: AnimatedOpacity(
+                        opacity: _endBoxOpacity,
+                        duration: Duration(milliseconds: kFadeInTimeMs),
+                        child: Stack(
                           children: [
-                            SizedBox(
-                                height: kIntroBoxesTopMargin), // ★ uses global
-                            _narrowBox(
-                              color: const Color(0xFFFFF3E0), // light orange
-                              child: Text(
-                                "🎮 Mini-Game: Catch The Qualitative",
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.lato(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.deepOrange.shade900,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _narrowBox(
-                              color: const Color(0xFFF3E5F5), // light purple
-                              child: Text(
-                                "🧺 Use the basket at the bottom to catch as many Qualitative WORDS as possible.\n\n"
-                                "🏆 Reach 50 points to win.\n"
-                                "💥 Hit −50 points and you lose.\n\n"
-                                "✅ Correct catch (Qual): +5\n"
-                                "❌ Wrong catch (Quant): −5\n"
-                                "😬 Missed Qualitative: −5\n"
-                                "😌 Missed Quantitative: 0",
-                                textAlign: TextAlign.left,
-                                style: GoogleFonts.lato(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.35,
-                                  color: Colors.purple.shade900,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                    maxWidth: LessonText.maxTextWidth),
-                                child: ElevatedButton(
-                                  onPressed: _startGame,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepOrange,
-                                    foregroundColor: Colors.white,
-                                    shape: const StadiumBorder(),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 28, vertical: 14),
-                                    textStyle: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900),
-                                    elevation: 3,
-                                  ),
-                                  child: const Text("Start Game"),
+                            AnimatedPositioned(
+                              duration:
+                                  Duration(milliseconds: kSlideUpDurationMs),
+                              curve: Curves.easeInOutCubic,
+                              top: _compactSlidUp
+                                  ? (_didWin
+                                      ? finalYPositionAfterSlideUpSuccess
+                                      : finalYPositionAfterSlideUpFail)
+                                  : (_didWin
+                                          ? finalYPositionAfterSlideUpSuccess
+                                          : finalYPositionAfterSlideUpFail) +
+                                      kSlideUpFromBottomPx,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: AnimatedSize(
+                                  duration: Duration(
+                                      milliseconds: kRevealDownDurationMs),
+                                  curve: Curves.easeOutCubic,
+                                  alignment: Alignment
+                                      .topCenter, // expand downward only
+                                  child: _buildEndCard(revealed: _revealed),
                                 ),
                               ),
                             ),
@@ -708,11 +728,228 @@ class _LessonStepSevenState extends State<LessonStepSeven>
                         ),
                       ),
                     ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Unified builder for the end card (win stats OR lose advice)
+  Widget _buildEndCard({Key? key, required bool revealed}) {
+    return _narrowBox(
+      child: Padding(
+        key: key,
+        padding: EdgeInsets.symmetric(
+          horizontal: max(kStatsLeftGutter, kStatsRightGutter),
+          vertical: 8,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _didWin ? "🎉 Congratulations! You win!" : "💥 Game Over",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lato(
+                fontSize: kEndTitleFont,
+                fontWeight: FontWeight.w900,
+                color: _didWin ? Colors.green.shade900 : Colors.red.shade900,
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 8),
+            LessonText.sentence(
+              [
+                LessonText.word("Final", Colors.black87,
+                    fontWeight: FontWeight.w700, fontSize: kEndScoreFont),
+                LessonText.word("Score:", Colors.black87,
+                    fontWeight: FontWeight.w700, fontSize: kEndScoreFont),
+                LessonText.word("$_score", Colors.black87,
+                    fontWeight: FontWeight.w900, fontSize: kEndScoreFont),
+              ],
+              alignment: WrapAlignment.center,
+            ),
+
+            // Revealed content only after slide completes
+            if (revealed) ...[
+              const SizedBox(height: 14),
+              if (_didWin) ...[
+                _statRow(
+                    "🎯 Qualitative caught", _qualitativeCaught, Colors.green),
+                _statRow(
+                    "❌ Quantitative caught", _quantitativeCaught, Colors.red),
+                _statRow("🛡️ Quantitative avoided", _quantitativeAvoided,
+                    Colors.blue),
+                _statRow(
+                    "📉 Qualitative missed", _qualitativeMissed, Colors.orange),
+              ] else ...[
+                const SizedBox(height: 6),
+                LessonText.sentence(
+                  [
+                    LessonText.word("💡", Colors.amber.shade800,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("Think:", Colors.black87,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                  ],
+                  alignment: WrapAlignment.center,
+                ),
+                const SizedBox(height: 6),
+                LessonText.sentence(
+                  [
+                    LessonText.word("Can", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("you", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("measure", Colors.indigo,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                    LessonText.word("this", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("word?", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("Can", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("you", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("do", Colors.indigo,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                    LessonText.word("math", Colors.indigo,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                    LessonText.word("with", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("it?", Colors.black87,
+                        fontSize: kEndBodyFont),
+                  ],
+                  alignment: WrapAlignment.center,
+                ),
+                const SizedBox(height: 6),
+                LessonText.sentence(
+                  [
+                    LessonText.word("If", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("yes", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("→", Colors.black45,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("Quantitative", Colors.red.shade700,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                  ],
+                  alignment: WrapAlignment.center,
+                ),
+                LessonText.sentence(
+                  [
+                    LessonText.word("If", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("not", Colors.black87,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("→", Colors.black45,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("Qualitative", Colors.green.shade700,
+                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
+                  ],
+                  alignment: WrapAlignment.center,
+                ),
+                const SizedBox(height: 6),
+                LessonText.sentence(
+                  [
+                    LessonText.word("E.g.", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("You", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("can't", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("measure", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("colors,", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("but", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("you", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("can", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("measure", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("height", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("or", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                    LessonText.word("score.", Colors.blue.shade700,
+                        fontSize: kEndBodyFont),
+                  ],
+                  alignment: WrapAlignment.center,
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: _startGame,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text("Try Again"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade300,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 12),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statRow(String label, int value, Color color) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: kStatsLeftGutter,
+        right: kStatsRightGutter,
+        top: 4,
+        bottom: 4,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: LessonText.sentence(
+              [
+                LessonText.word(label, color,
+                    fontWeight: FontWeight.w600, fontSize: kEndBodyFont)
+              ],
+              constrainWidth: false,
+            ),
+          ),
+          ConstrainedBox(
+            constraints: BoxConstraints(minWidth: kStatChipMinWidth),
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withOpacity(0.5)),
+              ),
+              child: Text(
+                "$value",
+                style: GoogleFonts.lato(
+                  fontSize: kEndBodyFont,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -774,23 +1011,33 @@ class _WordPainter extends CustomPainter {
   }
 }
 
-/// Basket (bold black U)
+/// Basket (bold black U, glows green on win)
 class _UBasketPlaceholder extends StatelessWidget {
   final double width;
   final double height;
-  const _UBasketPlaceholder({required this.width, required this.height});
+  final bool glowGreen;
+  const _UBasketPlaceholder({
+    required this.width,
+    required this.height,
+    this.glowGreen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _UBasketPainter(), size: Size(width, height));
+    return CustomPaint(
+        painter: _UBasketPainter(glowGreen: glowGreen),
+        size: Size(width, height));
   }
 }
 
 class _UBasketPainter extends CustomPainter {
+  final bool glowGreen;
+  _UBasketPainter({this.glowGreen = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final Paint stroke = Paint()
-      ..color = Colors.black
+      ..color = glowGreen ? Colors.green : Colors.black
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6;
 
@@ -816,5 +1063,6 @@ class _UBasketPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _UBasketPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _UBasketPainter oldDelegate) =>
+      oldDelegate.glowGreen != glowGreen;
 }

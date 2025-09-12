@@ -2,7 +2,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:running_robot/core/app_router.dart' show AppNavigate;
+import 'package:running_robot/core/app_router.dart'
+    show AppNavigate, RouteLesson;
 import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
 
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
@@ -10,7 +11,6 @@ import 'package:running_robot/z_pages/assets/lessonPage/chapter_pill.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/path_painter.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_box.dart';
-import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_names.dart';
 
 /// ===== Global gaps (map layout) =====
@@ -102,7 +102,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
       duration: kBoxAnimDuration,
     );
 
-    // Precache image
+    // Precache image + measure pill width
     WidgetsBinding.instance.addPostFrameCallback((_) {
       precacheImage(
           const AssetImage("assets/images/robot_family.jpg"), context);
@@ -258,15 +258,16 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(24),
                     child: LessonBox(
                       pictureLink: "assets/images/robot_family2.jpg",
-                      // 🔥 CHANGED: Lesson title is now "Lesson 1.2"
                       lessonTitle:
                           "Lesson $_currentChapter.${_selectedNodeIndex! + 1}",
-                      // Keep text title the same
                       titleText:
                           "${lessonTitles[_currentChapter - 1][_selectedNodeIndex!]}",
                       buttonText: "Continue Lesson",
                       onNavigate: () {
-                        widget.onNavigate(RouteLesson1());
+                        // 🔹 Compute global lesson index (9 lessons per chapter)
+                        final globalLessonIndex = (_currentChapter - 1) * 9 +
+                            (_selectedNodeIndex! + 1);
+                        widget.onNavigate(RouteLesson(globalLessonIndex));
                       },
                       imageHeight: 120,
                       width: 280,

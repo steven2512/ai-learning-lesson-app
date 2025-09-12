@@ -1,5 +1,4 @@
-/// All navigable pages as strongly-typed routes (no Map<String, dynamic>).
-
+/// FILE: lib/core/app_router.dart
 import 'package:running_robot/game/decorations/progress_bar.dart';
 
 abstract class AppRoute {
@@ -7,39 +6,22 @@ abstract class AppRoute {
 }
 
 /// ---------------- LESSON ROUTES ----------------
-class RouteLesson1 extends AppRoute {
-  const RouteLesson1();
-}
-
-class RouteLesson2 extends AppRoute {
-  const RouteLesson2();
-}
-
-class RouteLesson3 extends AppRoute {
-  const RouteLesson3();
+/// 🔹 Generic lesson route instead of many classes
+class RouteLesson extends AppRoute {
+  final int lessonNumber;
+  const RouteLesson(this.lessonNumber);
 }
 
 /// ---------------- END LESSON ROUTE ----------------
 class RouteEndLesson extends AppRoute {
   final int xp;
   final int streak;
-
-  /// 🔹 The final, already-filled bar to display on the end screen.
   final LessonProgressBar progressBar;
-
-  /// 🔹 Chapter aggregate progress (e.g., lessons completed in chapter).
   final int chapterProgress;
-
-  /// 🔹 Total lessons in the chapter.
   final int totalChapterLessons;
-
   final String topText;
-  final String? illustrationPath; // asset path (optional)
-
-  /// 🔹 Where to go if the user taps "Repeat".
+  final String? illustrationPath;
   final AppRoute repeatLesson;
-
-  /// 🔹 Where to go if the user taps "Next Lesson" (nullable if last lesson).
   final AppRoute? nextLesson;
 
   const RouteEndLesson({

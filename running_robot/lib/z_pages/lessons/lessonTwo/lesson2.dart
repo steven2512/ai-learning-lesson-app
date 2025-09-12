@@ -145,7 +145,7 @@ class _LessonTwoState extends State<LessonTwo> {
                             chapterProgress: chapterProgress,
                             totalChapterLessons: totalChapterLessons,
                             topText: "Lesson 2 complete! 🎉",
-                            repeatLesson: const RouteLesson2(),
+                            repeatLesson: const RouteLesson(2),
                             nextLesson: const RouteMainMenu(), // placeholder
                             illustrationPath: null,
                           ),
