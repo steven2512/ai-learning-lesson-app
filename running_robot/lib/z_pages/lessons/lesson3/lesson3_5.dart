@@ -1,6 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3_4_quantitative.dart
-// ✅ LessonStepFour — Quantitative (numbers)
-// UPDATE: Middle box now shows + - × ÷ together and is labeled "Math".
+// ✅ LessonStepFour — Quantitative (numbers) definition + examples
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,44 +57,9 @@ class LessonStepFour extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          // ========== Math Box with 3 simple actions ==========
-          LessonText.box(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LessonText.sentence([
-                  LessonText.word("You", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("can", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("measure", keyConceptGreen,
-                      fontSize: lesson3FontSize,
-                      fontWeight: FontWeight.w900,
-                      italic: true),
-                  LessonText.word("and", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("calculate", keyConceptGreen,
-                      fontSize: lesson3FontSize,
-                      fontWeight: FontWeight.w900,
-                      italic: true),
-                  LessonText.word("with it.", Colors.black87,
-                      fontSize: lesson3FontSize),
-                ]),
-                const SizedBox(height: 10),
-                const _ActionRow(actions: [
-                  _Action(icon: Icons.straighten, label: "Measure"),
-                  _Action.custom(label: "Math"), // Custom box for + - × ÷
-                  _Action(icon: Icons.compare_arrows, label: "Compare"),
-                ]),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 16),
 
-          // ========== 3 Examples ==========
+          // ========== Examples ==========
           Text(
             "Examples",
             style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.w900),
@@ -128,75 +92,16 @@ class _ChipWrap extends StatelessWidget {
                 border: Border.all(color: Colors.black12),
                 boxShadow: const [
                   BoxShadow(
-                      color: Color.fromARGB(20, 0, 0, 0),
-                      blurRadius: 6,
-                      offset: Offset(0, 2)),
+                    color: Color.fromARGB(20, 0, 0, 0),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
               child: Text(
                 t,
                 style:
                     GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _Action {
-  final IconData? icon;
-  final String label;
-  final bool isCustom;
-
-  const _Action({this.icon, required this.label}) : isCustom = false;
-  const _Action.custom({required this.label})
-      : icon = null,
-        isCustom = true;
-}
-
-class _ActionRow extends StatelessWidget {
-  final List<_Action> actions;
-  const _ActionRow({required this.actions});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: actions
-          .map(
-            (a) => Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 250, 250, 250),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    a.isCustom
-                        ? Text(
-                            "+ − × ÷",
-                            style: GoogleFonts.lato(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: keyConceptGreen,
-                            ),
-                          )
-                        : Icon(a.icon, size: 32, color: keyConceptGreen),
-                    const SizedBox(height: 6),
-                    Text(
-                      a.label,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.lato(
-                          fontSize: 14, fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
               ),
             ),
           )

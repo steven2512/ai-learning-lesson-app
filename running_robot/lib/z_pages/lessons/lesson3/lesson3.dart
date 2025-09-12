@@ -1,4 +1,3 @@
-// lib/z_pages/lessons/LessonTzhee/lesson3.dart
 // ✅ LessonThree with conditional continue button for StepFive & StepSeven
 
 import 'package:flame/components.dart' show Vector2;
@@ -13,6 +12,7 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_1.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_10.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_2.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_3.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_4.dart';
@@ -20,6 +20,7 @@ import 'package:running_robot/z_pages/lessons/lesson3/lesson3_5.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_6.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_7.dart';
 import 'package:running_robot/z_pages/lessons/lesson3/lesson3_8.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_9.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -38,15 +39,17 @@ class _LessonThreeState extends State<LessonThree> {
     2: 180,
     3: 200,
     4: 180,
-    5: 120,
-    6: 150,
-    7: 50,
+    5: 180,
+    6: 120,
+    7: 150,
+    8: 150,
+    9: 120,
   };
 
-  int get totalStages => 8;
+  int get totalStages => 10;
   bool _lessonCompleted = false;
-  bool _stepFiveAnswered = false;
-  bool _stepSevenAnswered = false;
+  bool _stepSixAnswered = false;
+  bool _stepNineAnswered = false;
 
   late IconButtonWidget<void> returnButton;
 
@@ -107,12 +110,12 @@ class _LessonThreeState extends State<LessonThree> {
 
   Widget _buildContinueButton() {
     // Step 5 → only show after correct answer
-    if (currentStep == 5 && !_stepFiveAnswered) {
+    if (currentStep == 6 && !_stepSixAnswered) {
       return const SizedBox.shrink();
     }
 
-    // Step 7 → only show after 10 qualitative words caught
-    if (currentStep == 7 && !_stepSevenAnswered) {
+    // Step 7 → only show after correct answer
+    if (currentStep == 9 && !_stepNineAnswered) {
       return const SizedBox.shrink();
     }
 
@@ -164,14 +167,18 @@ class _LessonThreeState extends State<LessonThree> {
       case 4:
         return const LessonStepFour();
       case 5:
-        return LessonStepFive(
-          onStepCompleted: () => setState(() => _stepFiveAnswered = true),
-        );
+        return const LessonStepFive();
       case 6:
-        return const LessonStepSix();
+        return LessonStepSix(
+          onStepCompleted: () => setState(() => _stepSixAnswered = true),
+        );
       case 7:
-        return LessonStepSeven(
-          onStepCompleted: () => setState(() => _stepSevenAnswered = true),
+        return const LessonStepSeven();
+      case 8:
+        return const LessonStepEight();
+      case 9:
+        return LessonStepNine(
+          onStepCompleted: () => setState(() => _stepNineAnswered = true),
         );
     }
     return const SizedBox.shrink();

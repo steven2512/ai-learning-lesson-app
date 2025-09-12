@@ -1,5 +1,4 @@
-// lib/z_pages/lessons/LessonTzhee/lesson3_5_mcq.dart
-// ✅ LessonStepFive — Tricky MCQ with illustration + tinted feedback box
+// ✅ LessonStepSeven — Tricky MCQ for Qualitative data with illustration + tinted feedback box
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,16 +9,16 @@ const double lesson3FontSize = 20;
 const double feedbackFontSize = 16; // ✅ global font size for feedback
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 
-class LessonStepSix extends StatefulWidget {
+class LessonStepNine extends StatefulWidget {
   final VoidCallback? onStepCompleted; // ✅ notify parent when correct
 
-  const LessonStepSix({super.key, this.onStepCompleted});
+  const LessonStepNine({super.key, this.onStepCompleted});
 
   @override
-  State<LessonStepSix> createState() => _LessonStepSixState();
+  State<LessonStepNine> createState() => _LessonStepNineState();
 }
 
-class _LessonStepSixState extends State<LessonStepSix> {
+class _LessonStepNineState extends State<LessonStepNine> {
   String? feedbackMessage;
   bool? isCorrectAnswer;
 
@@ -28,18 +27,18 @@ class _LessonStepSixState extends State<LessonStepSix> {
       isCorrectAnswer = isCorrect;
       if (isCorrect) {
         feedbackMessage =
-            "Correct ✅ There is no real meaning to calculate or measure phone numbers";
+            "Correct ✅ Temperature is measurable with numbers, so it’s quantitative — not qualitative.";
         widget.onStepCompleted?.call(); // ✅ trigger completion event
+      } else if (index == 0) {
+        feedbackMessage = "Incorrect ❌ Colors are descriptive, not measurable.";
       } else if (index == 1) {
-        feedbackMessage = "Incorrect ❌ You can measure and calculate with age.";
+        feedbackMessage =
+            "Incorrect ❌ Moods are feelings, not measurable in numbers.";
       } else if (index == 2) {
         feedbackMessage =
-            "Incorrect ❌ You can measure and calculate with height.";
-      } else if (index == 3) {
-        feedbackMessage =
-            "Incorrect ❌ You can measure and calculate with weight.";
+            "Incorrect ❌ Blood types are categories, not numerical values.";
       } else {
-        feedbackMessage = "Incorrect ❌ This can be measured.";
+        feedbackMessage = "Incorrect ❌ This one is descriptive.";
       }
     });
   }
@@ -63,7 +62,7 @@ class _LessonStepSixState extends State<LessonStepSix> {
                   fontSize: lesson3FontSize,
                   fontWeight: FontWeight.w900,
                   italic: true),
-              LessonText.word("quantitative", mainConceptColor,
+              LessonText.word("qualitative", mainConceptColor,
                   fontSize: lesson3FontSize, fontWeight: FontWeight.w900),
               LessonText.word("data?", Colors.black87,
                   fontSize: lesson3FontSize),
@@ -75,7 +74,7 @@ class _LessonStepSixState extends State<LessonStepSix> {
             margin: const EdgeInsets.only(bottom: 18),
             child: Center(
               child: Image.asset(
-                "assets/images/quantitative_not.png",
+                "assets/images/qualitative_not.png", // 🔧 placeholder
                 height: 180,
                 fit: BoxFit.contain,
               ),
@@ -84,12 +83,12 @@ class _LessonStepSixState extends State<LessonStepSix> {
 
           // 🟦 MCQ Box
           MCQBox(
-            correctAnswer: 0, // Phone number ❌
+            correctAnswer: 3, // Temperature 🌡️ is quantitative
             answers: [
-              "Phone number",
-              "Age (years)",
-              "Height (cm)",
-              "Weight (kg)",
+              "Favorite color",
+              "Mood (happy/sad)",
+              "Blood type (A, B, AB, O)",
+              "Temperature (°C/°F)",
             ],
             lockCorrectAnswer: true,
             answerFill: Colors.white,
