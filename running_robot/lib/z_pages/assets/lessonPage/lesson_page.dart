@@ -291,7 +291,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
 
   List<Widget> _buildLessonNodes(List<Offset> centers, Size screen) {
     return List<Widget>.generate(centers.length, (i) {
-      final unlocked = i < 3;
+      final unlocked = i < 15;
       final c = centers[i];
 
       final node = LessonNode(

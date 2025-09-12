@@ -12,10 +12,10 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_3.dart';
-import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_4.dart';
-import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_5.dart';
-import 'package:running_robot/z_pages/lessons/lessonTwo/lesson2_6.dart';
+import 'package:running_robot/z_pages/lessons/lesson2/lesson2_3.dart';
+import 'package:running_robot/z_pages/lessons/lesson2/lesson2_4.dart';
+import 'package:running_robot/z_pages/lessons/lesson2/lesson2_5.dart';
+import 'package:running_robot/z_pages/lessons/lesson2/lesson2_6.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (quiz step)

@@ -12,14 +12,14 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_1.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_2.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_3.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_4.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_5.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_6.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_7.dart';
-import 'package:running_robot/z_pages/lessons/LessonTzhee/lesson3_8.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_1.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_2.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_3.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_4.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_5.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_6.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_7.dart';
+import 'package:running_robot/z_pages/lessons/lesson3/lesson3_8.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;

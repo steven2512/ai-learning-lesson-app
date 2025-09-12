@@ -8,8 +8,8 @@ import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
     as flutter_ui_bar;
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_1.dart';
-import 'package:running_robot/z_pages/lessons/lessonOne/lesson1_2.dart';
+import 'package:running_robot/z_pages/lessons/lesson1/lesson1_1.dart';
+import 'package:running_robot/z_pages/lessons/lesson1/lesson1_2.dart';
 
 // 🔹 Flame progress bar (final bar to pass to EndLessonPage)
 import 'package:running_robot/game/decorations/progress_bar.dart'
