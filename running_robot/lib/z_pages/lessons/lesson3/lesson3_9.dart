@@ -1,5 +1,5 @@
 // lib/z_pages/lessons/LessonTzhee/lesson3_8_qualitative.dart
-// ✅ LessonStepEight — Qualitative actions + examples
+// ✅ LessonStepEight — Qualitative actions + examples (same box style as quantitative)
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -66,18 +66,31 @@ class LessonStepEight extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ========== Examples ==========
-          Text(
-            "Examples",
-            style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.w800),
+          // ========== Examples Box (same as quantitative) ==========
+          LessonText.box(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LessonText.sentence([
+                  LessonText.word("Examples of", Colors.black, fontSize: 20),
+                  LessonText.word(
+                    "Qualitative Data",
+                    keyConceptPurple,
+                    fontSize: 20,
+                  ),
+                ]),
+                const SizedBox(height: 15),
+                const _ChipWrap(items: [
+                  "Eye Color",
+                  "Fruit Type",
+                  "Favorite Subject",
+                  "Country",
+                  "Mood",
+                  "Music Genre",
+                ]),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          const _ChipWrap(items: [
-            "Eye color",
-            "Fruit type",
-            "Favorite subject",
-            "Country"
-          ]),
         ],
       ),
     );
@@ -86,33 +99,35 @@ class LessonStepEight extends StatelessWidget {
 
 // ---------- Small helpers ----------
 class _ChipWrap extends StatelessWidget {
-  final List<String> items;
+  final List<String> items; // Just labels
   const _ChipWrap({required this.items});
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
+      spacing: 4,
       runSpacing: 10,
       children: items
           .map(
-            (t) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            (label) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.black12),
                 boxShadow: const [
                   BoxShadow(
-                      color: Color.fromARGB(20, 0, 0, 0),
-                      blurRadius: 6,
-                      offset: Offset(0, 2)),
+                    color: Color.fromARGB(20, 0, 0, 0),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
-              child: Text(
-                t,
-                style:
-                    GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w800),
+              child: LessonText.word(
+                label,
+                Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
               ),
             ),
           )
