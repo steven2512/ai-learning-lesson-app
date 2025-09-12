@@ -17,8 +17,11 @@ import 'package:running_robot/z_pages/assets/lessonPage/lesson_names.dart';
 const double kPillTopGap = 25.0;
 const double kMapTopGap = 100.0;
 
-/// ===== Focus animation settings =====
-const Duration kFocusDuration = Duration(milliseconds: 650);
+/// ===== Focus animation settings (separate in/out) =====
+const Duration kFocusZoomInDuration =
+    Duration(milliseconds: 650); // zoom into node
+const Duration kUnfocusZoomOutDuration =
+    Duration(milliseconds: 450); // zoom back to map
 const double kFocusedScale = 1.50;
 
 /// ===== Position of focused node (relative to screen) =====
@@ -41,6 +44,19 @@ const Duration kBeamDuration = Duration(milliseconds: 300);
 /// ===== Box animation settings =====
 const Duration kBoxDelay = Duration(milliseconds: 0);
 const Duration kBoxAnimDuration = Duration(milliseconds: 500);
+
+/// ===== UI fade/size knobs (direction-aware) =====
+/// Chapter pill
+const Duration kChapterTopPillFadeOutDuration = Duration(milliseconds: 300);
+const Duration kChapterTopPillFadeInDuration = Duration(milliseconds: 500);
+
+/// Map path / "other" layer
+const Duration kOtherFadeOutDuration = Duration(milliseconds: 200);
+const Duration kOtherFadeInDuration = Duration(milliseconds: 450);
+
+/// Curve + dropdown size anim
+const Curve kUiFadeCurve = Curves.easeInOut;
+const Duration kUiSizeDuration = Duration(milliseconds: 300);
 
 class LessonPage extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -76,7 +92,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
 
   bool get _isFocused => _selectedNodeIndex != null; // [FOCUS]
 
-  // ✨ NEW: invalidate pending async work when state changes fast
+  // Invalidate pending async work when state changes fast
   int _session = 0; // monotonically increasing token
   int? _beamSession; // token captured when beam starts
 
@@ -92,19 +108,17 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
 
     _focusController = AnimationController(
       vsync: this,
-      duration: kFocusDuration,
+      duration: kFocusZoomInDuration, // default forward duration
     );
 
     _beamController = AnimationController(
       vsync: this,
       duration: kBeamDuration,
     )..addStatusListener((status) async {
-        // ✨ CHANGED: guard status events with session to avoid stale completions
         if (status == AnimationStatus.completed) {
-          final int? tokenAtStart = _beamSession; // capture
+          final int? tokenAtStart = _beamSession;
           await Future.delayed(kBoxDelay);
           if (!mounted) return;
-          // Abort if focus was cleared or a new session started
           if (!_isFocused || tokenAtStart == null || tokenAtStart != _session) {
             return; // stale; do nothing
           }
@@ -112,9 +126,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           _boxController.forward(from: 0);
         }
         if (status == AnimationStatus.dismissed) {
-          // Extra safety: ensure beam hidden on dismiss
           if (mounted && _showBeam) {
-            setState(() => _showBeam = false); // ✨ NEW
+            setState(() => _showBeam = false);
           }
         }
       });
@@ -148,62 +161,63 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 
   Future<void> _focusOnNode(int index) async {
-    // ✨ NEW: bump session to cancel any pending delayed tasks from a previous focus
     final int mySession = ++_session;
 
-    // [LOCK] engage lock during zoom; also enter focused state immediately
     setState(() {
       _selectedNodeIndex = index;
       _showBox = false;
-      _showBeam = false; // ✨ NEW: ensure hidden before starting
+      _showBeam = false;
+      _dropdownOpen = false; // keep UI clean when focusing
       _inputLocked = true;
     });
 
-    // ✨ NEW: hard reset beam & box controllers to a clean slate
     _beamSession = null;
     _beamController.stop();
     _beamController.value = 0.0;
     _boxController.stop();
     _boxController.reset();
 
+    // ensure forward duration
+    _focusController.duration = kFocusZoomInDuration;
     await _focusController.forward(from: 0);
 
-    // [LOCK] release lock right after zoom completes (still focused)
     if (mounted) setState(() => _inputLocked = false);
 
-    // Delay before turning on the beam; abort if session changed or focus cleared
     await Future.delayed(kBeamDelay);
     if (!mounted) return;
     if (!_isFocused || _session != mySession || _selectedNodeIndex != index) {
-      return; // ✨ NEW: abort stale continuation
+      return;
     }
 
     setState(() {
       _showBeam = true;
-      _beamSession = mySession; // ✨ NEW: mark which session owns this beam
+      _beamSession = mySession;
     });
     _beamController.forward(from: 0);
   }
 
   void _clearFocus() {
-    // ✨ NEW: bump session first to invalidate any pending delayed callbacks
     _session++;
 
     setState(() {
       _selectedNodeIndex = null;
-      _showBeam = false; // hide immediately
+      _showBeam = false;
       _showBox = false;
-      _dropdownOpen = false; // small safety
+      _dropdownOpen = false;
     });
 
-    // ✨ CHANGED: aggressively stop & reset controllers to avoid residual frames
     _beamSession = null;
     _beamController.stop();
-    _beamController.value =
-        0.0; // ensure progress=0 so painter clips to nothing
+    _beamController.value = 0.0;
+
+    // reverse with its own duration (controls non-selected nodes "fade-in" & zoom-out)
     _focusController.stop();
-    _focusController.reverse(
-        from: _focusController.value); // animate out if mid-zoom
+    _focusController.animateBack(
+      0.0,
+      duration: kUnfocusZoomOutDuration,
+      curve: kUiFadeCurve,
+    );
+
     _boxController.stop();
     _boxController.reset();
   }
@@ -230,7 +244,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     final content = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        // [RULE] When focused and not currently animating, a background tap exits focus mode.
         if (_isFocused && !_inputLocked) {
           _clearFocus();
         }
@@ -240,7 +253,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           Positioned.fill(
             child: SingleChildScrollView(
               controller: _scrollController,
-              // [LOCK] no scroll while animating OR while focused
               physics: (_inputLocked || _isFocused)
                   ? const NeverScrollableScrollPhysics()
                   : null,
@@ -251,9 +263,13 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                   padding: const EdgeInsets.only(top: kMapTopGap),
                   child: Stack(
                     children: [
+                      // Map path fade with separate IN/OUT durations
                       AnimatedOpacity(
                         opacity: _selectedNodeIndex == null ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 400),
+                        duration: (_selectedNodeIndex == null)
+                            ? kOtherFadeInDuration
+                            : kOtherFadeOutDuration,
+                        curve: kUiFadeCurve,
                         child: CustomPaint(
                           size: mapSize,
                           painter: PathPainter(path: path),
@@ -268,47 +284,57 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           ),
 
           // ===== FLOATING PILL + DROPDOWN =====
-          // [LOCK] disable pill & dropdown while animating OR focused
           Positioned(
             top: statusBar + kPillTopGap,
             left: 0,
             right: 0,
-            child: IgnorePointer(
-              ignoring: _inputLocked || _isFocused, // [LOCK]
-              child: Column(
-                children: [
-                  ChapterPill(
-                    key: _pillKey,
-                    currentChapter: _currentChapter,
-                    dropdownOpen: _dropdownOpen,
-                    onTap: () => setState(() => _dropdownOpen = !_dropdownOpen),
-                  ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    child: _dropdownOpen && _pillWidth != null
-                        ? SizedBox(
-                            width: _pillWidth! * 0.42,
-                            child: ChapterDropdown(
-                              chapters: chapters,
-                              currentChapter: _currentChapter,
-                              onChapterSelected: (c) {
-                                setState(() {
-                                  _currentChapter = c;
-                                  _dropdownOpen = false;
-                                });
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  if (_scrollController.hasClients) {
-                                    _scrollController.jumpTo(0);
-                                  }
-                                });
-                              },
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+            child: AnimatedOpacity(
+              // Pill fade with separate IN/OUT durations
+              opacity: _isFocused ? 0.0 : 1.0,
+              duration: _isFocused
+                  ? kChapterTopPillFadeOutDuration
+                  : kChapterTopPillFadeInDuration,
+              curve: kUiFadeCurve,
+              child: IgnorePointer(
+                ignoring: _inputLocked || _isFocused,
+                child: Column(
+                  children: [
+                    ChapterPill(
+                      key: _pillKey,
+                      currentChapter: _currentChapter,
+                      dropdownOpen: _dropdownOpen,
+                      onTap: () =>
+                          setState(() => _dropdownOpen = !_dropdownOpen),
+                    ),
+                    AnimatedSize(
+                      duration: kUiSizeDuration,
+                      curve: kUiFadeCurve,
+                      child:
+                          (_dropdownOpen && _pillWidth != null && !_isFocused)
+                              ? SizedBox(
+                                  width: _pillWidth! * 0.42,
+                                  child: ChapterDropdown(
+                                    chapters: chapters,
+                                    currentChapter: _currentChapter,
+                                    onChapterSelected: (c) {
+                                      _clearFocus();
+                                      setState(() {
+                                        _currentChapter = c;
+                                        _dropdownOpen = false;
+                                      });
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        if (_scrollController.hasClients) {
+                                          _scrollController.jumpTo(0);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -317,7 +343,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           if (_selectedNodeIndex != null && _showBox)
             FadeTransition(
               opacity: _boxController,
-              // [LOCK] consume taps on the box area so background tap doesn't clear
               child: Align(
                 alignment: const Alignment(0, 0.6),
                 child: Padding(
@@ -353,7 +378,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     );
 
     return WillPopScope(
-      // ✨ NEW: hardware back clears focus instead of popping
       onWillPop: () async {
         if (_isFocused) {
           _clearFocus();
@@ -372,10 +396,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
-            shadowColor: Colors.transparent,
           ),
         ),
-        // [LOCK] block ALL input only during the zoom animation
         body: AbsorbPointer(
           absorbing: _inputLocked,
           child: content,
@@ -395,7 +417,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         onNavigate: widget.onNavigate,
         onTapBuilder: (nav) {
           return () {
-            // [LOCK] ignore taps while animating or when already focused
             if (_inputLocked || _isFocused) return;
             _focusOnNode(i);
           };
@@ -433,7 +454,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 return Positioned(
                   left: dx - 40 * scale,
                   top: dy - 40 * scale,
-                  // [LOCK] for the selected node, ABSORB taps so background doesn't clear focus
                   child: AbsorbPointer(
                     absorbing: true,
                     child: Transform.scale(scale: scale, child: child),
@@ -446,8 +466,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         );
       }
 
-      // Other (non-selected) nodes:
-      // While focused, let taps PASS THROUGH these nodes so the parent background tap can clear focus.
+      // Other (non-selected) nodes blur/fade based on focus controller.
+      // Their fade-in speed is governed by kUnfocusZoomOutDuration via animateBack in _clearFocus.
       return AnimatedBuilder(
         animation: _focusController,
         builder: (context, child) {
@@ -467,8 +487,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           );
         },
         child: IgnorePointer(
-          ignoring:
-              _isFocused, // when focused, taps go through to background onTap => _clearFocus()
+          ignoring: _isFocused, // when focused, taps go through to background
           child: node,
         ),
       );
