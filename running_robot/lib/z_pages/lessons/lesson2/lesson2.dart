@@ -19,6 +19,8 @@ import 'package:running_robot/z_pages/lessons/lesson2/lesson2_6.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (quiz step)
+import 'lesson2_3.dart'
+    show LessonStepTwo; // ensure we import the updated StepTwo
 
 class LessonTwo extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -32,13 +34,13 @@ class _LessonTwoState extends State<LessonTwo> {
   int currentStep = 0;
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
-  /// Map of per-step top offsets
+  /// Per-step vertical offsets
   final Map<int, double> topOffsets = const {
     0: 160, // StepZero
     1: 170, // StepOne
     2: 180, // StepTwo
-    3: 250, // StepThree (future)
-    4: 250, // StepFour (future)
+    3: 250, // StepThree
+    4: 250, // StepFour
   };
 
   int get totalStages => 6;
@@ -65,7 +67,7 @@ class _LessonTwoState extends State<LessonTwo> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ✅ Progress bar
+          // Progress bar
           Positioned(
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - (279 / 2),
@@ -75,17 +77,17 @@ class _LessonTwoState extends State<LessonTwo> {
             ),
           ),
 
-          // ✅ Close button
+          // Close button
           Positioned(top: 69, left: 30, child: returnButton),
 
-          // ✅ Active step with offset
+          // Active step with offset
           Positioned.fill(
             top: topOffset,
             bottom: 100,
             child: _buildCurrentStep(),
           ),
 
-          // ✅ Continue button
+          // Continue button (now with a soft fade via AnimatedSwitcher)
           Positioned(
             bottom: 40,
             left: 0,
@@ -96,8 +98,8 @@ class _LessonTwoState extends State<LessonTwo> {
                 builder: (context, answered, _) {
                   if (_lessonCompleted) return const SizedBox.shrink();
 
-                  // Step 0 + Step 1 → always visible
-                  // Step 2 → only visible when answered = true
+                  // Step 0,1,3,4 → always visible
+                  // Step 2 and 5 → only visible when answered = true
                   final showContinue = (currentStep == 0 ||
                           currentStep == 1 ||
                           currentStep == 3 ||
@@ -107,51 +109,62 @@ class _LessonTwoState extends State<LessonTwo> {
                           ? answered
                           : false);
 
-                  if (!showContinue) return const SizedBox.shrink();
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    reverseDuration: const Duration(milliseconds: 120),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: showContinue
+                        ? ContinueButton(
+                            key: const ValueKey('continue-btn'),
+                            onPressed: () {
+                              if (currentStep < totalStages - 1) {
+                                setState(() {
+                                  currentStep++;
+                                  _stepAnswered.value = false;
+                                });
+                              } else {
+                                // Final step
+                                setState(() {
+                                  _lessonCompleted = true;
+                                  _stepAnswered.value = false;
+                                });
 
-                  return ContinueButton(
-                    onPressed: () {
-                      if (currentStep < totalStages - 1) {
-                        setState(() {
-                          currentStep++;
-                          _stepAnswered.value = false;
-                        });
-                      } else {
-                        // Final step
-                        setState(() {
-                          _lessonCompleted = true;
-                          _stepAnswered.value = false;
-                        });
+                                final endBar = LessonProgressBar(
+                                  position: Vector2.zero(),
+                                  stages: totalStages,
+                                );
+                                for (int i = 0; i < totalStages; i++) {
+                                  endBar.switchPhase(EventProgressBar.proceed);
+                                }
 
-                        final endBar = LessonProgressBar(
-                          position: Vector2.zero(),
-                          stages: totalStages,
-                        );
-                        for (int i = 0; i < totalStages; i++) {
-                          endBar.switchPhase(EventProgressBar.proceed);
-                        }
+                                // Stub values
+                                const int xp = 50;
+                                const int streak = 1;
+                                const int chapterProgress = 2;
+                                const int totalChapterLessons = 10;
 
-                        // Stub values
-                        const int xp = 50;
-                        const int streak = 1;
-                        const int chapterProgress = 2; // e.g. lesson 2 done
-                        const int totalChapterLessons = 10;
-
-                        widget.onNavigate(
-                          RouteEndLesson(
-                            xp: xp,
-                            streak: streak,
-                            progressBar: endBar,
-                            chapterProgress: chapterProgress,
-                            totalChapterLessons: totalChapterLessons,
-                            topText: "Lesson 2 complete! 🎉",
-                            repeatLesson: const RouteLesson(2),
-                            nextLesson: const RouteMainMenu(), // placeholder
-                            illustrationPath: null,
+                                widget.onNavigate(
+                                  RouteEndLesson(
+                                    xp: xp,
+                                    streak: streak,
+                                    progressBar: endBar,
+                                    chapterProgress: chapterProgress,
+                                    totalChapterLessons: totalChapterLessons,
+                                    topText: "Lesson 2 complete! 🎉",
+                                    repeatLesson: const RouteLesson(2),
+                                    nextLesson: const RouteMainMenu(),
+                                    illustrationPath: null,
+                                  ),
+                                );
+                              }
+                            },
+                          )
+                        : const SizedBox(
+                            key: ValueKey('continue-hidden'),
                           ),
-                        );
-                      }
-                    },
                   );
                 },
               ),
@@ -166,9 +179,10 @@ class _LessonTwoState extends State<LessonTwo> {
     if (currentStep == 0) return const LessonStepZero();
     if (currentStep == 1) return const LessonStepOne();
     if (currentStep == 2) {
+      // IMPORTANT: LessonStepTwo should call onStarted AFTER it shows "COMPLETE"
       return LessonStepTwo(
         onStarted: () {
-          _stepAnswered.value = true; // 👈 notify parent when Start pressed
+          _stepAnswered.value = true; // unlock Continue only after COMPLETE
         },
       );
     }
@@ -178,15 +192,13 @@ class _LessonTwoState extends State<LessonTwo> {
     if (currentStep == 4) {
       return LessonStepFour();
     }
-// inside _buildCurrentStep()
     if (currentStep == 5) {
       return LessonStepFive(
         onCompleted: () {
-          _stepAnswered.value = true; // 👈 unlock Continue
+          _stepAnswered.value = true; // unlock Continue after activity complete
         },
       );
     }
-
     return const SizedBox.shrink();
   }
 }
