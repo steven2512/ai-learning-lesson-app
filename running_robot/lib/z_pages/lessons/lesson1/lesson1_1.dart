@@ -145,7 +145,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
           children: [
             // ✅ Definition box using LessonText
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 10, top: 50),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -144,6 +144,9 @@ flutter:
     - assets/images/qualitative.png
     - assets/images/quantitative_not.png
     - assets/images/qualitative_not.png
+    - assets/images/quiz_time.png
+    - assets/images/data_analyst.jpg
+    - assets/images/data_analyst.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

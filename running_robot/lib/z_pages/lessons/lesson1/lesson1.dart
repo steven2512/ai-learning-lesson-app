@@ -1,3 +1,7 @@
+// FILE: lib/z_pages/lessons/lesson1/lesson1.dart
+// CHANGED: imports stay the same files; lesson1_1.dart now also defines NEW LessonStepOne (intro)
+// CHANGED: lesson1_2.dart now defines LessonStepTwo (the old quiz step, renamed)
+
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,47 +12,16 @@ import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
     as flutter_ui_bar;
-import 'package:running_robot/z_pages/lessons/lesson1/lesson1_1.dart';
-import 'package:running_robot/z_pages/lessons/lesson1/lesson1_2.dart';
+
+import 'package:running_robot/z_pages/lessons/lesson1/lesson1_1.dart'; // contains LessonStepZero (unchanged) + NEW LessonStepOne (intro)
+import 'package:running_robot/z_pages/lessons/lesson1/lesson1_2.dart'; // contains LessonStepTwo (old quizzes renamed)
 
 // 🔹 Flame progress bar (final bar to pass to EndLessonPage)
 import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-
-/// ✅ Shared Continue Button
-// class ContinueButton extends StatelessWidget {
-//   final VoidCallback onPressed;
-//   const ContinueButton({super.key, required this.onPressed});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.center,
-//       children: [
-//         ElevatedButton(
-//           style: ElevatedButton.styleFrom(
-//             backgroundColor: Colors.teal,
-//             padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 14),
-//             shape: RoundedRectangleBorder(
-//               borderRadius: BorderRadius.circular(30),
-//             ),
-//           ),
-//           onPressed: onPressed,
-//           child: Text(
-//             'Continue',
-//             style: GoogleFonts.lato(
-//               fontSize: 18,
-//               fontWeight: FontWeight.w600,
-//               color: Colors.white,
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+import 'package:running_robot/z_pages/lessons/lesson1/lesson1_3.dart';
 
 class LessonOne extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -64,16 +37,19 @@ class _LessonOneState extends State<LessonOne> {
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
   /// ✅ Each step can define its own vertical offset
+  /// CHANGED: Added entry for new step 1 (intro). Quizzes shift by +1.
   final Map<int, double> topOffsets = const {
-    0: 150, // StepZero
-    1: 150, // Quiz 1
-    2: 150, // Quiz 2
-    3: 150, // Quiz 3
-    4: 150, // Quiz 4
-    5: 150, // Quiz 5 (new Video quiz 🎥🏀)
+    0: 150, // StepZero (unchanged)
+    1: 150, // NEW LessonStepOne (intro)
+    2: 160, // Quiz 1 (now in LessonStepTwo)
+    3: 160, // Quiz 2
+    4: 160, // Quiz 3
+    5: 160, // Quiz 4
+    6: 160, // Quiz 5
   };
 
-  int get totalStages => 1 + LessonStepOne.quizCount;
+  // CHANGED: total stages = StepZero + NEW StepOne intro + quizzes (now in StepTwo)
+  int get totalStages => 2 + LessonStepTwo.quizCount;
 
   // Track "lesson completed" so the Flutter UI bar can render 100%
   bool _lessonCompleted = false;
@@ -129,7 +105,8 @@ class _LessonOneState extends State<LessonOne> {
                 valueListenable: _stepAnswered,
                 builder: (context, answered, _) {
                   if (_lessonCompleted) return const SizedBox.shrink();
-                  final showContinue = (currentStep == 0) ? true : answered;
+                  // CHANGED: Allow auto-continue for StepZero (0) and NEW StepOne (1)
+                  final showContinue = (currentStep <= 1) ? true : answered;
                   if (!showContinue) return const SizedBox.shrink();
 
                   return ContinueButton(
@@ -170,8 +147,7 @@ class _LessonOneState extends State<LessonOne> {
                             chapterProgress: chapterProgress,
                             totalChapterLessons: totalChapterLessons,
                             topText: "Lesson 1 complete! 🎉",
-                            illustrationPath:
-                                null, // provide an asset path when ready    repeatLesson: const RouteLesson1(),   // 👈 repeat this lesson
+                            illustrationPath: null,
                             repeatLesson:
                                 const RouteLesson(1), // 👈 repeat this lesson
                             nextLesson: const RouteLesson(2),
@@ -190,10 +166,13 @@ class _LessonOneState extends State<LessonOne> {
   }
 
   Widget _buildCurrentStep() {
+    // CHANGED: Step mapping: 0 -> StepZero (unchanged), 1 -> NEW StepOne (intro),
+    //          2.. -> LessonStepTwo quizzes with shifted index (currentStep-2)
     if (currentStep == 0) return const LessonStepZero();
-    final quizIndex = currentStep - 1;
+    if (currentStep == 1) return const LessonStepOne();
 
-    return LessonStepOne(
+    final quizIndex = currentStep - 2;
+    return LessonStepTwo(
       key: ValueKey('quiz-$quizIndex'),
       quizIndex: quizIndex,
       onQuizCompleted: (index) {
