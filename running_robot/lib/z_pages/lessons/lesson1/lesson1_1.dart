@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // 👈 import the new LessonText helper
+import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ LessonText helper
+// FIX: removed duplicate import
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
@@ -143,9 +143,41 @@ class _LessonStepZeroState extends State<LessonStepZero>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Definition box using LessonText
+            const SizedBox(height: 20),
+
+            // CHANGED: Animation zone moved ABOVE the definition box
+            SizedBox(
+              height: 350,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Positioned(
+                    bottom: computerOffset.dy,
+                    left: computerOffset.dx,
+                    child: Image.asset(
+                      "assets/images/computer.png",
+                      height: computerHeight,
+                    ),
+                  ),
+                  for (int i = 0; i < _dataImages.length; i++)
+                    Positioned(
+                      left: MediaQuery.of(context).size.width / 2 +
+                          _itemOffsets[i].dx -
+                          _itemSizes[i].width / 2 -
+                          30, // adjust for padding
+                      top: _itemOffsets[i].dy,
+                      child: _buildAnimatedItem(i),
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(
+                height: 0), // CHANGED: spacing between animation and text
+
+            // ✅ Definition box using LessonText (now BELOW animation)
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 10, top: 50),
+              margin: const EdgeInsets.only(bottom: 10, top: 0), // CHANGED
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -180,35 +212,6 @@ class _LessonStepZeroState extends State<LessonStepZero>
                     LessonText.word("computer.", Colors.black87,
                         fontSize: secondLineSize, fontWeight: secondLineWeight),
                   ]),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // ✅ Animation zone
-            SizedBox(
-              height: 350,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned(
-                    bottom: computerOffset.dy,
-                    left: computerOffset.dx,
-                    child: Image.asset(
-                      "assets/images/computer.png",
-                      height: computerHeight,
-                    ),
-                  ),
-                  for (int i = 0; i < _dataImages.length; i++)
-                    Positioned(
-                      left: MediaQuery.of(context).size.width / 2 +
-                          _itemOffsets[i].dx -
-                          _itemSizes[i].width / 2 -
-                          30, // adjust for padding
-                      top: _itemOffsets[i].dy,
-                      child: _buildAnimatedItem(i),
-                    ),
                 ],
               ),
             ),
