@@ -19,13 +19,9 @@ enum _Feedback { none, success, error }
 
 class _LessonStepSixState extends State<LessonStepSix>
     with TickerProviderStateMixin {
-  // ───────────────────────────────────────────────────────────────
-  // TUNABLE CONSTANTS (feel free to tweak these)
-  // ───────────────────────────────────────────────────────────────
-  static const double _narrowMaxWidth = 350; // title + feedback width
-  static const double _finalOverlayAlignY = -0.2; // -1 top, 0 center, +1 bottom
+  static const double _narrowMaxWidth = 350;
+  static const double _finalOverlayAlignY = -0.2;
 
-  // Animation / timing knobs
   static const Duration dShake = Duration(milliseconds: 260);
   static const Duration dInlineFeedbackFade = Duration(milliseconds: 220);
   static const Duration dAfterPairBeforeRemove = Duration(milliseconds: 800);
@@ -35,12 +31,10 @@ class _LessonStepSixState extends State<LessonStepSix>
   static const Duration dDelayBeforeFinalOverlay = Duration(milliseconds: 250);
   static const Duration dFinalOverlayFade = Duration(milliseconds: 380);
 
-  // Layout guesses for emoji tiles.
   static const double _tileWidthGuess = 68;
   static const double _rowExtent = 76;
   static const double _spacing = 12;
 
-  /// Explicit two-emoji pairs via pairId (each pairId appears twice).
   static const List<_EmojiCard> seedCards = [
     _EmojiCard("🙂", "faceA"),
     _EmojiCard("🙁", "faceA"),
@@ -61,12 +55,9 @@ class _LessonStepSixState extends State<LessonStepSix>
   _Feedback _feedback = _Feedback.none;
   bool _completed = false;
 
-  // Final overlay fade
   double _overlayOpacity = 0;
-
   double? _reservedPoolHeight;
 
-  // Shake + flash per basket
   late final AnimationController _shakeCtrl0;
   late final AnimationController _shakeCtrl1;
   late final Animation<Offset> _shakeAnim0;
@@ -116,7 +107,6 @@ class _LessonStepSixState extends State<LessonStepSix>
 
     return Stack(
       children: [
-        // Main scrollable content
         SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -125,28 +115,41 @@ class _LessonStepSixState extends State<LessonStepSix>
               children: [
                 const SizedBox(height: 20),
 
-                // Title box — constrained width
+                // ✅ Title box with green "binary pairs"
                 Center(
-                  child: SizedBox(
-                    width: _narrowMaxWidth,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 330),
                     child: LessonText.box(
                       margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 10),
                       child: Center(
-                        child: Text(
-                          "Put these icons in their correct binary pairs",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
+                        child: LessonText.sentence(
+                          alignment: WrapAlignment.center,
+                          [
+                            LessonText.word("Put", Colors.black87,
+                                fontSize: 20),
+                            LessonText.word("these", Colors.black87,
+                                fontSize: 20),
+                            LessonText.word("icons", Colors.black87,
+                                fontSize: 20),
+                            LessonText.word("in", Colors.black87, fontSize: 20),
+                            LessonText.word("their", Colors.black87,
+                                fontSize: 20),
+                            LessonText.word("correct", Colors.black87,
+                                fontSize: 20),
+                            LessonText.word("binary", keyConceptGreen,
+                                fontSize: 20, fontWeight: FontWeight.w800),
+                            LessonText.word("pairs", keyConceptGreen,
+                                fontSize: 20, fontWeight: FontWeight.w800),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                // Pool (fixed-reserved height so baskets never jump)
+                // Pool (fixed height)
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final maxW = constraints.maxWidth;
@@ -176,7 +179,6 @@ class _LessonStepSixState extends State<LessonStepSix>
 
                 const SizedBox(height: 70),
 
-                // Baskets
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -187,7 +189,6 @@ class _LessonStepSixState extends State<LessonStepSix>
 
                 const SizedBox(height: 12),
 
-                // Inline feedback below baskets (hidden once completed)
                 if (!_completed)
                   AnimatedSwitcher(
                     duration: dInlineFeedbackFade,
@@ -201,8 +202,6 @@ class _LessonStepSixState extends State<LessonStepSix>
             ),
           ),
         ),
-
-        // FINAL overlay: centered with adjustable vertical alignment & fixed width
         if (_completed)
           Positioned.fill(
             child: IgnorePointer(
@@ -266,7 +265,6 @@ class _LessonStepSixState extends State<LessonStepSix>
     );
   }
 
-  // Inline feedback builder (below baskets during gameplay)
   Widget _buildInlineFeedback() {
     if (_feedback == _Feedback.success) {
       return KeyedSubtree(
@@ -340,7 +338,6 @@ class _LessonStepSixState extends State<LessonStepSix>
     return const SizedBox.shrink();
   }
 
-  // UI builders
   Widget _buildDraggable(_EmojiCard card) {
     return Draggable<_EmojiCard>(
       data: card,
@@ -403,7 +400,6 @@ class _LessonStepSixState extends State<LessonStepSix>
               _basket[label] = card;
               _feedback = _Feedback.success;
 
-              // Remove both from the game after a short beat and reset baskets.
               Future.delayed(dAfterPairBeforeRemove, () {
                 setState(() {
                   _pool.remove(first);
@@ -414,22 +410,19 @@ class _LessonStepSixState extends State<LessonStepSix>
                 });
 
                 if (_pool.isEmpty) {
-                  // Let the inline "correct" sit briefly, then fade in overlay.
                   Future.delayed(dDelayBeforeFinalOverlay, () {
                     if (!mounted) return;
                     setState(() {
                       _completed = true;
-                      _feedback = _Feedback.none; // hide inline
-                      _overlayOpacity = 0; // prepare fade
+                      _feedback = _Feedback.none;
+                      _overlayOpacity = 0;
                     });
-                    // kick the fade on the next frame
                     Future.delayed(const Duration(milliseconds: 16), () {
                       if (mounted) setState(() => _overlayOpacity = 1);
                     });
                     widget.onCompleted();
                   });
                 } else {
-                  // Hide per-pair success shortly
                   Future.delayed(dHidePerPairSuccess, () {
                     if (mounted && !_completed) {
                       setState(() => _feedback = _Feedback.none);
@@ -485,7 +478,6 @@ class _LessonStepSixState extends State<LessonStepSix>
     );
   }
 
-  // Effects (shake + red flash + “Try again!”)
   void _triggerWrong(String label) {
     _feedback = _Feedback.error;
 
