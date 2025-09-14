@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/dialouge.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ LessonText helper
-// FIX: removed duplicate import
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
@@ -10,22 +10,18 @@ const double secondLineSize = 20.5;
 const FontWeight secondLineWeight = FontWeight.w800;
 
 /// ✅ Timing variables (all in ms)
-const int timeBeforeFullOpacity = 600; // fade in
-const int durationFullOpacity = 1000; // hold full opacity
-const int fadeTime = 800; // fade out
+const int timeBeforeFullOpacity = 600;
+const int durationFullOpacity = 1000;
+const int fadeTime = 800;
 
-/// ✅ Derived total cycle duration
 int get totalCycleMs => timeBeforeFullOpacity + durationFullOpacity + fadeTime;
 
-/// ✅ Stagger and loop controls
-const int staggerMs = 400; // delay between items
-const int delayBetweenMs = 2000; // extra pause before repeating loop
+const int staggerMs = 400;
+const int delayBetweenMs = 2000;
 
-/// ✅ Computer configuration
 const double computerHeight = 200;
 const Offset computerOffset = Offset(70, 40);
 
-/// ✅ Global trajectories for each item
 final List<Map<String, Offset>> itemTrajectories = [
   {"begin": const Offset(0, 0), "end": const Offset(1, 2.2)}, // voice
   {"begin": const Offset(0, 0), "end": const Offset(-1, 2.1)}, // notebook
@@ -56,11 +52,11 @@ class _LessonStepZeroState extends State<LessonStepZero>
   ];
 
   final List<Offset> _itemOffsets = [
-    const Offset(-100, 0), // voice
-    const Offset(100, 0), // notebook
-    const Offset(-120, 100), // tabular
-    const Offset(0, 100), // recording
-    const Offset(120, 100), // car
+    const Offset(-100, 0),
+    const Offset(100, 0),
+    const Offset(-120, 100),
+    const Offset(0, 100),
+    const Offset(120, 100),
   ];
 
   final List<Size> _itemSizes = [
@@ -144,8 +140,6 @@ class _LessonStepZeroState extends State<LessonStepZero>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-
-            // CHANGED: Animation zone moved ABOVE the definition box
             SizedBox(
               height: 350,
               child: Stack(
@@ -164,56 +158,107 @@ class _LessonStepZeroState extends State<LessonStepZero>
                       left: MediaQuery.of(context).size.width / 2 +
                           _itemOffsets[i].dx -
                           _itemSizes[i].width / 2 -
-                          30, // adjust for padding
+                          30,
                       top: _itemOffsets[i].dy,
                       child: _buildAnimatedItem(i),
                     ),
                 ],
               ),
             ),
+            const SizedBox(height: 0),
 
-            const SizedBox(
-                height: 0), // CHANGED: spacing between animation and text
-
-            // ✅ Definition box using LessonText (now BELOW animation)
-            LessonText.box(
-              margin: const EdgeInsets.only(bottom: 10, top: 0), // CHANGED
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LessonText.sentence([
-                    LessonText.word("What", Colors.black87, fontSize: 30),
-                    LessonText.word("is", Colors.black87, fontSize: 30),
-                    LessonText.word("Data?", mainConceptColor, fontSize: 30),
-                  ]),
-                  const SizedBox(height: 12),
-                  LessonText.sentence([
-                    const Padding(
-                      padding: EdgeInsets.only(top: 3, right: 1),
-                      child: Icon(Icons.arrow_forward_rounded,
-                          size: 26, color: Colors.black54),
+            /// ✅ Dialogue sequence pages
+            DialogueBox(
+              width: 320,
+              content: [
+                // 1) "Welcome to Lesson 1"
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LessonText.sentence(
+                      _lw("Welcome to Lesson 1", size: 28),
                     ),
-                    LessonText.word("Data", mainConceptColor,
-                        fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("is", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("the", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("information", keyConceptGreen,
-                        fontSize: secondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("we", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("feed", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("into", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("a", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                    LessonText.word("computer.", Colors.black87,
-                        fontSize: secondLineSize, fontWeight: secondLineWeight),
-                  ]),
-                ],
-              ),
+                  ],
+                ),
+
+                // 2) "This is the beginning of your AI Journey"
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LessonText.sentence(
+                      _lw("This is the beginning of your AI Journey", size: 24),
+                    ),
+                  ],
+                ),
+
+                // 3) "We will now learn the most foundational concept in AI"
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LessonText.sentence(
+                      _lw("We will now learn the most foundational concept in AI",
+                          size: 22),
+                    ),
+                  ],
+                ),
+
+                // 4) "The world of Data"
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LessonText.sentence(
+                      _lw("The world of Data", size: 26),
+                    ),
+                  ],
+                ),
+
+                // 5) Now display the original "What is Data?" block — END
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LessonText.sentence([
+                      LessonText.word("So what", Colors.black87, fontSize: 30),
+                      LessonText.word("is", Colors.black87, fontSize: 30),
+                      LessonText.word("Data?", mainConceptColor, fontSize: 30),
+                    ]),
+                    const SizedBox(height: 12),
+                    LessonText.sentence([
+                      const Padding(
+                        padding: EdgeInsets.only(top: 3, right: 1),
+                        child: Icon(Icons.arrow_forward_rounded,
+                            size: 26, color: Colors.black54),
+                      ),
+                      LessonText.word("Data", mainConceptColor,
+                          fontSize: secondLineSize,
+                          fontWeight: FontWeight.w800),
+                      LessonText.word("is", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("the", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("information", keyConceptGreen,
+                          fontSize: secondLineSize,
+                          fontWeight: FontWeight.w800),
+                      LessonText.word("we", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("feed", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("into", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("a", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                      LessonText.word("computer.", Colors.black87,
+                          fontSize: secondLineSize,
+                          fontWeight: secondLineWeight),
+                    ]),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -221,6 +266,7 @@ class _LessonStepZeroState extends State<LessonStepZero>
     );
   }
 
+  /// Builds the animated floaters
   Widget _buildAnimatedItem(int index) {
     final size = _itemSizes[index];
 
@@ -252,5 +298,19 @@ class _LessonStepZeroState extends State<LessonStepZero>
         ),
       ),
     );
+  }
+
+  /// 🔹 Helper: convert a plain sentence into LessonText.word widgets
+  List<Widget> _lw(
+    String text, {
+    double size = 20,
+    Color color = Colors.black87,
+    FontWeight weight = secondLineWeight,
+  }) {
+    return text
+        .split(' ')
+        .map((w) =>
+            LessonText.word(w, color, fontSize: size, fontWeight: weight))
+        .toList();
   }
 }
