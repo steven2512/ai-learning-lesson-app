@@ -22,7 +22,7 @@ const Duration cursorBlinkInterval = Duration(milliseconds: 500);
 const int maxBufferLength = 400;
 const int wrapEvery = 40;
 const int maxLines =
-    5; // how many lines to type before pausing & showing COMPLETE
+    4; // how many lines to type before pausing & showing COMPLETE
 const double containerWidth = 260;
 const double containerHeight = 140;
 const double overlayOffsetX = 0;

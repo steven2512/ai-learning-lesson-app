@@ -1,24 +1,141 @@
-// FILE: lib/z_pages/lessons/lesson1/lesson1_1.dart
+// FILE: lib/z_pages/lessons/lesson1/lesson_step_one.dart
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
-import 'package:running_robot/z_pages/lessons/unknown/bin_classf.dart'; // LessonText
 
-// ====== EXISTING: LessonStepZero remains in this file, unchanged ======
-// (Not repeated here; keep your current implementation.)
+const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
+const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
+const double secondLineSize = 20.5;
+const FontWeight secondLineWeight = FontWeight.w800;
 
-// ====== NEW: LessonStepOne (intro) ======
-const Color _mainConceptColor = Color.fromARGB(255, 255, 109, 12);
-const Color _keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
-const double _maxTextWidth = 350;
+/// ✅ Timing variables (all in ms)
+const int timeBeforeFullOpacity = 1000; // fade in
+const int durationFullOpacity = 1000; // hold full opacity
+const int fadeTime = 800; // fade out
 
-// ✅ Global font-size flag (controls both lines)
-const double kIntroFontSize = 21.0;
-const double kSecondLineSize = kIntroFontSize - 1.5;
+int get totalCycleMs => timeBeforeFullOpacity + durationFullOpacity + fadeTime;
 
-class LessonStepOne extends StatelessWidget {
+// ⭐ NEW: delay before first animation starts
+const int timeBeforeFirstAnimation = 500;
+
+const int staggerMs = 0; // was 400
+const int delayBetweenMs = 1000; // extra pause before repeating loop
+
+const double computerHeight = 200;
+const Offset computerOffset = Offset(70, 40);
+
+final List<Map<String, Offset>> itemTrajectories = [
+  {"begin": Offset(0, 0), "end": Offset(1, 2.2)}, // voice
+  {"begin": Offset(0, 0), "end": Offset(-1, 2.1)}, // notebook
+  {"begin": Offset(0, 0), "end": Offset(1.4, 1)}, // tabular
+  {"begin": Offset(0, 0), "end": Offset(0, 1)}, // recording
+  {"begin": Offset(0, 0), "end": Offset(-1.5, 1)}, // car
+];
+
+class LessonStepOne extends StatefulWidget {
   const LessonStepOne({super.key});
+
+  @override
+  State<LessonStepOne> createState() => _LessonStepOneState();
+}
+
+class _LessonStepOneState extends State<LessonStepOne>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _fadeAnimations;
+  late final List<Animation<Offset>> _moveAnimations;
+
+  final List<String> _dataImages = [
+    "assets/images/voice.png",
+    "assets/images/notebook.png",
+    "assets/images/tabular.png",
+    "assets/images/recording.png",
+    "assets/images/car.jpg",
+  ];
+
+  final List<Offset> _itemOffsets = [
+    Offset(-100, 0), // voice
+    Offset(100, 0), // notebook
+    Offset(-120, 100), // tabular
+    Offset(0, 100), // recording
+    Offset(120, 100), // car
+  ];
+
+  final List<Size> _itemSizes = [
+    Size(70, 70),
+    Size(70, 70),
+    Size(70, 70),
+    Size(70, 70),
+    Size(70, 70),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controllers = List.generate(
+      _dataImages.length,
+      (i) => AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: totalCycleMs),
+      ),
+    );
+
+    _fadeAnimations = _controllers.map((controller) {
+      return TweenSequence([
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 0, end: 1)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: timeBeforeFullOpacity.toDouble(),
+        ),
+        TweenSequenceItem(
+          tween: ConstantTween<double>(1),
+          weight: durationFullOpacity.toDouble(),
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 1, end: 0)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: fadeTime.toDouble(),
+        ),
+      ]).animate(controller);
+    }).toList();
+
+    _moveAnimations = List.generate(_controllers.length, (i) {
+      final begin = itemTrajectories[i]["begin"]!;
+      final end = itemTrajectories[i]["end"]!;
+      return Tween<Offset>(begin: begin, end: end).animate(
+        CurvedAnimation(parent: _controllers[i], curve: Curves.easeIn),
+      );
+    });
+
+    // ⭐ NEW: apply global delay before animations start
+    Future.delayed(Duration(milliseconds: timeBeforeFirstAnimation), () {
+      for (int i = 0; i < _controllers.length; i++) {
+        Future.delayed(Duration(milliseconds: i * staggerMs), () {
+          if (mounted) _startLoop(i);
+        });
+      }
+    });
+  }
+
+  void _startLoop(int i) {
+    _controllers[i].forward().whenComplete(() async {
+      await Future.delayed(const Duration(milliseconds: delayBetweenMs));
+      if (mounted) {
+        _controllers[i].reset();
+        _startLoop(i);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,122 +143,124 @@ class LessonStepOne extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            /// ─────────────────────────────────────────────────────────
-            /// BOX 1: "There are many types of data 📊"
-            /// ─────────────────────────────────────────────────────────
-            LessonText.box(
-              margin: const EdgeInsets.only(bottom: 10, top: 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LessonText.sentence([
-                    LessonText.word("There", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("are", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("many", _mainConceptColor,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("types", _mainConceptColor,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                    LessonText.word("of", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("data", _keyConceptGreen,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                    LessonText.word("📊", _keyConceptGreen,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                  ]),
-                ],
-              ),
-            ),
-
-            /// ─────────────────────────────────────────────────────────
-            /// BOX 2: "Most of which you actually use on a daily basis 😉"
-            /// ─────────────────────────────────────────────────────────
-            LessonText.box(
-              margin: const EdgeInsets.only(bottom: 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LessonText.sentence([
-                    LessonText.word("You", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("might even", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("work", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("with", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("them", const Color.fromARGB(255, 0, 0, 0),
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("every day", _mainConceptColor,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("without knowing 😉", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                  ]),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            /// ─────────────────────────────────────────────────────────
-            /// CHARACTER + DIALOGUE STACK
-            /// ─────────────────────────────────────────────────────────
-            Center(
-              child: SizedBox(
-                width: 400,
-                height: 320,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Character (base layer)
-                    Positioned(
-                      bottom: 0,
-                      left: 10,
-                      child: Image.asset(
-                        "assets/images/data_analyst.png",
-                        width: 280,
-                        height: 280,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-
-                    // Dialogue box (top-right of character)
-                    Positioned(
-                      top: 40,
-                      right: 60,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            "assets/images/dialogue_box.png",
-                            width: 230,
-                            height: 90,
-                            fit: BoxFit.contain,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 18, left: 2),
-                            child: Text(
-                              "Data is \neverywhere",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.lato(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                                height: 1.1,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            /// ✅ Custom tight box centered on screen
+            const SizedBox(height: 10),
+            TightCenterBox(
+              children: [
+                LessonText.word("Data", mainConceptColor,
+                    fontSize: 24, fontWeight: FontWeight.w800),
+                const SizedBox(width: 6),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: LessonText.word("→", Colors.black87,
+                      fontSize: 24, fontWeight: FontWeight.w600),
                 ),
+                const SizedBox(width: 6),
+                LessonText.word("Computer", keyConceptGreen,
+                    fontSize: 24, fontWeight: FontWeight.w800),
+              ],
+            ),
+
+            /// ✅ Animation zone
+            SizedBox(
+              height: 350,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Positioned(
+                    bottom: computerOffset.dy,
+                    left: computerOffset.dx,
+                    child: Image.asset(
+                      "assets/images/computer.png",
+                      height: computerHeight,
+                    ),
+                  ),
+                  for (int i = 0; i < _dataImages.length; i++)
+                    Positioned(
+                      left: MediaQuery.of(context).size.width / 2 +
+                          _itemOffsets[i].dx -
+                          _itemSizes[i].width / 2 -
+                          30,
+                      top: _itemOffsets[i].dy,
+                      child: _buildAnimatedItem(i),
+                    ),
+                ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedItem(int index) {
+    final size = _itemSizes[index];
+
+    return SizedBox(
+      width: size.width,
+      height: size.height,
+      child: AnimatedBuilder(
+        animation: _controllers[index],
+        builder: (context, child) {
+          return Opacity(
+            opacity: _fadeAnimations[index].value,
+            child: FractionalTranslation(
+              translation: _moveAnimations[index].value,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black26),
+          ),
+          child: Image.asset(
+            _dataImages[index],
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 🔹 Clean tight box (always centers text, no extra padding conflicts)
+class TightCenterBox extends StatelessWidget {
+  final List<Widget> children;
+
+  const TightCenterBox({
+    super.key,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.only(right: 8, left: 15, top: 7, bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+          border:
+              Border.all(color: const Color.fromARGB(171, 0, 0, 0), width: 2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: children,
         ),
       ),
     );

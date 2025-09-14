@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 
-/// 🔹 Global font sizes
-const double globalFontSize = 20;
-const double noteTextSize = 20;
+const double globalFontSize = 22;
 
 class LessonStepFour extends StatelessWidget {
   const LessonStepFour({super.key});
@@ -20,105 +17,135 @@ class LessonStepFour extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Intro box
+            // ✅ Examples box: Blue/Red and Yes/No
             LessonText.box(
-              margin: const EdgeInsets.only(top: 10, bottom: 20),
-              child: LessonText.sentence([
-                LessonText.word("Let's", Colors.black87,
-                    fontSize: globalFontSize + 2),
-                LessonText.word("look", Colors.black87,
-                    fontSize: globalFontSize + 2),
-                LessonText.word("at", Colors.black87,
-                    fontSize: globalFontSize + 2),
-                LessonText.word("this", Colors.black87,
-                    fontSize: globalFontSize + 2),
-                LessonText.word("sequence", mainConceptColor,
-                    fontSize: globalFontSize + 2, fontWeight: FontWeight.w800),
-              ]),
-            ),
-
-            // ✅ Binary string box (softer black + surrounding container)
-            Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(8), // outer padding
-              decoration: BoxDecoration(
-                color: Colors.grey[200], // light surround
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Container(
-                width: double.infinity, // ✅ stretch to align with other boxes
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color:
-                      const Color.fromARGB(255, 37, 35, 35), // toned-down black
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "01001000 01100101",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "01101100 01101100 01101111",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+              margin: const EdgeInsets.only(bottom: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LessonText.sentence([
+                    LessonText.word("Computers", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("use", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("'0'", keyConceptGreen,
+                        fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("'1',", keyConceptGreen,
+                        fontSize: globalFontSize, fontWeight: FontWeight.w800),
+                    LessonText.word("but", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("binary", Colors.black,
+                        fontSize: globalFontSize),
+                    LessonText.word("could", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("be:", Colors.black87,
+                        fontSize: globalFontSize),
+                  ]),
+                  LessonText.sentence([
+                    LessonText.word(
+                        "[Blue", const Color.fromARGB(255, 7, 2, 255),
+                        fontSize: globalFontSize, italic: true),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word(
+                        "Red]", const Color.fromARGB(255, 255, 12, 12),
+                        fontSize: globalFontSize, italic: true),
+                    LessonText.word("or", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("[Yes", keyConceptGreen,
+                        fontSize: globalFontSize, italic: true),
+                    LessonText.word("and", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word(
+                        "No]", const Color.fromARGB(255, 157, 0, 205),
+                        fontSize: globalFontSize, italic: true),
+                  ]),
+                ],
               ),
             ),
 
-            // ✅ Explanation box
+            // ✅ New box: Other examples of Binary (pill style, vibrant)
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
-              child: LessonText.sentence([
-                LessonText.word("Believe", const Color.fromARGB(255, 0, 0, 0),
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("it", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("or", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("not,", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("this", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("is", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("how", Colors.black87, fontSize: noteTextSize),
-                LessonText.word("computers", keyConceptGreen,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-                LessonText.word("see the word", Colors.black87,
-                    fontSize: noteTextSize, italic: true),
-                LessonText.word("'Hello'!", mainConceptColor,
-                    fontSize: noteTextSize, fontWeight: FontWeight.w800),
-              ]),
-            ),
-
-            // ✅ Small italic note underneath
-            Padding(
-              padding: const EdgeInsets.only(top: 4, right: 5),
-              child: LessonText.sentence(
-                [
-                  LessonText.word("Note:", Colors.black54,
-                      fontSize: 14, italic: true),
-                  LessonText.word(" this is done via", Colors.black54,
-                      fontSize: 14, italic: true),
-                  LessonText.word("Unicode encoding standard", Colors.black87,
-                      fontSize: 14,
-                      italic: true,
-                      underline: true), // 👈 underline supported now
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LessonText.sentence([
+                    LessonText.word("More examples of Binary", mainConceptColor,
+                        fontSize: globalFontSize, fontWeight: FontWeight.w900),
+                  ]),
+                  const SizedBox(height: 15),
+                  const _ChipWrap(items: [
+                    _BinaryPair(
+                        "Hot", Color(0xFFFF3B30), "Cold", Color(0xFF007AFF)),
+                    _BinaryPair(
+                        "Sun", Color(0xFFFFC700), "Moon", Color(0xFF6F42C1)),
+                    _BinaryPair(
+                        "Open", Color(0xFF34C759), "Closed", Color(0xFFFF9500)),
+                    _BinaryPair("...", Colors.grey, "", Colors.transparent),
+                  ]),
                 ],
-                constrainWidth: false,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ---------- Model for colored pairs ----------
+class _BinaryPair {
+  final String left;
+  final Color leftColor;
+  final String right;
+  final Color rightColor;
+
+  const _BinaryPair(this.left, this.leftColor, this.right, this.rightColor);
+}
+
+// ---------- Pill-style helper ----------
+class _ChipWrap extends StatelessWidget {
+  final List<_BinaryPair> items;
+  const _ChipWrap({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 10,
+      children: items.map((pair) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromARGB(20, 0, 0, 0),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LessonText.word(pair.left, pair.leftColor,
+                  fontSize: 18, fontWeight: FontWeight.w900),
+              if (pair.right.isNotEmpty) ...[
+                LessonText.word(" / ", Colors.black,
+                    fontSize: 18, fontWeight: FontWeight.w700),
+                LessonText.word(pair.right, pair.rightColor,
+                    fontSize: 18, fontWeight: FontWeight.w900),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

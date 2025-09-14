@@ -5,11 +5,18 @@ import 'package:flutter/material.dart';
 /// - No animations/effects; page changes happen immediately.
 /// - Optional width/height to manually size the bubble.
 /// - Bottom-right "Next" button appears only when there are more pages.
+/// - If [finishButton] and [finishCallback] are both provided → show "Finish" button at end.
 class DialogueBox extends StatefulWidget {
   final dynamic content; // Widget or List<Widget>
   final EdgeInsets padding;
   final double? width;
   final double? height;
+
+  /// ✅ NEW: show Finish button at end
+  final bool finishButton;
+
+  /// ✅ NEW: callback when Finish pressed
+  final VoidCallback? finishCallback;
 
   const DialogueBox({
     super.key,
@@ -18,6 +25,8 @@ class DialogueBox extends StatefulWidget {
         const EdgeInsets.fromLTRB(16, 14, 16, 22), // extra bottom for tail
     this.width,
     this.height,
+    this.finishButton = false,
+    this.finishCallback,
   });
 
   @override
@@ -62,17 +71,36 @@ class _DialogueBoxState extends State<DialogueBox> {
       child: bubble,
     );
 
+    final isLastPage = _currentIndex == _pages.length - 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         sized,
-        if (_pages.length > 1 && _currentIndex < _pages.length - 1)
+        if (_pages.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: 8, right: 8),
-            child: ElevatedButton.icon(
-              onPressed: _next,
-              icon: const Icon(Icons.chevron_right),
-              label: const Text("Next"),
+            child: Builder(
+              builder: (_) {
+                if (!isLastPage) {
+                  // ✅ Regular "Next" button
+                  return ElevatedButton.icon(
+                    onPressed: _next,
+                    icon: const Icon(Icons.chevron_right),
+                    label: const Text("Next"),
+                  );
+                } else if (widget.finishButton &&
+                    widget.finishCallback != null) {
+                  // ✅ Show Finish button only if BOTH provided
+                  return ElevatedButton.icon(
+                    onPressed: widget.finishCallback,
+                    icon: const Icon(Icons.check),
+                    label: const Text("Finish"),
+                  );
+                } else {
+                  return const SizedBox.shrink(); // nothing
+                }
+              },
             ),
           ),
       ],
