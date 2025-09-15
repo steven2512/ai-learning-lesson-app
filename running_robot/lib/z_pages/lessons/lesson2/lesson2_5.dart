@@ -23,6 +23,16 @@ class LessonStepFour extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 🔹 NEW: Big header "Main Takeaway"
+                  LessonText.sentence([
+                    LessonText.word("Main", mainConceptColor,
+                        fontSize: 30, fontWeight: FontWeight.w900),
+                    LessonText.word("Takeaway", mainConceptColor,
+                        fontSize: 30, fontWeight: FontWeight.w900),
+                  ]),
+                  const SizedBox(height: 14),
+
+                  // Original content
                   LessonText.sentence([
                     LessonText.word("Computers", Colors.black87,
                         fontSize: globalFontSize),
@@ -34,11 +44,14 @@ class LessonStepFour extends StatelessWidget {
                         fontSize: globalFontSize),
                     LessonText.word("'1',", keyConceptGreen,
                         fontSize: globalFontSize, fontWeight: FontWeight.w800),
-                    LessonText.word("but", Colors.black87,
+                  ]),
+                  LessonText.sentence([
+                    LessonText.word("but", Colors.black,
                         fontSize: globalFontSize),
-                    LessonText.word("binary", Colors.black,
+                    LessonText.word(
+                        "binary", const Color.fromARGB(255, 25, 169, 0),
                         fontSize: globalFontSize),
-                    LessonText.word("could", Colors.black87,
+                    LessonText.word("could also", Colors.black87,
                         fontSize: globalFontSize),
                     LessonText.word("be:", Colors.black87,
                         fontSize: globalFontSize),

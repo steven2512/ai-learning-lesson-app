@@ -17,7 +17,7 @@ const int fadeTime = 800; // fade out
 int get totalCycleMs => timeBeforeFullOpacity + durationFullOpacity + fadeTime;
 
 // ⭐ NEW: delay before first animation starts
-const int timeBeforeFirstAnimation = 500;
+const int timeBeforeFirstAnimation = 200;
 
 const int staggerMs = 0; // was 400
 const int delayBetweenMs = 1000; // extra pause before repeating loop

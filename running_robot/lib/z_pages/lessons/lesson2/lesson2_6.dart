@@ -12,6 +12,101 @@ const double noteTextSize = 20;
 class LessonStepFive extends StatelessWidget {
   const LessonStepFive({super.key});
 
+  void _showUnicodeOverlay(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54, // ✅ semi-translucent background
+      builder: (context) {
+        return Center(
+          child: Container(
+            width: 320,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("How Unicode Works",
+                      style: GoogleFonts.lato(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: mainConceptColor,
+                      )),
+                  const SizedBox(height: 16),
+
+                  // ✅ Steps (split into mini boxes)
+                  LessonText.box(
+                    child: LessonText.sentence([
+                      LessonText.word("1.", Colors.black87, fontSize: 16),
+                      LessonText.word("You type", Colors.black87, fontSize: 16),
+                      LessonText.word("'A'", mainConceptColor,
+                          fontSize: 16, fontWeight: FontWeight.w900),
+                      LessonText.word("on the keyboard.", Colors.black87,
+                          fontSize: 16),
+                    ]),
+                  ),
+                  LessonText.box(
+                    child: LessonText.sentence([
+                      LessonText.word("2.", Colors.black87, fontSize: 16),
+                      LessonText.word("OS maps it to a", Colors.black87,
+                          fontSize: 16),
+                      LessonText.word("Unicode code point", keyConceptGreen,
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                      LessonText.word("(U+0041).", Colors.black87,
+                          fontSize: 16),
+                    ]),
+                  ),
+                  LessonText.box(
+                    child: LessonText.sentence([
+                      LessonText.word("3.", Colors.black87, fontSize: 16),
+                      LessonText.word("Then encoded as", Colors.black87,
+                          fontSize: 16),
+                      LessonText.word("UTF-8 bytes", mainConceptColor,
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                      LessonText.word("(01000001).", Colors.black87,
+                          fontSize: 16),
+                    ]),
+                  ),
+                  LessonText.box(
+                    child: LessonText.sentence([
+                      LessonText.word("4.", Colors.black87, fontSize: 16),
+                      LessonText.word(
+                          "Stored in memory & read by", Colors.black87,
+                          fontSize: 16),
+                      LessonText.word("programs.", keyConceptGreen,
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                    ]),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Got it"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -37,20 +132,19 @@ class LessonStepFive extends StatelessWidget {
               ]),
             ),
 
-            // ✅ Binary string box (softer black + surrounding container)
+            // ✅ Binary string box
             Container(
               margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(8), // outer padding
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.grey[200], // light surround
+                color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Container(
-                width: double.infinity, // ✅ stretch to align with other boxes
+                width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color:
-                      const Color.fromARGB(255, 37, 35, 35), // toned-down black
+                  color: const Color.fromARGB(255, 37, 35, 35),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -99,21 +193,29 @@ class LessonStepFive extends StatelessWidget {
               ]),
             ),
 
-            // ✅ Small italic note underneath
+            // ✅ Small note with clickable word
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 5),
-              child: LessonText.sentence(
-                [
-                  LessonText.word("Note:", Colors.black54,
-                      fontSize: 14, italic: true),
-                  LessonText.word(" this is done via", Colors.black54,
-                      fontSize: 14, italic: true),
-                  LessonText.word("Unicode encoding standard", Colors.black87,
-                      fontSize: 14,
-                      italic: true,
-                      underline: true), // 👈 underline supported now
-                ],
-                constrainWidth: false,
+              child: Center(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    LessonText.word("Note:", Colors.black54,
+                        fontSize: 14, italic: true),
+                    LessonText.word(" this is done via", Colors.black54,
+                        fontSize: 14, italic: true),
+                    GestureDetector(
+                      onTap: () => _showUnicodeOverlay(context),
+                      child: LessonText.word(
+                        "Unicode encoding standard",
+                        Colors.black87,
+                        fontSize: 14,
+                        italic: true,
+                        underline: true,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

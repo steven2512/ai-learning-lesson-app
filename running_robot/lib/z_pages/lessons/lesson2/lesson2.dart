@@ -1,4 +1,6 @@
 // FILE: lib/z_pages/lessons/lesson2/lesson2.dart
+// NOTE: No behavioral changes to the flow. Step 6 now also exposes
+// onRestartRequested so we can hide Continue whenever the user taps Try Again.
 
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/foundation.dart';
@@ -22,9 +24,7 @@ import 'package:running_robot/z_pages/lessons/lesson2/lesson2_7.dart';
 
 import 'lesson2_1.dart'; // StepZero
 import 'lesson2_2.dart'; // StepOne (quiz step)
-import 'lesson2_3.dart'
-    show
-        LessonStepTwo; // ensure we import the updated StepTwo// ✅ new StepThree
+import 'lesson2_3.dart' show LessonStepTwo;
 
 class LessonTwo extends StatefulWidget {
   final AppNavigate onNavigate;
@@ -39,8 +39,8 @@ class _LessonTwoState extends State<LessonTwo> {
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
   final Map<int, double> topOffsets = const {
-    0: 160,
-    1: 170,
+    0: 180,
+    1: 190,
     2: 180,
     3: 250,
     4: 250,
@@ -98,7 +98,7 @@ class _LessonTwoState extends State<LessonTwo> {
           totalChapterLessons: totalChapterLessons,
           topText: "Lesson 2 complete! 🎉",
           repeatLesson: const RouteLesson(2),
-          nextLesson: const RouteMainMenu(),
+          nextLesson: const RouteLesson(3),
           illustrationPath: null,
         ),
       );
@@ -142,7 +142,7 @@ class _LessonTwoState extends State<LessonTwo> {
                           currentStep == 4 ||
                           currentStep == 5)
                       ? true
-                      : ((currentStep == 2 || currentStep == 7)
+                      : ((currentStep == 2 || currentStep == 6)
                           ? answered
                           : false);
 
@@ -192,7 +192,10 @@ class _LessonTwoState extends State<LessonTwo> {
     if (currentStep == 6) {
       return LessonStepSix(
         onCompleted: () {
-          _stepAnswered.value = true;
+          _stepAnswered.value = true; // show Continue only after overlay reveal
+        },
+        onRestartRequested: () {
+          _stepAnswered.value = false; // hide Continue on Try Again
         },
       );
     }

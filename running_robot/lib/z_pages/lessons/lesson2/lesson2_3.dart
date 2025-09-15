@@ -22,7 +22,7 @@ const Duration cursorBlinkInterval = Duration(milliseconds: 500);
 const int maxBufferLength = 400;
 const int wrapEvery = 40;
 const int maxLines =
-    4; // how many lines to type before pausing & showing COMPLETE
+    3; // how many lines to type before pausing & showing COMPLETE
 const double containerWidth = 260;
 const double containerHeight = 140;
 const double overlayOffsetX = 0;
@@ -95,23 +95,16 @@ class _LessonStepTwoState extends State<LessonStepTwo> {
               ]),
             ),
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 40),
+              margin: const EdgeInsets.only(bottom: 5),
               child: LessonText.sentence([
-                LessonText.word("To", Colors.black87, fontSize: 20),
-                LessonText.word("them,", Colors.black87, fontSize: 20),
-                LessonText.word("everything", Colors.black87, fontSize: 20),
-                LessonText.word("is", Colors.black87, fontSize: 20),
-                LessonText.word("just", Colors.black87, fontSize: 20),
-                LessonText.word("a", Colors.black87, fontSize: 20),
-                LessonText.word("sequence", mainConceptColor, fontSize: 20),
-                LessonText.word("of", Colors.black87, fontSize: 20),
-                LessonText.word("the", Colors.black87, fontSize: 20),
-                LessonText.word("number", Colors.black87, fontSize: 20),
-                LessonText.word("'0'", keyConceptGreen,
-                    fontSize: 20, fontWeight: FontWeight.w800),
-                LessonText.word("and", Colors.black87, fontSize: 20),
-                LessonText.word("'1'.", keyConceptGreen,
-                    fontSize: 20, fontWeight: FontWeight.w800),
+                LessonText.word("This", Colors.black87, fontSize: 21),
+                LessonText.word("is", Colors.black87, fontSize: 21),
+                LessonText.word("what", Colors.black87, fontSize: 21),
+                LessonText.word("they", Colors.black87, fontSize: 21),
+                LessonText.word("actually", Color.fromARGB(255, 0, 48, 223),
+                    fontSize: 21),
+                LessonText.word("see", Color.fromARGB(255, 0, 48, 223),
+                    fontSize: 21),
               ]),
             ),
             Center(

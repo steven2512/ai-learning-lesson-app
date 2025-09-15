@@ -1,32 +1,60 @@
-Slide 1+2 (recap):
-“Recap: In Lesson 1, we learnt data can be images, sounds, or text, etc. 
-And in Lesson 2: computers turn it all into 0s and 1s.”
+Slide 1
+Dialouge Box
+"Now you know what data is 'Fire emoji"
+"You may wonder "Why do we care about data?" "
+"How is Data related to AI?"
+Finish
 
-Slide 3 (ease-in question):
-"“But when humans analyze this data, whether images or sound, etc”
-“We don’t see just 0s and 1s.”
-“We look for meaning.”
+Slide 2:
+First box "Think of the Computer as a Student, and Data as the Homework"
+"Ask yourself:
+Without the homework, can the student really practice and improve?"
 
-Slide 4 (quantitative):
-“That's why the first thing we ask is: is this data numbers or categories?”
-Animation
+Some kind of image here links Student Homework to Robot and Data
+
+Slide 3:
+"Data is basically the examples that AI learns from"
+
+"With data, AI can do powerful and useful things to humans"
+
+Slide 4:
+Dialouge box "Let's now see what AI can do with data" (Next, fades away)
 
 Slide 5:
-What is quantitative data (big box)
-“Quantitative data is any information that is numbers”.
-"You can do math with it (add, average, compare)".
+AI predicts future values from patterns in data.
+Animation (some kind of diagram)
 
-Examples: height in centimeters, number of books, test scores, age.
-Give some nice animation
+Slide 6
+Example: AI can guess what TV show you’ll binge next (based on your past shows watched)
 
-Slide 6:
-Some exercises about numbers
+Slide 7:
+AI discovers structure in data without labels.
+Animation + diagram
 
-Slide 7 (transition):
-What is qualitative data?
-“Qualitative data is data that describes categories.”
-"You can group it or sort it, but you can’t do normal math on it."
-Examples: eye color, type of fruit, favorite subject, country of birth.
+Slide 8:
+Example: AI groups songs together
+👉 “Music apps use AI to group similar songs and listeners based on patterns in what people play. 
 
-Slide 8: exercises
-(Exercise here to practice spotting numbers vs categories)
+"It does this without anyone telling it what’s ‘right’ or ‘wrong.’”’”
+
+Slide 9:
+AI creates new text, images, audio, or designs.
+Animation
+
+Slide 10:
+- AI drawing a Japanese Samurai in Van Gogh style
+- AI makes a rap song about spaghtti
+
+Slide 11:
+Dialouge
+- Those are just some prime examples
+- In reality, AI can do even more than that with Data !
+
+
+
+
+
+
+
+
+
