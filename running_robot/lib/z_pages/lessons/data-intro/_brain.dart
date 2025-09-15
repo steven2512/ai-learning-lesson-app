@@ -14,10 +14,10 @@ import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
     as flutter_ui_bar;
 
-import 'package:running_robot/z_pages/lessons/data-intro/s01_data_intro.dart'; // StepZero + StepOne
-import 'package:running_robot/z_pages/lessons/data-intro/s02_comp_data.dart';
-import 'package:running_robot/z_pages/lessons/data-intro/s03_data_types.dart';
-import 'package:running_robot/z_pages/lessons/data-intro/s04_data_quiz.dart';
+import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // StepZero + StepOne
+import 'package:running_robot/z_pages/lessons/data-intro/comp_data.dart';
+import 'package:running_robot/z_pages/lessons/data-intro/data_types.dart';
+import 'package:running_robot/z_pages/lessons/data-intro/data_quiz.dart';
 
 import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;

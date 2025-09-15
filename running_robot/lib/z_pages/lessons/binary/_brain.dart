@@ -16,15 +16,15 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-import 'package:running_robot/z_pages/lessons/binary/s03_0101.dart';
-import 'package:running_robot/z_pages/lessons/binary/s04_binary.dart';
-import 'package:running_robot/z_pages/lessons/binary/s05_bin_example.dart';
-import 'package:running_robot/z_pages/lessons/binary/s06_unicode.dart';
-import 'package:running_robot/z_pages/lessons/binary/s07_bin_drag_drop.dart';
+import 'package:running_robot/z_pages/lessons/binary/comp_0101.dart';
+import 'package:running_robot/z_pages/lessons/binary/binary_intro.dart';
+import 'package:running_robot/z_pages/lessons/binary/bin_example.dart';
+import 'package:running_robot/z_pages/lessons/binary/unicode.dart';
+import 'package:running_robot/z_pages/lessons/binary/binary_game.dart';
 
-import 's01_photo.dart'; // StepZero
-import 's02_music.dart'; // StepOne (quiz step)
-import 's03_0101.dart' show LessonStepTwo;
+import 'photo.dart'; // StepZero
+import 'music.dart'; // StepOne (quiz step)
+import 'comp_0101.dart' show LessonStepTwo;
 
 class LessonTwo extends StatefulWidget {
   final AppNavigate onNavigate;

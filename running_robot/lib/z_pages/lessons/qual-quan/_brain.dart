@@ -11,16 +11,16 @@ import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
-import 'package:running_robot/z_pages/lessons/qual-quan/s01_recap_1.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s10_not_qual.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s02_recap_2.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s03_meaning.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s04_num_cate.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s05_quan_intro.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s06_quan_eg.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s07_not_quan.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s08_qual_intro.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/s09_qual_eg.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/recap_data.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/qual_quiz.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/recap_binary.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/we_meaning.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/num_cate.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/quan_intro.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/quan_quiz.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/not_quan.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/qual_intro.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/qual_eg.dart';
 
 class LessonThree extends StatefulWidget {
   final AppNavigate onNavigate;

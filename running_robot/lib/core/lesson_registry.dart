@@ -1,10 +1,10 @@
 /// FILE: lib/core/lesson_registry.dart
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/z_pages/lessons/data-intro/brain.dart';
-import 'package:running_robot/z_pages/lessons/binary/brain.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/brain.dart';
+import 'package:running_robot/z_pages/lessons/data-intro/_brain.dart';
+import 'package:running_robot/z_pages/lessons/binary/_brain.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/_brain.dart';
 
-import '../z_pages/lessons/qual-game/brain.dart';
+import '../z_pages/lessons/qual-game/_brain.dart';
 
 typedef LessonBuilder = dynamic Function(AppNavigate onNavigate);
 

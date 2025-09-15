@@ -14,7 +14,7 @@ import 'package:running_robot/game/events/event_type.dart'
     show EventProgressBar;
 
 // ⬇️ Your game step moved here (Step7 → Step0 for this lesson)
-import 'package:running_robot/z_pages/lessons/qual-game/s01_catch_qual_game.dart';
+import 'package:running_robot/z_pages/lessons/qual-game/catch_qual_game.dart';
 
 class LessonFour extends StatefulWidget {
   final AppNavigate onNavigate;
