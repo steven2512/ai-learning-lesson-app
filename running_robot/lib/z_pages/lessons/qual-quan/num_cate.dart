@@ -33,14 +33,14 @@ const int firstSpawnDelayMs = 0;
 
 // =================================================================
 
-class LessonStepThree extends StatefulWidget {
-  const LessonStepThree({super.key});
+class NumberAndCategoryIntro extends StatefulWidget {
+  const NumberAndCategoryIntro({super.key});
 
   @override
-  State<LessonStepThree> createState() => _LessonStepThreeState();
+  State<NumberAndCategoryIntro> createState() => _NumberAndCategoryIntroState();
 }
 
-class _LessonStepThreeState extends State<LessonStepThree>
+class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
     with TickerProviderStateMixin {
   final Random _rand = Random();
 

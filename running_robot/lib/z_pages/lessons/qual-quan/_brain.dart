@@ -17,20 +17,20 @@ import 'package:running_robot/z_pages/lessons/qual-quan/recap_binary.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/we_meaning.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/num_cate.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/quan_intro.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/quan_eg.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/quan_quiz.dart';
-import 'package:running_robot/z_pages/lessons/qual-quan/not_quan.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/qual_intro.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/qual_eg.dart';
 
-class LessonThree extends StatefulWidget {
+class QualQuanBrain extends StatefulWidget {
   final AppNavigate onNavigate;
-  const LessonThree({super.key, required this.onNavigate});
+  const QualQuanBrain({super.key, required this.onNavigate});
 
   @override
-  State<LessonThree> createState() => _LessonThreeState();
+  State<QualQuanBrain> createState() => _QualQuanBrainState();
 }
 
-class _LessonThreeState extends State<LessonThree> {
+class _QualQuanBrainState extends State<QualQuanBrain> {
   int currentStep = 0;
 
   final Map<int, double> topOffsets = const {
@@ -157,27 +157,27 @@ class _LessonThreeState extends State<LessonThree> {
   Widget _buildCurrentStep() {
     switch (currentStep) {
       case 0:
-        return const LessonStepZero();
+        return const RecapData();
       case 1:
-        return const LessonStepOne();
+        return const RecapBinary();
       case 2:
-        return const LessonStepTwo();
+        return const HumanLookForMeaning();
       case 3:
-        return const LessonStepThree();
+        return const NumberAndCategoryIntro();
       case 4:
-        return const LessonStepFour();
+        return const QuanIntro();
       case 5:
-        return const LessonStepFive();
+        return const QuanExample();
       case 6:
-        return LessonStepSix(
+        return QuanQuiz(
           onStepCompleted: () => setState(() => _stepSixAnswered = true),
         );
       case 7:
-        return const LessonStepSeven();
+        return const QualIntro();
       case 8:
-        return const LessonStepEight();
+        return const QualExample();
       case 9:
-        return LessonStepNine(
+        return QualQuiz(
           onStepCompleted: () => setState(() => _stepNineAnswered = true),
         );
     }

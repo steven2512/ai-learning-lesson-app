@@ -28,11 +28,11 @@ class _QuizItem {
 
 const double correctTextSize = 20;
 
-class LessonStepThree extends StatefulWidget {
+class DataTypeQuiz extends StatefulWidget {
   final int quizIndex;
   final void Function(int quizIndex) onQuizCompleted;
 
-  const LessonStepThree({
+  const DataTypeQuiz({
     super.key,
     required this.quizIndex,
     required this.onQuizCompleted,
@@ -175,14 +175,14 @@ class LessonStepThree extends StatefulWidget {
   ];
 
   @override
-  State<LessonStepThree> createState() => LessonStepOneState();
+  State<DataTypeQuiz> createState() => LessonStepOneState();
 }
 
-class LessonStepOneState extends State<LessonStepThree> {
+class LessonStepOneState extends State<DataTypeQuiz> {
   bool _answeredCorrect = false;
   bool _triedWrong = false;
 
-  _QuizItem get current => LessonStepThree._quizItems[widget.quizIndex];
+  _QuizItem get current => DataTypeQuiz._quizItems[widget.quizIndex];
 
   void _handleAnswerTap(int selectedIndex) {
     if (selectedIndex == current.correctIndex) {
@@ -201,8 +201,8 @@ class LessonStepOneState extends State<LessonStepThree> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> successMsg =
-        (widget.quizIndex < LessonStepThree.successMessages.length)
-            ? LessonStepThree.successMessages[widget.quizIndex]
+        (widget.quizIndex < DataTypeQuiz.successMessages.length)
+            ? DataTypeQuiz.successMessages[widget.quizIndex]
             : [
                 LessonText.sentence([
                   LessonText.word("Correct", Colors.green.shade800,

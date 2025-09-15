@@ -22,15 +22,15 @@ import 'package:running_robot/z_pages/lessons/data-intro/data_quiz.dart';
 import 'package:running_robot/game/decorations/progress_bar.dart'
     show LessonProgressBar;
 
-class LessonOne extends StatefulWidget {
+class DataIntroBrain extends StatefulWidget {
   final AppNavigate onNavigate;
-  const LessonOne({super.key, required this.onNavigate});
+  const DataIntroBrain({super.key, required this.onNavigate});
 
   @override
-  State<LessonOne> createState() => _LessonOneState();
+  State<DataIntroBrain> createState() => _DataIntroBrainState();
 }
 
-class _LessonOneState extends State<LessonOne> {
+class _DataIntroBrainState extends State<DataIntroBrain> {
   int currentStep = 0;
   final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
 
@@ -46,7 +46,7 @@ class _LessonOneState extends State<LessonOne> {
   };
 
   // CHANGED: we now have 3 pre-quiz steps (0,1,2)
-  int get totalStages => 3 + LessonStepThree.quizCount; // was 2 + ...
+  int get totalStages => 3 + DataTypeQuiz.quizCount; // was 2 + ...
 
   bool _lessonCompleted = false;
   late IconButtonWidget<void> returnButton;
@@ -156,19 +156,19 @@ class _LessonOneState extends State<LessonOne> {
 
   Widget _buildCurrentStep() {
     if (currentStep == 0) {
-      return LessonStepZero(
+      return DataIntroLesson(
         onFinished: () {
           _stepAnswered.value = true; // legacy unlock Continue
         },
         onRequestNext: _goNextStep, // ✅ new direct next API
       );
     }
-    if (currentStep == 1) return const LessonStepOne();
-    if (currentStep == 2) return const LessonStepTwo();
+    if (currentStep == 1) return const ComputerToData();
+    if (currentStep == 2) return const DataTypes();
 
     // CHANGED: first quiz is now at currentStep == 3
     final quizIndex = currentStep - 3; // was currentStep - 2
-    return LessonStepThree(
+    return DataTypeQuiz(
       key: ValueKey('quiz-$quizIndex'),
       quizIndex: quizIndex,
       onQuizCompleted: (index) {

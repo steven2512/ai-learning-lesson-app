@@ -33,14 +33,14 @@ final List<Map<String, Offset>> itemTrajectories = [
   {"begin": Offset(0, 0), "end": Offset(-1.5, 1)}, // car
 ];
 
-class LessonStepOne extends StatefulWidget {
-  const LessonStepOne({super.key});
+class ComputerToData extends StatefulWidget {
+  const ComputerToData({super.key});
 
   @override
-  State<LessonStepOne> createState() => _LessonStepOneState();
+  State<ComputerToData> createState() => _ComputerToDataState();
 }
 
-class _LessonStepOneState extends State<LessonStepOne>
+class _ComputerToDataState extends State<ComputerToData>
     with TickerProviderStateMixin {
   late final List<AnimationController> _controllers;
   late final List<Animation<double>> _fadeAnimations;

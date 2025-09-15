@@ -16,15 +16,15 @@ import 'package:running_robot/game/events/event_type.dart'
 // ⬇️ Your game step moved here (Step7 → Step0 for this lesson)
 import 'package:running_robot/z_pages/lessons/qual-game/catch_qual_game.dart';
 
-class LessonFour extends StatefulWidget {
+class QualGameBrain extends StatefulWidget {
   final AppNavigate onNavigate;
-  const LessonFour({super.key, required this.onNavigate});
+  const QualGameBrain({super.key, required this.onNavigate});
 
   @override
-  State<LessonFour> createState() => _LessonFourState();
+  State<QualGameBrain> createState() => _QualGameBrainState();
 }
 
-class _LessonFourState extends State<LessonFour> {
+class _QualGameBrainState extends State<QualGameBrain> {
   int currentStep = 0;
 
   // Only one step — pick whatever vertical offset you like for the step area
@@ -137,7 +137,7 @@ class _LessonFourState extends State<LessonFour> {
     switch (currentStep) {
       case 0:
         // The game (formerly LessonStepSeven) now exposed as LessonStepZero
-        return LessonStepZero(
+        return CatchQualGame(
           onStepCompleted: () => setState(() => _stepAnswered = true),
         );
     }

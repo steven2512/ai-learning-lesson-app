@@ -23,8 +23,8 @@ Widget recapWord(String label) {
 /// PART 2 WIDGET: Second recap box + dark “binary photo” container box
 /// Class name is LessonStepOne (your requested name for the 2nd file)
 /// ------------------------------------------------------------------------
-class LessonStepOne extends StatelessWidget {
-  const LessonStepOne({super.key});
+class RecapBinary extends StatelessWidget {
+  const RecapBinary({super.key});
 
   @override
   Widget build(BuildContext context) {

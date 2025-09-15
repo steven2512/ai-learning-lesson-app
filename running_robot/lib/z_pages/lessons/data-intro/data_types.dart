@@ -17,8 +17,8 @@ const double _maxTextWidth = 350;
 const double kIntroFontSize = 21.0;
 const double kSecondLineSize = kIntroFontSize - 1.5;
 
-class LessonStepTwo extends StatelessWidget {
-  const LessonStepTwo({super.key});
+class DataTypes extends StatelessWidget {
+  const DataTypes({super.key});
 
   @override
   Widget build(BuildContext context) {

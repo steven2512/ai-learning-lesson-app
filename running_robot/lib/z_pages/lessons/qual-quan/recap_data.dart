@@ -19,8 +19,8 @@ Widget recapWord(String label) {
   );
 }
 
-class LessonStepZero extends StatelessWidget {
-  const LessonStepZero({super.key});
+class RecapData extends StatelessWidget {
+  const RecapData({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -120,15 +120,15 @@ const List<String> _quantitativeWords = <String>[
 
 final Random _rng = Random();
 
-class LessonStepZero extends StatefulWidget {
+class CatchQualGame extends StatefulWidget {
   final VoidCallback? onStepCompleted;
-  const LessonStepZero({super.key, this.onStepCompleted});
+  const CatchQualGame({super.key, this.onStepCompleted});
 
   @override
-  State<LessonStepZero> createState() => _LessonStepZeroState();
+  State<CatchQualGame> createState() => _CatchQualGameState();
 }
 
-class _LessonStepZeroState extends State<LessonStepZero>
+class _CatchQualGameState extends State<CatchQualGame>
     with TickerProviderStateMixin {
   late final AnimationController _ticker;
   late final Timer _spawnTimer;

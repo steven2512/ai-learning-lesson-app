@@ -6,8 +6,8 @@ import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const double lesson3FontSize = 20;
 
-class LessonStepTwo extends StatelessWidget {
-  const LessonStepTwo({super.key});
+class HumanLookForMeaning extends StatelessWidget {
+  const HumanLookForMeaning({super.key});
 
   @override
   Widget build(BuildContext context) {

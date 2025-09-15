@@ -9,8 +9,8 @@ const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptPurple = Color.fromARGB(255, 130, 59, 207);
 const double lesson3FontSize = 20;
 
-class LessonStepEight extends StatelessWidget {
-  const LessonStepEight({super.key});
+class QualExample extends StatelessWidget {
+  const QualExample({super.key});
 
   @override
   Widget build(BuildContext context) {

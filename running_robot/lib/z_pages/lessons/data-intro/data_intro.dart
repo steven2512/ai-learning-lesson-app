@@ -15,11 +15,11 @@ const Color dataOrange = Color(0xFFFF6D00); // Bright Orange
 const double secondLineSize = 20.5;
 const FontWeight secondLineWeight = FontWeight.w800;
 
-class LessonStepZero extends StatelessWidget {
+class DataIntroLesson extends StatelessWidget {
   final VoidCallback onFinished; // ✅ legacy: unlock Continue button
   final VoidCallback? onRequestNext; // ✅ optional: skip Continue and auto next
 
-  const LessonStepZero({
+  const DataIntroLesson({
     super.key,
     required this.onFinished,
     this.onRequestNext,

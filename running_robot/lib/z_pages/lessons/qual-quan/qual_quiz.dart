@@ -9,16 +9,16 @@ const double lesson3FontSize = 20;
 const double feedbackFontSize = 16; // ✅ global font size for feedback
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 
-class LessonStepNine extends StatefulWidget {
+class QualQuiz extends StatefulWidget {
   final VoidCallback? onStepCompleted; // ✅ notify parent when correct
 
-  const LessonStepNine({super.key, this.onStepCompleted});
+  const QualQuiz({super.key, this.onStepCompleted});
 
   @override
-  State<LessonStepNine> createState() => _LessonStepNineState();
+  State<QualQuiz> createState() => _QualQuizState();
 }
 
-class _LessonStepNineState extends State<LessonStepNine> {
+class _QualQuizState extends State<QualQuiz> {
   String? feedbackMessage;
   bool? isCorrectAnswer;
 

@@ -1,16 +1,48 @@
-// lib/z_pages/lessons/LessonTzhee/lesson3_5_quantitative.dart
-// ✅ LessonStepFive — Quantitative actions (measure, math, compare) + examples
+// lib/z_pages/lessons/LessonTzhee/lesson3_5_mcq.dart
+// ✅ LessonStepFive — Tricky MCQ with illustration + tinted feedback box
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
-const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
-const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 const double lesson3FontSize = 20;
+const double feedbackFontSize = 16; // ✅ global font size for feedback
+const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 
-class LessonStepFive extends StatelessWidget {
-  const LessonStepFive({super.key});
+class QuanQuiz extends StatefulWidget {
+  final VoidCallback? onStepCompleted; // ✅ notify parent when correct
+
+  const QuanQuiz({super.key, this.onStepCompleted});
+
+  @override
+  State<QuanQuiz> createState() => _QuanQuizState();
+}
+
+class _QuanQuizState extends State<QuanQuiz> {
+  String? feedbackMessage;
+  bool? isCorrectAnswer;
+
+  void _showFeedback(int index, bool isCorrect) {
+    setState(() {
+      isCorrectAnswer = isCorrect;
+      if (isCorrect) {
+        feedbackMessage =
+            "Correct ✅ There is no real meaning to calculate or measure phone numbers";
+        widget.onStepCompleted?.call(); // ✅ trigger completion event
+      } else if (index == 1) {
+        feedbackMessage = "Incorrect ❌ You can measure and calculate with age.";
+      } else if (index == 2) {
+        feedbackMessage =
+            "Incorrect ❌ You can measure and calculate with height.";
+      } else if (index == 3) {
+        feedbackMessage =
+            "Incorrect ❌ You can measure and calculate with weight.";
+      } else {
+        feedbackMessage = "Incorrect ❌ This can be measured.";
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,169 +51,80 @@ class LessonStepFive extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========== Math Box ==========
+          // 🟦 Question box
           LessonText.box(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LessonText.sentence([
-                  LessonText.word("You", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("can", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("measure", keyConceptGreen,
-                      fontSize: lesson3FontSize,
-                      fontWeight: FontWeight.w900,
-                      italic: true),
-                  LessonText.word("and", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("calculate", keyConceptGreen,
-                      fontSize: lesson3FontSize,
-                      fontWeight: FontWeight.w900,
-                      italic: true),
-                  LessonText.word("with", Colors.black87,
-                      fontSize: lesson3FontSize),
-                  LessonText.word("quantitative data",
-                      const Color.fromARGB(221, 255, 115, 0),
-                      fontSize: lesson3FontSize),
-                ]),
-                const SizedBox(height: 10),
-                const _ActionRow(actions: [
-                  _Action(icon: Icons.straighten, label: "Measure"),
-                  _Action.custom(label: "Math"), // Custom box for + - × ÷
-                  _Action(icon: Icons.compare_arrows, label: "Compare"),
-                ]),
-              ],
+            margin: const EdgeInsets.only(bottom: 18),
+            child: LessonText.sentence([
+              LessonText.word("Which", Colors.black87,
+                  fontSize: lesson3FontSize),
+              LessonText.word("one", Colors.black87, fontSize: lesson3FontSize),
+              LessonText.word("is", Colors.black87, fontSize: lesson3FontSize),
+              LessonText.word("NOT", Colors.red,
+                  fontSize: lesson3FontSize,
+                  fontWeight: FontWeight.w900,
+                  italic: true),
+              LessonText.word("quantitative", mainConceptColor,
+                  fontSize: lesson3FontSize, fontWeight: FontWeight.w900),
+              LessonText.word("data?", Colors.black87,
+                  fontSize: lesson3FontSize),
+            ]),
+          ),
+
+          // 🟦 Illustration box
+          LessonText.box(
+            margin: const EdgeInsets.only(bottom: 18),
+            child: Center(
+              child: Image.asset(
+                "assets/images/quantitative_not.png",
+                height: 180,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          // ========== Examples Box ==========
-          LessonText.box(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LessonText.sentence([
-                  LessonText.word("Examples of", Colors.black, fontSize: 20),
-                  LessonText.word(
-                    "Quantitative Data",
-                    const Color.fromARGB(255, 255, 123, 0),
-                    fontSize: 20,
-                  ),
-                ]),
-                const SizedBox(height: 15),
-                const _ChipWrap(items: [
-                  "Height",
-                  "Distance",
-                  "Salary",
-                  "Population Size",
-                  "IQ Score"
-                ]),
-              ],
-            ),
+          // 🟦 MCQ Box
+          MCQBox(
+            correctAnswer: 0, // Phone number ❌
+            answers: [
+              "Phone number",
+              "Age (years)",
+              "Height (cm)",
+              "Weight (kg)",
+            ],
+            lockCorrectAnswer: true,
+            answerFill: Colors.white,
+            onAnswerTap: _showFeedback,
           ),
+
+          // 🟦 Feedback box (tinted)
+          if (feedbackMessage != null)
+            LessonText.box(
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isCorrectAnswer == true
+                    ? Colors.green.shade50
+                    : Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (isCorrectAnswer == true ? Colors.green : Colors.red)
+                      .withOpacity(0.4),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                feedbackMessage!,
+                style: GoogleFonts.lato(
+                  fontSize: feedbackFontSize,
+                  fontWeight: FontWeight.w600,
+                  color: isCorrectAnswer == true
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                ),
+              ),
+            ),
         ],
       ),
-    );
-  }
-}
-
-// ---------- Small helpers ----------
-class _Action {
-  final IconData? icon;
-  final String label;
-  final bool isCustom;
-
-  const _Action({this.icon, required this.label}) : isCustom = false;
-  const _Action.custom({required this.label})
-      : icon = null,
-        isCustom = true;
-}
-
-class _ActionRow extends StatelessWidget {
-  final List<_Action> actions;
-  const _ActionRow({required this.actions});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: actions
-          .map(
-            (a) => Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 250, 250, 250),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    a.isCustom
-                        ? Text(
-                            "+ − × ÷",
-                            style: GoogleFonts.lato(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: keyConceptGreen,
-                            ),
-                          )
-                        : Icon(a.icon, size: 32, color: keyConceptGreen),
-                    const SizedBox(height: 6),
-                    Text(
-                      a.label,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.lato(
-                          fontSize: 14, fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _ChipWrap extends StatelessWidget {
-  final List<String> items; // Just labels now
-  const _ChipWrap({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 4,
-      runSpacing: 10,
-      children: items
-          .map(
-            (label) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.black12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromARGB(20, 0, 0, 0),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: LessonText.word(
-                label,
-                Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          )
-          .toList(),
     );
   }
 }
