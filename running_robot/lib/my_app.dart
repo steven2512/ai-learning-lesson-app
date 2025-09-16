@@ -4,7 +4,7 @@ import 'package:flame/game.dart';
 
 // Typed routes
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/core/lesson_registry.dart';
+import 'package:running_robot/core/lesson_manifest.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
 import 'package:running_robot/z_pages/root_nav.dart';
 
@@ -34,10 +34,8 @@ class _MyAppState extends State<MyApp> {
     }
 
     if (route is RouteLesson) {
-      final builder = lessonRegistry[route.lessonNumber];
-      if (builder != null) {
-        return builder(navigate);
-      }
+      final lesson = lessonManifest[route.lessonNumber - 1];
+      return lesson.builder(navigate);
     }
 
     if (route is RouteEndLesson) {
