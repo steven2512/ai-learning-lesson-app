@@ -1,3 +1,4 @@
+// lib/my_app.dart
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:flame/game.dart';
@@ -18,6 +19,10 @@ class _MyAppState extends State<MyApp> {
   AppRoute _route = const RouteMainMenu();
   int _sceneKey = 0;
 
+  // 🔹 Flatten chapter → lessons once for easy lookup
+  List<LessonMeta> get _allLessons =>
+      chapterManifest.expand((c) => c.lessons).toList();
+
   void navigate(AppRoute route) {
     setState(() {
       _route = route;
@@ -34,7 +39,8 @@ class _MyAppState extends State<MyApp> {
     }
 
     if (route is RouteLesson) {
-      final lesson = lessonManifest[route.lessonNumber - 1];
+      // 🔹 Use flattened list, not lessonManifest
+      final lesson = _allLessons[route.lessonNumber - 1];
       return lesson.builder(navigate);
     }
 

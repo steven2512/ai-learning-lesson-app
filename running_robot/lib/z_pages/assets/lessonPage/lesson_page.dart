@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:running_robot/core/app_router.dart'
     show AppNavigate, RouteLesson;
+import 'package:running_robot/core/lesson_manifest.dart'; // 🔹 for semantic lessons
 import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
 
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
@@ -11,28 +12,25 @@ import 'package:running_robot/z_pages/assets/lessonPage/chapter_pill.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_node.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/path_painter.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_box.dart';
-import 'package:running_robot/z_pages/assets/lessonPage/lesson_names.dart';
 
-/// ===== Global gaps (map layout) =====
+// ===== Global gaps (map layout) =====
 const double kPillTopGap = 25.0;
 const double kMapTopGap = 100.0;
 
-/// ===== Focus animation settings (separate in/out) =====
-const Duration kFocusZoomInDuration =
-    Duration(milliseconds: 650); // zoom into node
-const Duration kUnfocusZoomOutDuration =
-    Duration(milliseconds: 450); // zoom back to map
+// ===== Focus animation settings =====
+const Duration kFocusZoomInDuration = Duration(milliseconds: 650);
+const Duration kUnfocusZoomOutDuration = Duration(milliseconds: 450);
 const double kFocusedScale = 1.50;
 
-/// ===== Position of focused node (relative to screen) =====
+// ===== Position of focused node (relative to screen) =====
 const double kTargetXFactor = 0.57;
 const double kTargetYFactor = 0.35;
 
-/// ===== Blur/opacity settings =====
+// ===== Blur/opacity settings =====
 const double kMaxBlur = 6.0;
 const double kMinOpacity = 0.0;
 
-/// ===== Light beam settings =====
+// ===== Light beam settings =====
 const double kBeamWidth = 100;
 const double kBeamHeight = 90;
 const Color kBeamColor = Colors.blueAccent;
@@ -41,24 +39,17 @@ const double kBeamXOffset = -19.5;
 const Duration kBeamDelay = Duration(milliseconds: 200);
 const Duration kBeamDuration = Duration(milliseconds: 300);
 
-/// ===== Box animation settings =====
+// ===== Box animation settings =====
 const Duration kBoxDelay = Duration(milliseconds: 0);
 const Duration kBoxAnimDuration = Duration(milliseconds: 500);
 
-/// ===== UI fade/size knobs (direction-aware & separated) =====
-/// Chapter pill
+// ===== UI fade/size knobs =====
 const Duration kChapterTopPillFadeOutDuration = Duration(milliseconds: 300);
 const Duration kChapterTopPillFadeInDuration = Duration(milliseconds: 500);
-
-/// Map path ONLY
 const Duration kPathFadeOutDuration = Duration(milliseconds: 260);
 const Duration kPathFadeInDuration = Duration(milliseconds: 450);
-
-/// Non-selected lesson nodes ONLY (their blur/opacity)
 const Duration kNodeFadeOutDuration = Duration(milliseconds: 260);
 const Duration kNodeFadeInDuration = Duration(milliseconds: 450);
-
-/// Curve + dropdown size anim
 const Curve kUiFadeCurve = Curves.easeInOut;
 const Duration kUiSizeDuration = Duration(milliseconds: 300);
 
@@ -91,40 +82,32 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   final GlobalKey _pillKey = GlobalKey();
   double? _pillWidth;
 
-  // [LOCK] gate all input during the zoom animation
   bool _inputLocked = false;
+  bool get _isFocused => _selectedNodeIndex != null;
 
-  bool get _isFocused => _selectedNodeIndex != null; // [FOCUS]
-
-  // Invalidate pending async work when state changes fast
-  int _session = 0; // monotonically increasing token
-  int? _beamSession; // token captured when beam starts
+  int _session = 0;
+  int? _beamSession;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    _pulseController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat(reverse: true);
 
     _scrollController = ScrollController();
 
-    _focusController = AnimationController(
-      vsync: this,
-      duration: kFocusZoomInDuration, // default forward duration
-    );
+    _focusController =
+        AnimationController(vsync: this, duration: kFocusZoomInDuration);
 
-    _beamController = AnimationController(
-      vsync: this,
-      duration: kBeamDuration,
-    )..addStatusListener((status) async {
+    _beamController = AnimationController(vsync: this, duration: kBeamDuration)
+      ..addStatusListener((status) async {
         if (status == AnimationStatus.completed) {
           final int? tokenAtStart = _beamSession;
           await Future.delayed(kBoxDelay);
           if (!mounted) return;
           if (!_isFocused || tokenAtStart == null || tokenAtStart != _session) {
-            return; // stale; do nothing
+            return;
           }
           setState(() => _showBox = true);
           _boxController.forward(from: 0);
@@ -136,16 +119,12 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         }
       });
 
-    _boxController = AnimationController(
-      vsync: this,
-      duration: kBoxAnimDuration,
-    );
+    _boxController =
+        AnimationController(vsync: this, duration: kBoxAnimDuration);
 
-    // Precache image + measure pill width
     WidgetsBinding.instance.addPostFrameCallback((_) {
       precacheImage(
           const AssetImage("assets/images/robot_family.jpg"), context);
-
       final renderBox =
           _pillKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
@@ -164,11 +143,10 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Scales a 0..1 progress 'p' to finish in 'desiredDur' while the controller runs for 'animDur'
   double _scaleProgress(double p, Duration animDur, Duration desiredDur) {
     final int animMs = animDur.inMilliseconds;
     final int wantMs = desiredDur.inMilliseconds;
-    if (wantMs <= 0) return p > 0 ? 1.0 : 0.0; // instant after first tick
+    if (wantMs <= 0) return p > 0 ? 1.0 : 0.0;
     final double scaled = p * (animMs / wantMs);
     return scaled.clamp(0.0, 1.0);
   }
@@ -180,7 +158,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
       _selectedNodeIndex = index;
       _showBox = false;
       _showBeam = false;
-      _dropdownOpen = false; // keep UI clean when focusing
+      _dropdownOpen = false;
       _inputLocked = true;
     });
 
@@ -190,7 +168,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _boxController.stop();
     _boxController.reset();
 
-    // ensure forward duration
     _focusController.duration = kFocusZoomInDuration;
     await _focusController.forward(from: 0);
 
@@ -223,7 +200,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _beamController.stop();
     _beamController.value = 0.0;
 
-    // reverse with its own duration (controls non-selected nodes "fade-in" & zoom-out)
     _focusController.stop();
     _focusController.animateBack(
       0.0,
@@ -235,7 +211,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     _boxController.reset();
   }
 
-  // [FOCUS] compute target in map's coordinate space (scroll-aware)
   double _targetX(Size screen) => screen.width * kTargetXFactor;
   double _targetY(Size screen) {
     final scrollY =
@@ -245,12 +220,14 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final chapters = List.generate(9, (i) => i + 1);
+    final chapters = List.generate(chapterManifest.length, (i) => i + 1);
     final double statusBar = MediaQuery.of(context).padding.top;
 
-    final mapSize = LessonMapGeometry.mapSize(context);
-    final path = LessonMapGeometry.pathFor(_currentChapter, mapSize);
-    final nodes = LessonMapGeometry.nodesFor(_currentChapter, mapSize);
+    final lessonCount = chapterManifest[_currentChapter - 1].lessons.length;
+
+    final mapSize = LessonMapGeometry.mapSize(context, lessonCount);
+    final path = LessonMapGeometry.pathFor(lessonCount, mapSize);
+    final nodes = LessonMapGeometry.nodesFor(lessonCount, mapSize);
 
     final screen = MediaQuery.of(context).size;
 
@@ -276,7 +253,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                   padding: const EdgeInsets.only(top: kMapTopGap),
                   child: Stack(
                     children: [
-                      // Map path fade with separate IN/OUT durations
                       AnimatedOpacity(
                         opacity: _selectedNodeIndex == null ? 1.0 : 0.0,
                         duration: (_selectedNodeIndex == null)
@@ -302,7 +278,6 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
             left: 0,
             right: 0,
             child: AnimatedOpacity(
-              // Pill fade with separate IN/OUT durations
               opacity: _isFocused ? 0.0 : 1.0,
               duration: _isFocused
                   ? kChapterTopPillFadeOutDuration
@@ -361,17 +336,22 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: GestureDetector(
-                    onTap: () {}, // absorb taps on box surface
+                    onTap: () {},
                     behavior: HitTestBehavior.translucent,
                     child: LessonBox(
                       pictureLink: "assets/images/robot_family2.jpg",
                       lessonTitle:
                           "Lesson $_currentChapter.${_selectedNodeIndex! + 1}",
-                      titleText:
-                          "${lessonTitles[_currentChapter - 1][_selectedNodeIndex!]}",
+                      titleText: chapterManifest[_currentChapter - 1]
+                          .lessons[_selectedNodeIndex!]
+                          .title,
                       buttonText: "Continue Lesson",
                       onNavigate: () {
-                        final globalLessonIndex = (_currentChapter - 1) * 9 +
+                        // 🔹 Compute global lesson index by summing all previous chapter lengths
+                        final globalLessonIndex = chapterManifest
+                                .take(_currentChapter - 1)
+                                .fold<int>(0,
+                                    (sum, chap) => sum + chap.lessons.length) +
                             (_selectedNodeIndex! + 1);
                         widget.onNavigate(RouteLesson(globalLessonIndex));
                       },
@@ -411,10 +391,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
             surfaceTintColor: Colors.transparent,
           ),
         ),
-        body: AbsorbPointer(
-          absorbing: _inputLocked,
-          child: content,
-        ),
+        body: AbsorbPointer(absorbing: _inputLocked, child: content),
       ),
     );
   }
@@ -479,31 +456,26 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
         );
       }
 
-      // Other (non-selected) nodes: fade/blur independently of zoom duration
       return AnimatedBuilder(
         animation: _focusController,
         builder: (context, child) {
           final status = _focusController.status;
           final t = _focusController.value;
 
-          // Forward = focusing (fade OUT), Reverse = clearing focus (fade IN)
           final bool isForward = status == AnimationStatus.forward ||
               (status == AnimationStatus.completed && _isFocused);
 
           double effectiveT;
           if (isForward) {
-            // progress 0→1 during focus
             final p = t;
             final pScaled =
                 _scaleProgress(p, kFocusZoomInDuration, kNodeFadeOutDuration);
-            effectiveT = pScaled; // 0..1, controls fade OUT
+            effectiveT = pScaled;
           } else {
-            // progress 0→1 while unfocusing; map to fade IN
-            final p = 1.0 - t; // 0..1 as we animate back
+            final p = 1.0 - t;
             final pScaled =
                 _scaleProgress(p, kUnfocusZoomOutDuration, kNodeFadeInDuration);
-            effectiveT = 1.0 -
-                pScaled; // transform back to 1→0 (remove blur, restore opacity)
+            effectiveT = 1.0 - pScaled;
           }
 
           final blur = lerpDouble(0, kMaxBlur, effectiveT)!;
@@ -522,7 +494,7 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
           );
         },
         child: IgnorePointer(
-          ignoring: _isFocused, // when focused, taps go through to background
+          ignoring: _isFocused,
           child: node,
         ),
       );
@@ -530,9 +502,8 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 }
 
-/// =========================
-/// LIGHT BEAM WIDGET
-/// =========================
+// =========================
+/// LIGHT BEAM WIDGET (unchanged)
 class LightBeam extends StatelessWidget {
   final Offset origin;
   final double width;
