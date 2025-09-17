@@ -53,7 +53,7 @@ const double kHeaderBoxesTopMargin = 70.0;
 const double kIntroBoxesTopMargin = 100.0;
 
 /// 🧷 keep the top-left area (close button + progress bar) tappable
-const double kTopSafeInsetForClose = 108.0;
+const double kTopSafeInsetForClose = 205.0;
 
 /// 🎯 End-box & stats alignment (left icon/text gutter & right chip gutter)
 const double kStatsLeftGutter = 8.0;
