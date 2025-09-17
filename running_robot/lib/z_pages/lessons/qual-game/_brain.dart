@@ -25,6 +25,7 @@ class _QualGameBrainState extends BaseLessonBrainState<QualGameBrain> {
           mechanic: LessonMechanic.emit,
           build: (done, reset) => CatchQualGame(
             onStepCompleted: done,
+            onReset: reset, // 👈 now connected
           ),
         ),
       ];

@@ -122,7 +122,9 @@ final Random _rng = Random();
 
 class CatchQualGame extends StatefulWidget {
   final VoidCallback? onStepCompleted;
-  const CatchQualGame({super.key, this.onStepCompleted});
+  final VoidCallback? onReset; // 👈 add this
+
+  const CatchQualGame({super.key, this.onStepCompleted, this.onReset});
 
   @override
   State<CatchQualGame> createState() => _CatchQualGameState();
@@ -460,8 +462,10 @@ class _CatchQualGameState extends State<CatchQualGame>
   }
 
   void _startGame() {
+    widget.onReset?.call(); // 👈 hide Continue on Try Again
+
     setState(() {
-      _inEndSequence = false; // we’re starting fresh; allow pre-game next time
+      _inEndSequence = false;
       _active.clear();
       _fx.clear();
       _score = 0;
@@ -477,8 +481,7 @@ class _CatchQualGameState extends State<CatchQualGame>
       _compactSlidUp = false;
       _revealed = false;
       _glowNow = false;
-
-      _started = true; // 🎬 fade in HUD & basket, enable input plane
+      _started = true;
     });
   }
 
@@ -602,14 +605,24 @@ class _CatchQualGameState extends State<CatchQualGame>
             ),
 
             // INPUT PLANE — full-screen, only while playing
+            // ✅ Updated input plane: ignores touches in the top safe inset
             if (_started && !_showEndBox)
               Positioned.fill(
                 child: Listener(
-                  behavior: HitTestBehavior.opaque,
-                  onPointerDown: (e) =>
-                      _moveBasketToTap(e.localPosition.dx), // quick snap-to
-                  onPointerMove: (e) =>
-                      _moveBasketByDrag(e.delta.dx), // buttery follow
+                  behavior: HitTestBehavior
+                      .translucent, // allow pass-through when not handled
+                  onPointerDown: (e) {
+                    if (e.localPosition.dy > kTopSafeInsetForClose) {
+                      _moveBasketToTap(e.localPosition.dx);
+                    }
+                    // else: do nothing, let tap fall through
+                  },
+                  onPointerMove: (e) {
+                    if (e.localPosition.dy > kTopSafeInsetForClose) {
+                      _moveBasketByDrag(e.delta.dx);
+                    }
+                    // else: ignore drag in top safe zone
+                  },
                 ),
               ),
 
@@ -784,6 +797,28 @@ class _CatchQualGameState extends State<CatchQualGame>
                     Colors.blue),
                 _statRow(
                     "📉 Qualitative missed", _qualitativeMissed, Colors.orange),
+                const SizedBox(height: 14),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: _startGame,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text("Try Again"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 4, 160, 124),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 12),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
               ] else ...[
                 const SizedBox(height: 6),
                 LessonText.sentence(
