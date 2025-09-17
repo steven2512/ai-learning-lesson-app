@@ -1,3 +1,4 @@
+// FILE: lib/core/base_lesson_brain.dart
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/lesson_navigator.dart';
@@ -15,7 +16,7 @@ enum LessonMechanic { manual, emit, auto }
 class SubLesson {
   final double topOffset;
   final LessonMechanic mechanic;
-  final Widget Function(VoidCallback onComplete) build;
+  final Widget Function(VoidCallback onComplete, VoidCallback onReset) build;
 
   const SubLesson({
     required this.topOffset,
@@ -32,6 +33,7 @@ abstract class BaseLessonBrain extends StatefulWidget {
   String get lessonId;
 }
 
+/// Shared state implementation for all lessons
 abstract class BaseLessonBrainState<T extends BaseLessonBrain>
     extends State<T> {
   int currentIndex = 0;
@@ -103,7 +105,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               if (sub.mechanic == LessonMechanic.auto) {
                 goNext();
               }
-            }),
+            }, resetAnswer),
           ),
 
           // continue button

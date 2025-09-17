@@ -1,10 +1,11 @@
+// FILE: lib/z_pages/lessons/binary-intro/_brain.dart
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 
 // legacy steps
-import 'photo.dart';
-import 'music.dart';
+import 'photo.dart'; // HumanSeePhoto
+import 'music.dart'; // HumanHearMusic
 import 'comp_0101.dart' show ComputerSeeZeroOne;
 import 'binary_intro.dart';
 import 'bin_example.dart';
@@ -28,22 +29,22 @@ class _BinaryIntroBrainState extends BaseLessonBrainState<BinaryIntroBrain> {
         SubLesson(
           topOffset: 180,
           mechanic: LessonMechanic.manual,
-          build: (_) => const HumanSeePhoto(),
+          build: (_, __) => const HumanSeePhoto(),
         ),
         SubLesson(
           topOffset: 190,
           mechanic: LessonMechanic.manual,
-          build: (_) => const HumanHearMusic(),
+          build: (_, __) => const HumanHearMusic(),
         ),
         SubLesson(
           topOffset: 180,
           mechanic: LessonMechanic.emit,
-          build: (done) => ComputerSeeZeroOne(onStarted: done),
+          build: (done, __) => ComputerSeeZeroOne(onStarted: done),
         ),
         SubLesson(
           topOffset: 250,
           mechanic: LessonMechanic.auto,
-          build: (done) => BinaryIntro(
+          build: (done, __) => BinaryIntro(
             onFinished: done,
             onRequestNext: done,
           ),
@@ -51,19 +52,19 @@ class _BinaryIntroBrainState extends BaseLessonBrainState<BinaryIntroBrain> {
         SubLesson(
           topOffset: 250,
           mechanic: LessonMechanic.manual,
-          build: (_) => BinaryExample(),
+          build: (_, __) => BinaryExample(),
         ),
         SubLesson(
           topOffset: 250,
           mechanic: LessonMechanic.manual,
-          build: (_) => HelloInUnicode(),
+          build: (_, __) => HelloInUnicode(),
         ),
         SubLesson(
           topOffset: 120,
           mechanic: LessonMechanic.emit,
-          build: (done) => BinaryDragDropGame(
+          build: (done, reset) => BinaryDragDropGame(
             onCompleted: done,
-            onRestartRequested: resetAnswer, // ✅ clean + works
+            onRestartRequested: reset, // ✅ uses the parent resetAnswer
           ),
         ),
       ];

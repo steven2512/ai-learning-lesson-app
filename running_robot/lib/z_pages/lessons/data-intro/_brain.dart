@@ -1,179 +1,62 @@
 // FILE: lib/z_pages/lessons/lesson1/lesson1.dart
-// ✅ Minimal changes: StepZero can now either unlock Continue (legacy)
-// ✅ Or call onRequestNext to skip Continue and auto-proceed.
-
-import 'package:flame/components.dart' show Vector2;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/game/events/event_type.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
-    as flutter_ui_bar;
+import 'package:running_robot/core/base_lesson_brain.dart';
 
+// legacy lesson steps
 import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // StepZero + StepOne
 import 'package:running_robot/z_pages/lessons/data-intro/comp_data.dart';
 import 'package:running_robot/z_pages/lessons/data-intro/data_types.dart';
 import 'package:running_robot/z_pages/lessons/data-intro/data_quiz.dart';
 
-import 'package:running_robot/game/decorations/progress_bar.dart'
-    show LessonProgressBar;
+class DataIntroBrain extends BaseLessonBrain {
+  const DataIntroBrain({super.key, required AppNavigate onNavigate})
+      : super(onNavigate: onNavigate);
 
-class DataIntroBrain extends StatefulWidget {
-  final AppNavigate onNavigate;
-  const DataIntroBrain({super.key, required this.onNavigate});
+  @override
+  String get lessonId => "data-intro";
 
   @override
   State<DataIntroBrain> createState() => _DataIntroBrainState();
 }
 
-class _DataIntroBrainState extends State<DataIntroBrain> {
-  int currentStep = 0;
-  final ValueNotifier<bool> _stepAnswered = ValueNotifier(false);
-
-  final Map<int, double> topOffsets = const {
-    0: 280, // StepZero
-    1: 220, // StepOne
-    2: 150, // StepTwo
-    3: 160,
-    4: 160,
-    5: 160,
-    6: 160,
-    7: 160
-  };
-
-  // CHANGED: we now have 3 pre-quiz steps (0,1,2)
-  int get totalStages => 3 + DataTypeQuiz.quizCount; // was 2 + ...
-
-  bool _lessonCompleted = false;
-  late IconButtonWidget<void> returnButton;
-
+class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   @override
-  void initState() {
-    super.initState();
-    returnButton = IconButtonWidget<void>(
-      iconPath: 'assets/images/x_icon.png',
-      tint: Colors.black87,
-      size: 22,
-      onPressed: (_) => widget.onNavigate(const RouteMainMenu(tab: 0)),
-    );
-  }
-
-  void _goNextStep() {
-    if (currentStep < totalStages - 1) {
-      setState(() {
-        currentStep++;
-        _stepAnswered.value = false;
-      });
-    } else {
-      setState(() {
-        _lessonCompleted = true;
-        _stepAnswered.value = false;
-      });
-
-      final endBar = LessonProgressBar(
-        position: Vector2.zero(),
-        stages: totalStages,
-      );
-      for (int i = 0; i < totalStages; i++) {
-        endBar.switchPhase(EventProgressBar.proceed);
-      }
-
-      const int xp = 50;
-      const int streak = 1;
-      const int chapterProgress = 1;
-      const int totalChapterLessons = 10;
-
-      widget.onNavigate(
-        RouteEndLesson(
-          xp: xp,
-          streak: streak,
-          progressBar: endBar,
-          chapterProgress: chapterProgress,
-          totalChapterLessons: totalChapterLessons,
-          topText: "Lesson 1 complete! 🎉",
-          illustrationPath: null,
-          repeatLesson: const RouteLesson(1),
-          nextLesson: const RouteLesson(2),
+  List<SubLesson> buildSubLessons() => [
+        // Step 0 → Intro with conditional continue
+        SubLesson(
+          topOffset: 280,
+          mechanic: LessonMechanic.auto, // ✅ auto, not manual
+          build: (done, reset) => DataIntroLesson(
+            onFinished: () => done(), // fallback if needed
+            onRequestNext: () => goNext(), // skip Continue if triggered
+          ),
         ),
-      );
-    }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final double topOffset = topOffsets[currentStep] ?? 120;
+        // Step 1 → Computer to Data
+        SubLesson(
+          topOffset: 220,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const ComputerToData(),
+        ),
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned(
-            top: 70,
-            left: MediaQuery.of(context).size.width / 2 - (279 / 2),
-            child: flutter_ui_bar.LessonProgressBar(
-              totalStages: totalStages,
-              currentStage: _lessonCompleted ? totalStages : currentStep,
+        // Step 2 → Data Types
+        SubLesson(
+          topOffset: 150,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const DataTypes(),
+        ),
+
+        // Steps 3+ → Dynamic quiz pages
+        for (int i = 0; i < DataTypeQuiz.quizCount; i++)
+          SubLesson(
+            topOffset: 160,
+            mechanic: LessonMechanic.emit,
+            build: (done, reset) => DataTypeQuiz(
+              key: ValueKey('quiz-$i'),
+              quizIndex: i,
+              onQuizCompleted: (_) => done(),
             ),
           ),
-          Positioned(top: 69, left: 30, child: returnButton),
-          Positioned.fill(
-            top: topOffset,
-            bottom: 100,
-            child: _buildCurrentStep(),
-          ),
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _stepAnswered,
-                builder: (context, answered, _) {
-                  if (_lessonCompleted) return const SizedBox.shrink();
-
-                  // also unlock Continue on step 2 (LessonStepTwo)
-                  final showContinue = (currentStep == 0)
-                      ? answered
-                      : ((currentStep == 1 || currentStep == 2)
-                          ? true
-                          : answered);
-
-                  if (!showContinue) return const SizedBox.shrink();
-
-                  return ContinueButton(onPressed: _goNextStep);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCurrentStep() {
-    if (currentStep == 0) {
-      return DataIntroLesson(
-        onFinished: () {
-          _stepAnswered.value = true; // legacy unlock Continue
-        },
-        onRequestNext: _goNextStep, // ✅ new direct next API
-      );
-    }
-    if (currentStep == 1) return const ComputerToData();
-    if (currentStep == 2) return const DataTypes();
-
-    // CHANGED: first quiz is now at currentStep == 3
-    final quizIndex = currentStep - 3; // was currentStep - 2
-    return DataTypeQuiz(
-      key: ValueKey('quiz-$quizIndex'),
-      quizIndex: quizIndex,
-      onQuizCompleted: (index) {
-        _stepAnswered.value = true;
-      },
-    );
-  }
+      ];
 }

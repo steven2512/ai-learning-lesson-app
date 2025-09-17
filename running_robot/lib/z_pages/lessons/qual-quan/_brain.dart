@@ -1,16 +1,9 @@
-// ✅ LessonThree with conditional continue button for StepFive & StepSeven
-
-import 'package:flame/components.dart' show Vector2;
+// FILE: lib/z_pages/lessons/lesson3/lesson3.dart
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
-    as flutter_ui_bar;
-import 'package:running_robot/game/decorations/progress_bar.dart'
-    show LessonProgressBar;
-import 'package:running_robot/game/events/event_type.dart'
-    show EventProgressBar;
+import 'package:running_robot/core/base_lesson_brain.dart';
+
+// lesson steps
 import 'package:running_robot/z_pages/lessons/qual-quan/recap_data.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/qual_quiz.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/recap_binary.dart';
@@ -22,165 +15,75 @@ import 'package:running_robot/z_pages/lessons/qual-quan/quan_quiz.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/qual_intro.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/qual_eg.dart';
 
-class QualQuanBrain extends StatefulWidget {
-  final AppNavigate onNavigate;
-  const QualQuanBrain({super.key, required this.onNavigate});
+class QualQuanBrain extends BaseLessonBrain {
+  const QualQuanBrain({super.key, required AppNavigate onNavigate})
+      : super(onNavigate: onNavigate);
+
+  @override
+  String get lessonId => "qual-quan";
 
   @override
   State<QualQuanBrain> createState() => _QualQuanBrainState();
 }
 
-class _QualQuanBrainState extends State<QualQuanBrain> {
-  int currentStep = 0;
-
-  final Map<int, double> topOffsets = const {
-    0: 160,
-    1: 270,
-    2: 180,
-    3: 200,
-    4: 180,
-    5: 220,
-    6: 120,
-    7: 150,
-    8: 200,
-    9: 120,
-  };
-
-  int get totalStages => 10;
-  bool _lessonCompleted = false;
-  bool _stepSixAnswered = false;
-  bool _stepNineAnswered = false;
-
-  late IconButtonWidget<void> returnButton;
-
+class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
   @override
-  void initState() {
-    super.initState();
-    returnButton = IconButtonWidget<void>(
-      iconPath: 'assets/images/x_icon.png',
-      tint: Colors.black87,
-      size: 22,
-      onPressed: (_) => widget.onNavigate(const RouteMainMenu(tab: 0)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final double topOffset = topOffsets[currentStep] ?? 120;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // ✅ Progress bar
-          Positioned(
-            top: 70,
-            left: MediaQuery.of(context).size.width / 2 - (279 / 2),
-            child: flutter_ui_bar.LessonProgressBar(
-              totalStages: totalStages,
-              currentStage: _lessonCompleted ? totalStages : currentStep,
-            ),
+  List<SubLesson> buildSubLessons() => [
+        SubLesson(
+          topOffset: 160,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const RecapData(),
+        ),
+        SubLesson(
+          topOffset: 270,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const RecapBinary(),
+        ),
+        SubLesson(
+          topOffset: 180,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const HumanLookForMeaning(),
+        ),
+        SubLesson(
+          topOffset: 200,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const NumberAndCategoryIntro(),
+        ),
+        SubLesson(
+          topOffset: 180,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QuanIntro(),
+        ),
+        SubLesson(
+          topOffset: 220,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QuanExample(),
+        ),
+        // Step 6 → QuanQuiz, emit only when completed
+        SubLesson(
+          topOffset: 120,
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => QuanQuiz(
+            onStepCompleted: () => done(),
           ),
-
-          // ✅ Close button
-          Positioned(top: 69, left: 30, child: returnButton),
-
-          // ✅ Active step
-          Positioned.fill(
-            top: topOffset,
-            bottom: 100,
-            child: _buildCurrentStep(),
+        ),
+        SubLesson(
+          topOffset: 150,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QualIntro(),
+        ),
+        SubLesson(
+          topOffset: 200,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QualExample(),
+        ),
+        // Step 9 → QualQuiz, emit only when completed
+        SubLesson(
+          topOffset: 120,
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => QualQuiz(
+            onStepCompleted: () => done(),
           ),
-
-          // ✅ Continue button
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: _lessonCompleted
-                  ? const SizedBox.shrink()
-                  : _buildContinueButton(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContinueButton() {
-    // Step 5 → only show after correct answer
-    if (currentStep == 6 && !_stepSixAnswered) {
-      return const SizedBox.shrink();
-    }
-
-    // Step 7 → only show after correct answer
-    if (currentStep == 9 && !_stepNineAnswered) {
-      return const SizedBox.shrink();
-    }
-
-    return ContinueButton(
-      onPressed: () {
-        if (currentStep < totalStages - 1) {
-          setState(() {
-            currentStep++;
-          });
-        } else {
-          setState(() => _lessonCompleted = true);
-
-          final endBar = LessonProgressBar(
-            position: Vector2.zero(),
-            stages: totalStages,
-          );
-          for (int i = 0; i < totalStages; i++) {
-            endBar.switchPhase(EventProgressBar.proceed);
-          }
-
-          widget.onNavigate(
-            RouteEndLesson(
-              xp: 50,
-              streak: 1,
-              progressBar: endBar,
-              chapterProgress: 3,
-              totalChapterLessons: 10,
-              topText: "Lesson 3 complete! 🎉",
-              repeatLesson: const RouteLesson(3),
-              nextLesson: const RouteLesson(4), // placeholder
-              illustrationPath: null,
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildCurrentStep() {
-    switch (currentStep) {
-      case 0:
-        return const RecapData();
-      case 1:
-        return const RecapBinary();
-      case 2:
-        return const HumanLookForMeaning();
-      case 3:
-        return const NumberAndCategoryIntro();
-      case 4:
-        return const QuanIntro();
-      case 5:
-        return const QuanExample();
-      case 6:
-        return QuanQuiz(
-          onStepCompleted: () => setState(() => _stepSixAnswered = true),
-        );
-      case 7:
-        return const QualIntro();
-      case 8:
-        return const QualExample();
-      case 9:
-        return QualQuiz(
-          onStepCompleted: () => setState(() => _stepNineAnswered = true),
-        );
-    }
-    return const SizedBox.shrink();
-  }
+        ),
+      ];
 }
