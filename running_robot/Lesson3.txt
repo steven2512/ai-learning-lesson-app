@@ -1,7 +1,7 @@
 Slide 1
 Dialouge Box
 "Now you know what data is 'Fire emoji"
-"You may wonder "Why do we care about data?" "
+"But why do we care about data?" "
 "How is Data related to AI?"
 Finish
 
@@ -15,35 +15,33 @@ Some kind of image here links Student Homework to Robot and Data
 Slide 3:
 "Data is basically the examples that AI learns from"
 
-"With data, AI can do powerful and useful things to humans"
+"With data, AI can do powerful and useful things for humans"
 
 Slide 4:
 Dialouge box "Let's now see what AI can do with data" (Next, fades away)
 
 Slide 5:
 AI predicts future values from patterns in data.
-Animation (some kind of diagram)
-
-Slide 6
 Example: AI can guess what TV show you’ll binge next (based on your past shows watched)
 
+Slide 6:
+exercise 1 -> 3 -> 5 -> x: what comes next?
+
 Slide 7:
-AI discovers structure in data without labels.
-Animation + diagram
-
-Slide 8:
-Example: AI groups songs together
-👉 “Music apps use AI to group similar songs and listeners based on patterns in what people play. 
-
-"It does this without anyone telling it what’s ‘right’ or ‘wrong.’”’”
-
-Slide 9:
 AI creates new text, images, audio, or designs.
 Animation
+Example: - AI drawing a Japanese Samurai in Van Gogh style
+
+Slide 8:
+Some kind of creative exercises here
+
+Slide 9:
+AI discovers structure in data without labels.
+Animation + diagram (some kind of disorganized pile and Ai figures out)
+"It does this without anyone telling it what’s ‘right’ or ‘wrong.’”’”
 
 Slide 10:
-- AI drawing a Japanese Samurai in Van Gogh style
-- AI makes a rap song about spaghtti
+Again some kind of mini game very small
 
 Slide 11:
 Dialouge

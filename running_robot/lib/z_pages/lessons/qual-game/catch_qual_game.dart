@@ -71,8 +71,8 @@ const double kSlideUpFromBottomPx = 120.0; // how far the compact box slides up
 
 /// 🔧 NEW (separate anchors): where the compact end box stops before unveiling
 /// (Y from the top of the step area below the close/progress zone)
-const double finalYPositionAfterSlideUpSuccess = 120.0;
-const double finalYPositionAfterSlideUpFail = 100.0;
+const double finalYPositionAfterSlideUpSuccess = 30.0;
+const double finalYPositionAfterSlideUpFail = 00.0;
 
 // End box font sizes (consistent win/lose)
 const double kEndTitleFont = 22;

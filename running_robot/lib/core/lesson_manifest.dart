@@ -1,6 +1,7 @@
 // lib/core/lesson_manifest.dart
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/_brain.dart';
 
 // brains
 import 'package:running_robot/z_pages/lessons/data-intro/_brain.dart';
@@ -47,6 +48,10 @@ final List<ChapterMeta> chapterManifest = [
         title: "Data Intro",
         builder: (nav) => DataIntroBrain(onNavigate: nav),
       ),
+      LessonMeta(
+          id: "data-ai-relevance",
+          title: "Why is Data so important for AI?",
+          builder: (nav) => DataAiRelevance(onNavigate: nav)),
       LessonMeta(
         id: "binary-intro",
         title: "Binary Intro",
