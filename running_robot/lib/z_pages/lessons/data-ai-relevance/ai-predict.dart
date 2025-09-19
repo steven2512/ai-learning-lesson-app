@@ -1,48 +1,64 @@
 // FILE: lib/z_pages/lessons/data-ai-relevance/ai_predict.dart
+// Smooth RIGHT→LEFT slides with staggered cross-fade (no blur).
+// Houses 1–3: "(Data)"; House 4: "(prediction)".
+// House 4 price: "??????" slides RIGHT out; real price slides LEFT in and pops.
+// Price lane is constraint-safe and constant width (no jitter/overflow).
+
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
-/// ─────────────────────────────────────────────────────────────────────────
 /// Colors
-/// ─────────────────────────────────────────────────────────────────────────
 const Color aiPink = Color(0xFFE91E63);
 const Color titleInk = Colors.black87;
-const Color houseNumRed = Color(0xFFE53935); // "4" in House 4
-const Color sizeOrange = Color(0xFFFF6D00); // "500 m²"
+const Color houseNumRed = Color(0xFFE53935);
 const Color priceGreen = Color.fromARGB(255, 0, 163, 54);
-
-/// Price badge (simple black-border pill)
 const Color priceBadgeBg = Colors.white;
 const Color priceBadgeBorder = Colors.black;
-const int kPriceBadgeAnimMs = 180;
+const Color brandBlue = Color(0xFF1E88E5);
 
-/// ─────────────────────────────────────────────────────────────────────────
 /// Layout
-/// ─────────────────────────────────────────────────────────────────────────
 const double headerFontSize = 20;
 const double sceneHeight = 360;
 
-/// ─────────────────────────────────────────────────────────────────────────
-/// Motion knobs (≈15s total when kLoop = true)
-/// ─────────────────────────────────────────────────────────────────────────
-const bool kLoop = true; // repeat the whole sequence
-const int kStartDelayMs = 200;
+/// Pill metrics (exact sizing → perfect centering, no clipping)
+const double _kPillPadH = 12.0; // horizontal padding in pill
+const double _kPillBorder = 2.0; // border width in pill
+const double _kPillExtraW = _kPillPadH * 2 + _kPillBorder * 2; // 28
+const double _kPillHeight = 36.0; // pill height
+const double _kLaneHeight = 44.0; // lane headroom
+const double _kLaneSafety = 6.0; // ← NEW: width safety px
 
-// Each "page turn" (we're sliding/tilting, not a 3D flip)
-const int kTurnMs = 600; // duration of each turn
-const int kHoldMs = 1200; // hold between page turns (1..3)
-const int kRevealHoldMs = 1200; // hold after page 4 shows '?'
-const int kThinkingMs = 1800; // "thinking" pause
-const int kGuessHoldMs = 6000; // hold on final guess to land near 15s
+/// Reveal timing tweaks
+const double _kFadeOutCutoff = 0.85; // unknown invisible by 85%
+const double _kOvershoot = 6.0; // slide slightly past edge
 
-// Geometry of the turn (counter-clockwise)
-const double kTurnAngleRad = -math.pi / 18; // subtle CCW twist
-const double kSlideOutPx = 140; // outgoing slides left INSIDE box
-const double kSlideInStartPx = 220; // incoming starts just outside R
-const double kOvershootPx = 14; // slight left overshoot → settle
+/// Motion knobs
+const bool kLoop = true;
+const int kStartDelayMs = 2000;
+
+// ≈2s/card: 700ms transition + 1300ms hold
+const int kTurnMs = 700;
+const int kHoldMs = 1300;
+const int kRevealHoldMs = 1300;
+const int kThinkingMs = 1600;
+const int kGuessHoldMs = 5200;
+
+// Slide geometry (no rotation)
+const double kSlideOutPx = 160;
+const double kSlideInStartPx = 260;
+
+// Cross-fade staggering
+const double kFadeInDelay = 0.20;
+const double kFadeOutFinish = 0.68;
+
+// Price reveal (Unknown→Real)
+const int kPriceRevealMs = 520;
+
+// Gentle pop scale for final price
+const double kPopStart = 0.94;
+const double kPopEnd = 1.04;
 
 class AIPredict extends StatefulWidget {
   const AIPredict({super.key});
@@ -55,16 +71,11 @@ enum _Phase { page1, page2, page3, page4ShowUnknown, thinking, guessed }
 class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
   _Phase _phase = _Phase.page1;
 
-  /// Turn controller (0→1 for each counter-clockwise “turn”)
-  late final AnimationController _turnCtrl;
+  late final AnimationController _turnCtrl; // page slide
+  late final AnimationController _popCtrl; // landing pop (title number)
+  late final AnimationController _guessPopCtrl; // final price pop
+  late final AnimationController _revealCtrl; // Unknown→Real
 
-  /// Pops: house number + size on every landing page
-  late final AnimationController _pageNumPopCtrl;
-
-  /// Pop: final price on guess
-  late final AnimationController _guessPopCtrl;
-
-  /// Current and next page indices (0..3 → House 1..4)
   int _currentIndex = 0;
   int? _nextIndex;
 
@@ -77,19 +88,28 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     _turnCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: kTurnMs),
-    );
+    )..addListener(() => mounted ? setState(() {}) : null);
 
-    _pageNumPopCtrl = AnimationController(
+    _popCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 280),
-    );
+      duration: const Duration(milliseconds: 260),
+    )..addListener(() => mounted ? setState(() {}) : null);
 
     _guessPopCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
-      lowerBound: 0.80, // stronger pop
-      upperBound: 1.10,
+      duration: const Duration(milliseconds: 340),
+      lowerBound: 0.0,
+      upperBound: 1.0,
     );
+
+    _revealCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: kPriceRevealMs),
+    )..addListener(() => mounted ? setState(() {}) : null);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _popCtrl.forward(from: 0.86);
+    });
 
     Future.delayed(const Duration(milliseconds: kStartDelayMs), _runStoryboard);
   }
@@ -101,34 +121,26 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
       _chain(Duration(milliseconds: t),
           () => _turnTo(idx, then: () => _setPhase(p)));
       t += kTurnMs;
-      _chain(Duration(milliseconds: t), _popNumbers);
       t += (p == _Phase.page4ShowUnknown ? kRevealHoldMs : kHoldMs);
     }
 
-    // Page 1 (visible “turn to self” so there’s always motion)
-    turnTo(0, _Phase.page1);
-
-    // Page 2
+    // 1 → 2 → 3 → 4 (Unknown)
     turnTo(1, _Phase.page2);
-
-    // Page 3
     turnTo(2, _Phase.page3);
-
-    // Page 4 shows '?'
     turnTo(3, _Phase.page4ShowUnknown);
 
     // Thinking
     _chain(Duration(milliseconds: t), () => _setPhase(_Phase.thinking));
     t += kThinkingMs;
 
-    // Final guess: pop price badge
+    // Reveal final price
     _chain(Duration(milliseconds: t), () {
       _setPhase(_Phase.guessed);
-      _guessPopCtrl.forward(from: 0.80);
+      _revealCtrl.forward(from: 0.0);
+      _guessPopCtrl.forward(from: 0.0);
     });
     t += kGuessHoldMs;
 
-    // Loop if desired
     if (kLoop) {
       _chain(Duration(milliseconds: t), () {
         if (!mounted) return;
@@ -143,24 +155,23 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     for (final t in _timers) t.cancel();
     _timers.clear();
     _turnCtrl.value = 0;
-    _pageNumPopCtrl.value = 0;
-    _guessPopCtrl.value = 0.80;
+    _popCtrl.value = 0;
+    _guessPopCtrl.value = 0;
+    _revealCtrl.value = 0;
     _currentIndex = 0;
     _nextIndex = null;
     _phase = _Phase.page1;
     if (mounted) setState(() {});
   }
 
-  void _popNumbers() => _pageNumPopCtrl.forward(from: 0.86);
+  void _popLanding() => _popCtrl.forward(from: 0.86);
 
-  /// Turn: current slides left/tilts CCW (stays inside box),
-  /// next starts just outside right, overshoots a bit left, then settles.
   void _turnTo(int index, {VoidCallback? then}) {
     _nextIndex = index;
     _turnCtrl.forward(from: 0.0).whenComplete(() {
       _currentIndex = index;
       _nextIndex = null;
-      _pageNumPopCtrl.forward(from: 0.86);
+      _popLanding();
       then?.call();
     });
   }
@@ -178,8 +189,9 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
   void dispose() {
     for (final t in _timers) t.cancel();
     _turnCtrl.dispose();
-    _pageNumPopCtrl.dispose();
+    _popCtrl.dispose();
     _guessPopCtrl.dispose();
+    _revealCtrl.dispose();
     super.dispose();
   }
 
@@ -189,30 +201,33 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Tiny header box
+            // HEADER (TOP, CENTERED)
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: LessonText.sentence([
-                LessonText.word("AI", aiPink,
-                    fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                LessonText.word("can", titleInk, fontSize: headerFontSize),
-                LessonText.word("predict", titleInk,
-                    fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                LessonText.word("future", titleInk, fontSize: headerFontSize),
-                LessonText.word("values", titleInk,
-                    fontSize: headerFontSize, fontWeight: FontWeight.w900),
-              ]),
+              child: Center(
+                child: LessonText.sentence([
+                  LessonText.word("AI", aiPink,
+                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
+                  LessonText.word("can", titleInk, fontSize: headerFontSize),
+                  LessonText.word("predict", brandBlue,
+                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
+                  LessonText.word("unknown", brandBlue,
+                      fontSize: headerFontSize),
+                  LessonText.word("values", brandBlue,
+                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
+                ]),
+              ),
             ),
 
-            // Big scene — the animation is clipped to this frame
+            // SCENE (animation)
             LessonText.box(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: SizedBox(
                 height: sceneHeight,
-                child: _turnScene(), // ← animation
+                child: _turnScene(),
               ),
             ),
           ],
@@ -221,141 +236,158 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     );
   }
 
-  /// Counter-clockwise “turn” scene with inside-frame slide & overshoot.
+  /// Clean slide with staggered cross-fade
   Widget _turnScene() {
-    final t = CurvedAnimation(parent: _turnCtrl, curve: Curves.easeInOutCubic);
+    return AnimatedBuilder(
+      animation: _turnCtrl,
+      builder: (context, _) {
+        final current = _pageFor(_currentIndex);
+        final next = _pageFor(_nextIndex ?? _currentIndex);
 
-    final current = _pageFor(_currentIndex);
-    final next = _pageFor(_nextIndex ?? _currentIndex);
+        final double s = _clamp01(_turnCtrl.value);
+        final double e = Curves.easeInOutCubic.transform(s);
 
-    // s ∈ [0,1] (clamped to avoid floating-point creep like 1.0000000000000002)
-    final double s = _clamp01(t.value);
+        final double outDx = (-kSlideOutPx * e).roundToDouble();
+        final double inDx = (kSlideInStartPx * (1 - e)).roundToDouble();
 
-    // Outgoing transforms: slide left + CCW tilt + fade out
-    final double outRot = kTurnAngleRad * s;
-    final double outDx = -kSlideOutPx * _curve01(Curves.easeIn, s);
-    final double outOp = 1.0 - s;
+        final double outOp = _fadeOutStagger(s);
+        final double inOp = _fadeInStagger(s);
 
-    // Incoming transforms with overshoot:
-    //  - first phase (0..~0.82): approach from right to a small left overshoot
-    //  - second phase (~0.82..1): settle from overshoot to center
-    double inDx;
-    if (s < 0.82) {
-      final p = _clamp01(s / 0.82);
-      final e = _curve01(Curves.easeOut, p);
-      inDx = (1 - e) * kSlideInStartPx - kOvershootPx; // → -overshoot
-    } else {
-      final p = _clamp01((s - 0.82) / 0.18);
-      final e = _curve01(Curves.easeOut, p);
-      inDx = _lerp(-kOvershootPx, 0, e); // -overshoot → 0
-    }
-    final double inRot = kTurnAngleRad * (1.0 - s); // CCW → flat
-    final double inOp = s;
-
-    // Clip to the scene so motion looks “behind the frame”.
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (_nextIndex == null) current,
-          if (_nextIndex != null) ...[
-            // Outgoing (under)
-            Opacity(
-              opacity: outOp,
-              child: Transform.translate(
-                offset: Offset(outDx, 0),
-                child: Transform.rotate(
-                  angle: outRot,
-                  alignment: Alignment.center,
-                  child: current,
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (_nextIndex == null) current,
+              if (_nextIndex != null) ...[
+                Opacity(
+                  opacity: outOp,
+                  child: Transform.translate(
+                    offset: Offset(outDx, 0),
+                    child: current,
+                  ),
                 ),
-              ),
-            ),
-            // Incoming (over)
-            Opacity(
-              opacity: inOp,
-              child: Transform.translate(
-                offset: Offset(inDx, 0),
-                child: Transform.rotate(
-                  angle: inRot,
-                  alignment: Alignment.center,
-                  child: next,
+                Opacity(
+                  opacity: inOp,
+                  child: Transform.translate(
+                    offset: Offset(inDx, 0),
+                    child: next,
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ],
-      ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
-  /// index: 0..3 → House 1..4
+  double _fadeOutStagger(double s) {
+    final g = (s / kFadeOutFinish).clamp(0.0, 1.0);
+    return (1.0 - Curves.easeIn.transform(g)).clamp(0.0, 1.0);
+  }
+
+  double _fadeInStagger(double s) {
+    final g = ((s - kFadeInDelay) / (1.0 - kFadeInDelay)).clamp(0.0, 1.0);
+    return Curves.easeOut.transform(g).clamp(0.0, 1.0);
+  }
+
+  /// index: 0..3 → House 1..3 (Data), House 4 (prediction)
   Widget _pageFor(int index) {
-    final labels = ["House 1", "House 2", "House 3", "House 4"];
     final numbers = [1, 2, 3, 4];
+    final suffixes = ["(Data)", "(Data)", "(Data)", "(prediction)"];
     final images = [
       "assets/images/house1.png",
       "assets/images/house2.png",
       "assets/images/house3.png",
       "assets/images/house4.png",
     ];
-    final sizes = ["350 m²", "370 m²", "200 m²", "500 m²"];
-    final prices = ["\$980,000", "\$700,000", "\$550,000", "?"];
 
     final bool isFinal = (index == 3);
     final bool isGuessed = (_phase == _Phase.guessed);
-    final String priceTxt = isGuessed ? "\$1,807,250" : prices[index];
+
+    const String unknownTxt = "??????";
+    const String guessTxt = "\$1,807,250"; // exact
 
     return _HouseFullCard(
-      label: labels[index],
       number: numbers[index],
+      suffix: suffixes[index],
       imagePath:
           (index < images.length) ? images[index] : "assets/images/house3.png",
-      sizeValue: sizes[index],
-      priceValue: priceTxt,
+      priceValue: isFinal
+          ? guessTxt
+          : (index == 0
+              ? "\$980,000"
+              : index == 1
+                  ? "\$700,000"
+                  : "\$550,000"),
       isFinal: isFinal,
-      popNumbers:
-          CurvedAnimation(parent: _pageNumPopCtrl, curve: Curves.easeOutBack),
+      isGuessed: isGuessed,
+      popNumbers: CurvedAnimation(parent: _popCtrl, curve: Curves.easeOutBack),
       popFinalPrice: isFinal && isGuessed
           ? CurvedAnimation(parent: _guessPopCtrl, curve: Curves.easeOutBack)
           : null,
+      reveal: isFinal
+          ? CurvedAnimation(parent: _revealCtrl, curve: Curves.easeInOutCubic)
+          : null,
+      unknownText: unknownTxt,
     );
   }
 }
 
-/// Inner **card** that confines the house content inside the scene.
 class _HouseFullCard extends StatelessWidget {
-  final String label;
   final int number;
+  final String suffix;
   final String imagePath;
-  final String sizeValue;
   final String priceValue;
   final bool isFinal;
+  final bool isGuessed;
 
-  final Animation<double> popNumbers; // house number + size
-  final Animation<double>? popFinalPrice; // final price pop
+  final Animation<double> popNumbers;
+  final Animation<double>? popFinalPrice;
+  final Animation<double>? reveal;
+  final String? unknownText;
 
   const _HouseFullCard({
-    required this.label,
     required this.number,
+    required this.suffix,
     required this.imagePath,
-    required this.sizeValue,
     required this.priceValue,
     required this.isFinal,
+    required this.isGuessed,
     required this.popNumbers,
     this.popFinalPrice,
+    this.reveal,
+    this.unknownText,
     super.key,
   });
 
+  double _textWidth(String text, TextStyle style) {
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return tp.width;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final numberScale =
-        Tween<double>(begin: 0.86, end: 1.0).animate(popNumbers);
-
-    final priceScale = popFinalPrice == null
+    final popScale = Tween<double>(begin: 0.86, end: 1.0).animate(popNumbers);
+    final Animation<double> pricePopScale = (popFinalPrice == null)
         ? const AlwaysStoppedAnimation(1.0)
-        : Tween<double>(begin: 0.80, end: 1.10).animate(popFinalPrice!);
+        : Tween<double>(begin: kPopStart, end: kPopEnd).animate(popFinalPrice!);
+
+    final labelStyle = GoogleFonts.lato(
+      fontSize: 20,
+      fontWeight: FontWeight.w800,
+      color: titleInk,
+    );
+    final badgeTextStyle = GoogleFonts.lato(
+      fontSize: 22,
+      fontWeight: FontWeight.w900,
+      color: priceGreen,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -364,44 +396,43 @@ class _HouseFullCard extends StatelessWidget {
         border: Border.all(color: Colors.black12, width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
+              color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title: House N (N is big & red, pops)
+          // Title
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "House ",
-                style: GoogleFonts.lato(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: titleInk,
-                ),
-              ),
-              ScaleTransition(
-                scale: numberScale,
-                child: Text(
-                  "$number",
+              Text("House ",
                   style: GoogleFonts.lato(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: houseNumRed,
-                  ),
-                ),
+                    color: titleInk,
+                  )),
+              ScaleTransition(
+                scale: popScale,
+                child: Text("$number",
+                    style: GoogleFonts.lato(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: houseNumRed,
+                    )),
               ),
+              Text(" $suffix",
+                  style: GoogleFonts.lato(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: titleInk,
+                  )),
             ],
           ),
           const SizedBox(height: 10),
 
-          // Big image (safe if missing)
+          // Big image
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -409,87 +440,68 @@ class _HouseFullCard extends StatelessWidget {
                 imagePath,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                filterQuality: FilterQuality.none,
                 errorBuilder: (ctx, err, st) => Container(
                   color: const Color(0xFFF3F3F3),
                   alignment: Alignment.center,
-                  child: Text(
-                    "Image not found",
-                    style: GoogleFonts.lato(
-                      fontSize: 16,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text("Image not found",
+                      style: GoogleFonts.lato(
+                        fontSize: 16,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w700,
+                      )),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // Size
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Total Size: ",
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: titleInk,
-                ),
-              ),
-              ScaleTransition(
-                scale: numberScale,
-                child: Text(
-                  sizeValue,
-                  style: GoogleFonts.lato(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: sizeOrange,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // CENTERED Price row, constant lane width (with safety)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double maxW = constraints.maxWidth;
+              const double spacing = 6.0;
 
-          // Price (plain black-border pill)
-          const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Price: ",
-                style: GoogleFonts.lato(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: titleInk,
-                ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: kPriceBadgeAnimMs),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: priceBadgeBg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: priceBadgeBorder,
-                    width: popFinalPrice == null ? 1.2 : 2.0,
-                  ),
-                ),
-                child: ScaleTransition(
-                  scale: priceScale,
-                  child: Text(
-                    priceValue,
-                    style: GoogleFonts.lato(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: priceGreen,
+              final double labelW = _textWidth("Price: ", labelStyle);
+
+              final String unkText = (unknownText ?? "??????");
+              final double wUnknown =
+                  _textWidth(unkText, badgeTextStyle) + _kPillExtraW;
+              final double wReal =
+                  _textWidth(priceValue, badgeTextStyle) + _kPillExtraW;
+
+              final double availableForLane =
+                  (maxW - labelW - spacing).clamp(120.0, maxW) as double;
+
+              // ← NEW: ceil + safety so last digit never clips
+              double laneW =
+                  ((wUnknown > wReal ? wUnknown : wReal) + _kLaneSafety)
+                      .clamp(120.0, availableForLane) as double;
+
+              laneW = laneW.ceilToDouble();
+
+              return Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Price: ", style: labelStyle),
+                    const SizedBox(width: spacing),
+                    SizedBox(
+                      width: laneW,
+                      child: isFinal
+                          ? _RevealablePrice(
+                              isGuessed: isGuessed,
+                              reveal: reveal,
+                              priceText: priceValue,
+                              unknownText: unkText,
+                              scale: pricePopScale,
+                            )
+                          : _PriceBadge(text: priceValue),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),
@@ -497,7 +509,130 @@ class _HouseFullCard extends StatelessWidget {
   }
 }
 
+/// Unknown → Real inside a fixed-width lane.
+/// Unknown fades while sliding right with a small overshoot.
+/// Final pill is a separate widget that slides in and pops.
+class _RevealablePrice extends StatelessWidget {
+  final bool isGuessed;
+  final Animation<double>? reveal; // 0..1
+  final String priceText;
+  final String unknownText;
+  final Animation<double> scale;
+
+  const _RevealablePrice({
+    required this.isGuessed,
+    required this.reveal,
+    required this.priceText,
+    required this.unknownText,
+    required this.scale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double r = ((reveal?.value) ?? 0.0).clamp(0.0, 1.0);
+    final double t = Curves.easeInOutCubic.transform(r);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double laneW = constraints.maxWidth;
+
+        final double unkX = _lerp(0.0, laneW + _kOvershoot, t);
+        final double realX = _lerp(laneW + _kOvershoot, 0.0, t);
+
+        // Fade unknown out before it reaches the edge
+        final double fadeT = (t / _kFadeOutCutoff).clamp(0.0, 1.0);
+        final double unkOpacity = 1.0 - Curves.easeOut.transform(fadeT);
+
+        return SizedBox(
+          height: _kLaneHeight,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            alignment: Alignment.centerLeft,
+            children: [
+              if (!isGuessed || r < 1.0)
+                Opacity(
+                  opacity: unkOpacity,
+                  child: Transform.translate(
+                    offset: Offset(unkX, 0),
+                    child: const _PriceBadge(
+                      text: "??????",
+                      textColor: Colors.red,
+                    ),
+                  ),
+                ),
+              if (isGuessed || r > 0.0)
+                Transform.translate(
+                  offset: Offset(realX, 0),
+                  child: Transform.scale(
+                    alignment: Alignment.centerLeft,
+                    scale:
+                        1.0 + (scale.value - 1.0) * Curves.easeOut.transform(t),
+                    child: _PriceBadge(text: priceText),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  double _lerp(double a, double b, double t) => a + (b - a) * t;
+}
+
+/// Simple pill (fixed height + centered text).
+class _PriceBadge extends StatelessWidget {
+  final String text;
+  final bool emphasize;
+  final bool dim;
+  final Animation<double>? scale; // kept for compatibility
+  final Color? textColor;
+  const _PriceBadge({
+    required this.text,
+    this.emphasize = true,
+    this.dim = false,
+    this.scale,
+    this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pill = RepaintBoundary(
+      child: Container(
+        height: _kPillHeight,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: _kPillPadH),
+        decoration: BoxDecoration(
+          color: priceBadgeBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: priceBadgeBorder,
+            width: emphasize ? _kPillBorder : 1.2,
+          ),
+        ),
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.clip,
+          softWrap: false,
+          style: GoogleFonts.lato(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: textColor ?? (dim ? Colors.black54 : priceGreen),
+            height: 1.0,
+          ),
+        ),
+      ),
+    );
+
+    return scale == null
+        ? pill
+        : Align(
+            alignment: Alignment.centerLeft,
+            child: ScaleTransition(scale: scale!, child: pill),
+          );
+  }
+}
+
 /// Helpers
-double _lerp(double a, double b, double t) => a + (b - a) * t;
 double _clamp01(double x) => x < 0 ? 0 : (x > 1 ? 1 : x);
-double _curve01(Curve c, double t) => c.transform(_clamp01(t));
