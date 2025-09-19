@@ -53,19 +53,18 @@ class AskYourselfHomework extends StatelessWidget {
               ),
             ),
 
-            // 🟦 Box 2 — Placeholder image
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 15),
+              padding: EdgeInsetsGeometry.all(8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  "assets/images/placeholder.png",
-                  width: double.infinity,
-                  height: 200,
+                  "assets/images/ask_yourself.png",
+                  width: 400,
+                  height: 220,
                   fit: BoxFit.cover,
                 ),
               ),
-            ),
+            )
           ],
         ),
       ),

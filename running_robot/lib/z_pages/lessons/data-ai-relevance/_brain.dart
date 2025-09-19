@@ -2,7 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict-quiz.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ask_yourself_homework.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/data-example.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/data_ai_intro.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/student_homework.dart';
 
@@ -22,52 +25,44 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
   List<SubLesson> buildSubLessons() => [
         // Dialogue: “Why do we care about data?”
         SubLesson(
-          topOffset: 280,
+          topOffset: 260,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataAiIntro(onFinished: done),
         ),
 
         // Analogy: Student & Homework
         SubLesson(
-          topOffset: 280,
+          topOffset: 230,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const StudentHomework(),
         ),
         SubLesson(
-          topOffset: 250,
+          topOffset: 230,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const AskYourselfHomework(),
         ),
-        //   // Data as examples
-        //   SubLesson(
-        //     topOffset: 180,
-        //     mechanic: LessonMechanic.manual,
-        //     build: (_, __) => const DataExamples(),
-        //   ),
+        // Data as examples
+        SubLesson(
+          topOffset: 180,
+          mechanic: LessonMechanic.auto,
+          build: (done, __) => DataExample(onFinished: done),
+        ),
 
-        //   // Dialogue: “Let’s see what AI can do with data”
-        //   SubLesson(
-        //     topOffset: 220,
-        //     mechanic: LessonMechanic.auto,
-        //     build: (done, __) => AiTransitionDialogue(onFinished: done),
-        //   ),
+        // Prediction explained
+        SubLesson(
+          topOffset: 200,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const AIPredict(),
+        ),
 
-        //   // Prediction explained
-        //   SubLesson(
-        //     topOffset: 200,
-        //     mechanic: LessonMechanic.manual,
-        //     build: (_, __) => const PredictionExplained(),
-        //   ),
-
-        //   // Prediction exercise (MCQ sequence)
-        //   SubLesson(
-        //     topOffset: 160,
-        //     mechanic: LessonMechanic.emit,
-        //     build: (done, reset) => PredictionExercise(
-        //       onCompleted: done,
-        //       onRestartRequested: reset,
-        //     ),
-        //   ),
+        // Prediction exercise (MCQ sequence)
+        SubLesson(
+          topOffset: 160,
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => PredictionExercise(
+            onCompleted: done,
+          ),
+        ),
 
         //   // Classification explained (non-technical phrasing, like “sorting/grouping”)
         //   SubLesson(

@@ -32,7 +32,10 @@ class MCQBox extends StatelessWidget {
 
   // Flags
   final bool defaultAnimation;
-  final bool lockCorrectAnswer; // ✅ new
+  final bool lockCorrectAnswer;
+
+  // NEW: style selector — 0 = legacy vertical, 1 = 2×2 grid
+  final int style; // NEW
 
   const MCQBox({
     super.key,
@@ -57,7 +60,8 @@ class MCQBox extends StatelessWidget {
     this.answerLetterSpacing,
     this.answerAlignment,
     this.defaultAnimation = true,
-    this.lockCorrectAnswer = false, // ✅ default: off
+    this.lockCorrectAnswer = false,
+    this.style = 0, // NEW: default legacy
   });
 
   @override
@@ -127,7 +131,10 @@ class MCQBox extends StatelessWidget {
             borderRadius: borderRadius,
             answerFill: answerFill,
             defaultAnimation: defaultAnimation,
-            lockCorrectAnswer: lockCorrectAnswer, // ✅ pass through
+            lockCorrectAnswer: lockCorrectAnswer,
+            style: style, // NEW: pass through
+            width: double.infinity, // keep filling the container
+            height: 50, // same default height per-tile (grid uses this too)
           ),
         ],
       ),
@@ -142,13 +149,16 @@ class MCQAnswers extends StatefulWidget {
   final void Function(int index, bool isCorrect)? onAnswerTap;
 
   final double width;
-  final double height;
+  final double height; // per-tile height
   final double gapBetween;
   final double borderRadius;
   final Color answerFill;
 
   final bool defaultAnimation;
-  final bool lockCorrectAnswer; // ✅ new
+  final bool lockCorrectAnswer;
+
+  // NEW: style selector — 0 = legacy vertical, 1 = 2×2 grid
+  final int style; // NEW
 
   const MCQAnswers({
     super.key,
@@ -161,8 +171,12 @@ class MCQAnswers extends StatefulWidget {
     this.borderRadius = 12,
     this.answerFill = const Color(0xFFE0E0E0),
     this.defaultAnimation = true,
-    this.lockCorrectAnswer = false, // ✅ default: off
-  });
+    this.lockCorrectAnswer = false,
+    this.style = 0, // NEW
+  }) : assert(
+          style == 0 || answers.length == 4,
+          'style: 1 requires exactly 4 answers (top-left, top-right, bottom-left, bottom-right).',
+        ); // NEW
 
   @override
   State<MCQAnswers> createState() => _MCQAnswersState();
@@ -187,56 +201,124 @@ class _MCQAnswersState extends State<MCQAnswers> {
     widget.onAnswerTap?.call(index, isCorrect);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(widget.answers.length, (index) {
-        final isSelected = index == selectedIndex;
-        final isCorrect = index == widget.correctAnswer;
+  Widget _buildTile(int index, {double? fixedWidth}) {
+    final isSelected = index == selectedIndex;
+    final isCorrect = index == widget.correctAnswer;
 
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: index == widget.answers.length - 1 ? 0 : widget.gapBetween,
-          ),
-          child: GestureDetector(
-            onTap: () => _handleTap(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              width: widget.width,
-              height: widget.height,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(widget.borderRadius),
+    final tile = (widget.defaultAnimation)
+        ? AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            width: fixedWidth ?? widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              color: isSelected
+                  ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
+                  : widget.answerFill,
+              border: Border.all(
                 color: isSelected
-                    ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
-                    : widget.answerFill,
-                border: Border.all(
-                  color: isSelected
-                      ? (isCorrect ? Colors.green : Colors.red)
-                      : Colors.black26,
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: widget.answers[index]),
-
-                  // ✅ Tick appears when selected & correct
-                  if (isSelected && isCorrect)
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 22,
-                    ),
-                ],
+                    ? (isCorrect ? Colors.green : Colors.red)
+                    : Colors.black26,
+                width: isSelected ? 2 : 1,
               ),
             ),
-          ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: widget.answers[index]),
+                if (isSelected && isCorrect)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 22),
+              ],
+            ),
+          )
+        : Container(
+            width: fixedWidth ?? widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              color: isSelected
+                  ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
+                  : widget.answerFill,
+              border: Border.all(
+                color: isSelected
+                    ? (isCorrect ? Colors.green : Colors.red)
+                    : Colors.black26,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: widget.answers[index]),
+                if (isSelected && isCorrect)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 22),
+              ],
+            ),
+          );
+
+    return GestureDetector(
+      onTap: () => _handleTap(index),
+      child: tile,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // CHANGED: branch on style
+    if (widget.style == 0) {
+      // Legacy vertical list
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(widget.answers.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom:
+                  index == widget.answers.length - 1 ? 0 : widget.gapBetween,
+            ),
+            child: _buildTile(index),
+          );
+        }),
+      );
+    }
+
+    // NEW: style == 1 → 2×2 grid (TL, TR, BL, BR)
+    // Requires exactly 4 answers (enforced by assert in constructor).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Compute tile width = (availableWidth - horizontalGap) / 2
+        final available =
+            (widget.width.isFinite ? widget.width : constraints.maxWidth);
+        final double horizontalGap = widget.gapBetween;
+        final double tileWidth =
+            (available - horizontalGap) / 2.0; // for 2 columns
+
+        return Wrap(
+          spacing: widget.gapBetween, // horizontal gap between columns
+          runSpacing: widget.gapBetween, // vertical gap between rows
+          children: [
+            // Order: 0=TL, 1=TR, 2=BL, 3=BR
+            SizedBox(
+                width: tileWidth,
+                height: widget.height,
+                child: _buildTile(0, fixedWidth: tileWidth)),
+            SizedBox(
+                width: tileWidth,
+                height: widget.height,
+                child: _buildTile(1, fixedWidth: tileWidth)),
+            SizedBox(
+                width: tileWidth,
+                height: widget.height,
+                child: _buildTile(2, fixedWidth: tileWidth)),
+            SizedBox(
+                width: tileWidth,
+                height: widget.height,
+                child: _buildTile(3, fixedWidth: tileWidth)),
+          ],
         );
-      }),
+      },
     );
   }
 }

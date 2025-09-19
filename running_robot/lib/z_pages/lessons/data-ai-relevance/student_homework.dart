@@ -23,21 +23,29 @@ class StudentHomework extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  LessonText.sentence([
+                    LessonText.word(
+                        "Imagine", const Color.fromARGB(255, 223, 29, 94),
+                        fontSize: 30, fontWeight: FontWeight.w900),
+                    LessonText.word("this", aiPink,
+                        fontSize: 30, fontWeight: FontWeight.w900),
+                  ]),
+                  const SizedBox(height: 14),
                   // Content
                   LessonText.sentence([
-                    LessonText.word("Think of", Colors.black87,
-                        fontSize: globalFontSize),
                     LessonText.word("AI", aiPink,
                         fontSize: globalFontSize, fontWeight: FontWeight.w900),
-                    LessonText.word("as the", Colors.black87,
+                    LessonText.word("is the", Colors.black87,
                         fontSize: globalFontSize),
                     LessonText.word("student", aiPink,
                         fontSize: globalFontSize, fontWeight: FontWeight.w900),
                     LessonText.word("and", Colors.black87,
                         fontSize: globalFontSize),
-                    LessonText.word("data", dataOrange,
+                    LessonText.word("Data", dataOrange,
                         fontSize: globalFontSize, fontWeight: FontWeight.w900),
-                    LessonText.word("as the", Colors.black87,
+                    LessonText.word("is", Colors.black87,
+                        fontSize: globalFontSize),
+                    LessonText.word("the", Colors.black87,
                         fontSize: globalFontSize),
                     LessonText.word("homework.", dataOrange,
                         fontSize: globalFontSize, fontWeight: FontWeight.w900),
@@ -46,19 +54,18 @@ class StudentHomework extends StatelessWidget {
               ),
             ),
 
-            // 🟦 Box 2 — Placeholder image
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 15),
+              padding: EdgeInsetsGeometry.all(8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  "assets/images/placeholder.png",
-                  width: double.infinity,
-                  height: 200,
+                  "assets/images/data-ai-student-homework.png",
+                  width: 400,
+                  height: 220,
                   fit: BoxFit.cover,
                 ),
               ),
-            ),
+            )
           ],
         ),
       ),

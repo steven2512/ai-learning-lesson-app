@@ -1,58 +1,130 @@
-Slide 1
-Dialouge Box
-"Now you know what data is 'Fire emoji"
-"But why do we care about data?" "
-"How is Data related to AI?"
-Finish
+Perfect — thanks for catching that. So instead of cramming both into one slide, we split them cleanly:
 
-Slide 2:
-First box "Think of the Computer as a Student, and Data as the Homework"
-"Ask yourself:
-Without the homework, can the student really practice and improve?"
+Here’s the **revised storyboard (12 slides total now)**:
 
-Some kind of image here links Student Homework to Robot and Data
+---
 
-Slide 3:
-"Data is basically the examples that AI learns from"
+### **Slide 1 – Dialogue**
 
-"With data, AI can do powerful and useful things for humans"
+📦 **DialogueBox**
 
-Slide 4:
-Dialouge box "Let's now see what AI can do with data" (Next, fades away)
+* “Now you know what data is 🔥”
+* “But why do we care about data?”
+* “How is Data related to AI?”
 
-Slide 5:
-AI predicts future values from patterns in data.
-Example: AI can guess what TV show you’ll binge next (based on your past shows watched)
+---
 
-Slide 6:
-exercise 1 -> 3 -> 5 -> x: what comes next?
+### **Slide 2 – Analogy (Student/Homework)**
 
-Slide 7:
-AI creates new text, images, audio, or designs.
-Animation
-Example: - AI drawing a Japanese Samurai in Van Gogh style
+📦 **Box 1**
 
-Slide 8:
-Some kind of creative exercises here
+* *“Think of AI as the student and data as the homework”*
 
-Slide 9:
-AI discovers structure in data without labels.
-Animation + diagram (some kind of disorganized pile and Ai figures out)
-"It does this without anyone telling it what’s ‘right’ or ‘wrong.’”’”
+  * AI = pink
+  * Data/Homework = orange
 
-Slide 10:
-Again some kind of mini game very small
+📦 **Box 2**
 
-Slide 11:
-Dialouge
-- Those are just some prime examples
-- In reality, AI can do even more than that with Data !
+* Placeholder image (student/homework → robot/data).
 
+---
 
+### **Slide 3 – Ask Yourself**
 
+📦 **Box**
 
+* Header: *“Ask Yourself”* (big, orange).
 
+---
 
+### **Slide 4 – Without Homework…**
 
+📦 **Box**
 
+* Text: *“Without the homework, can the student really practice and improve?”*
 
+  * “homework” = orange
+  * “student” = pink
+  * “practice / improve” = green
+
+📦 **Box**
+
+* Placeholder image.
+
+---
+
+### **Slide 5 – Data = Examples**
+
+📦 **Box**
+
+* “Data is basically the examples that AI learns from.”
+* “With data, AI can do powerful and useful things for humans.”
+
+---
+
+### **Slide 6 – Prediction**
+
+📦 **Box**
+
+* “AI predicts future values from patterns in data.”
+* Example: *“AI can guess what TV show you’ll binge next (based on your past shows watched).”*
+
+---
+
+### **Slide 7 – Prediction Exercise**
+
+📦 **Exercise** (emit)
+
+* Sequence: *1 → 3 → 5 → ?*
+* Correct answer: **7**.
+
+---
+
+### **Slide 8 – Classification**
+
+📦 **Box**
+
+* “AI can also sort and label things into categories.”
+* Example: *“AI can look at pictures and tell which are cats, dogs, or birds.”*
+
+---
+
+### **Slide 9 – Classification Exercise**
+
+📦 **Exercise** (emit)
+
+* Drag-and-drop: match images (cat/dog/bird) into bins.
+
+---
+
+### **Slide 10 – Generation**
+
+📦 **Box**
+
+* “AI can create new text, images, audio, or designs.”
+* Example: *“AI drawing a Japanese Samurai in Van Gogh’s style.”*
+
+---
+
+### **Slide 11 – Generation Exercise**
+
+📦 **Exercise** (emit)
+
+* Reverse-engineer:
+
+  * Show generated image.
+  * User spins wheel (animal × style).
+  * Must pick correct combo to continue.
+
+---
+
+### **Slide 12 – Wrap-up Dialogue**
+
+📦 **DialogueBox**
+
+* “Those are just some prime examples.”
+* “In reality, AI can do even more than that with data!”
+
+---
+
+Would you like me to now **generate all the Dart widget class stubs** (like `AskYourselfHomework`, `WithoutHomeworkImprove`, etc.) so they match this 12-slide flow? That way you can drop them directly into a new `DataAIRelevanceBrain`.
