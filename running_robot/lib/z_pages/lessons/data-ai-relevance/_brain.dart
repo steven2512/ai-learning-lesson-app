@@ -7,6 +7,7 @@ import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict.dart'
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ask_yourself_homework.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/data-example.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/data_ai_intro.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/student_homework.dart';
 
 class DataAiRelevance extends BaseLessonBrain {
@@ -51,8 +52,10 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
         // Prediction explained
         SubLesson(
           topOffset: 200,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const AIPredict(),
+          mechanic: LessonMechanic.emit,
+          build: (done, __) => AIPredict(
+            onCompleted: done,
+          ),
         ),
 
         // Prediction exercise (MCQ sequence)
@@ -64,18 +67,19 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
           ),
         ),
 
-        //   // Classification explained (non-technical phrasing, like “sorting/grouping”)
-        //   SubLesson(
-        //     topOffset: 200,
-        //     mechanic: LessonMechanic.manual,
-        //     build: (_, __) => const ClassificationExplained(),
-        //   ),
+        // Classification explained (non-technical phrasing, like “sorting/grouping”)
+        SubLesson(
+            topOffset: 200,
+            mechanic: LessonMechanic.emit,
+            build: (done, __) => SortGroup(
+                  onCompleted: done,
+                )),
 
         //   // Classification drag-and-drop game
         //   SubLesson(
         //     topOffset: 160,
         //     mechanic: LessonMechanic.emit,
-        //     build: (done, reset) => ClassificationGame(
+        //     build: (done, reset) => SortGroupQuiz(
         //       onCompleted: done,
         //       onRestartRequested: reset,
         //     ),

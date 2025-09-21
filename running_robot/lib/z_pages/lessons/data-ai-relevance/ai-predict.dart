@@ -61,7 +61,9 @@ const double kPopStart = 0.94;
 const double kPopEnd = 1.04;
 
 class AIPredict extends StatefulWidget {
-  const AIPredict({super.key});
+  final VoidCallback? onCompleted; // optional callback when correct
+
+  const AIPredict({super.key, this.onCompleted});
   @override
   State<AIPredict> createState() => _AIPredictState();
 }
@@ -134,11 +136,18 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     t += kThinkingMs;
 
     // Reveal final price
+// Reveal final price
     _chain(Duration(milliseconds: t), () {
       _setPhase(_Phase.guessed);
       _revealCtrl.forward(from: 0.0);
       _guessPopCtrl.forward(from: 0.0);
     });
+
+// 🔹 Trigger continue button ~2s after guessed
+    _chain(Duration(milliseconds: t + 2000), () {
+      widget.onCompleted?.call();
+    });
+
     t += kGuessHoldMs;
 
     if (kLoop) {
