@@ -1,35 +1,37 @@
-// FILE: lib/z_pages/lessons/widgets/drag_drop_game.dart
-//
-// GENERIC DRAG & DROP GAME — HARD-STYLED, REUSABLE
-// ------------------------------------------------
-// 🔒 HARDLOCK (WORDS):
-//   • Success pill: "That's correct!"
-//   • Error pill:   "Try again!"
-//   • End-card header: "Great work 🎉"
-// 🔧 CHANGE: Default stats say "Correct Attempts" (generic).
-//
-// Customizable (inputs only):
-//   • Mode: pairMatch | classify
-//   • Baskets (1..4) + display names
-//   • Tokens (pairId or targetBasketKey)
-//   • Title: titleText OR title (Widget)
-//   • End-card body: endCardBodyText OR endCardBody (Widget)
-//   • Stat labels: labelTime, labelCorrectAttempts, labelLongestStreak, labelIncorrectAttempts
-//   • Try-again button text: tryAgainLabel
-//   • Basket titles: basketTitlePrefix OR basketTitleBuilder
-//   • Time formatting: timeValueBuilder(seconds)
-//
-// Everything visual (Lato font, shapes, shadows, paddings, spacings, animations,
-// overlay choreography, pool-row limit) remains hardcoded.
-
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-const Color _kMainConceptColor = Color.fromARGB(255, 255, 109, 12);
-const Color _kKeyGreen = Color.fromARGB(255, 0, 163, 54);
+/// Shared types (public)
+/// ─────────────────────────────────────────────────────────────────────────
+enum DragDropMode { pairMatch, classify }
+
+class BasketSpec {
+  final String key;
+  final String displayName;
+  const BasketSpec({required this.key, required this.displayName});
+}
+
+class DragToken {
+  final String emoji;
+  final String? pairId; // used by PairMatch
+  final String? targetBasketKey; // treated as CATEGORY KEY for ClassifyGame
+
+  DragToken._(this.emoji, this.pairId, this.targetBasketKey);
+  factory DragToken.pair({required String emoji, required String pairId}) =>
+      DragToken._(emoji, pairId, null);
+  factory DragToken.classify(
+          {required String emoji, required String targetBasketKey}) =>
+      DragToken._(emoji, null, targetBasketKey);
+}
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// Hard-styled constants (legacy look & timings)
+/// ─────────────────────────────────────────────────────────────────────────
+const Color kMainConceptColorLocked = Color.fromARGB(255, 255, 109, 12);
+const Color kKeyGreenLocked = Color.fromARGB(255, 0, 163, 54);
 
 const int _kSuccessFeedbackVisibleMs = 500;
 const double _kStatsWordsCenterPull = 35.0;
@@ -41,10 +43,7 @@ const Duration _dInlineFeedbackFade = Duration(milliseconds: 220);
 const Duration _dErrorFlash = Duration(milliseconds: 350);
 const Duration _dErrorAutoHide = Duration(milliseconds: 900);
 const Duration _dContentFadeOut = Duration(milliseconds: 450);
-const Duration _dHidePerPairSuccess =
-    Duration(milliseconds: _kSuccessFeedbackVisibleMs);
 
-const int _kEndBoxFadeMs = 600;
 const int _kFadeInTimeMs = 450;
 const int _kSlideUpDurationMs = 650;
 const int _kRevealDownDurationMs = 600;
@@ -61,56 +60,41 @@ const double _kGoodScaleBump = 1.03;
 const int _kMaxPoolRows = 4;
 
 /// ─────────────────────────────────────────────────────────────────────────
-enum DragDropMode { pairMatch, classify }
-
-class BasketSpec {
-  final String key;
-  final String displayName;
-  const BasketSpec({required this.key, required this.displayName});
-}
-
-class DragToken {
-  final String emoji;
-  final String? pairId; // pairMatch
-  final String? targetBasketKey; // classify → treated as CATEGORY KEY
-
-  DragToken._(this.emoji, this.pairId, this.targetBasketKey);
-  factory DragToken.pair({required String emoji, required String pairId}) =>
-      DragToken._(emoji, pairId, null);
-  factory DragToken.classify(
-          {required String emoji, required String targetBasketKey}) =>
-      DragToken._(emoji, null, targetBasketKey);
-}
-
-class DragDropGame extends StatefulWidget {
-  final DragDropMode mode;
+/// Abstract base (hard-styled, reusable)
+/// Subclasses implement the drop rules and (optionally) basket content.
+/// ─────────────────────────────────────────────────────────────────────────
+abstract class DragDropGameBase extends StatefulWidget {
   final List<BasketSpec> baskets;
   final List<DragToken> tokens;
 
+  // Title surfaces
   final String? titleText;
   final Widget? title;
 
-  // End-card header is hardlocked → only BODY is customizable
+  // End-card body (header is locked to "Great work 🎉")
   final String? endCardBodyText;
   final Widget? endCardBody;
 
+  // Stat labels & Try Again label
   final String? labelTime;
-  final String? labelCorrectAttempts; // "Correct Attempts"
+  final String? labelCorrectAttempts; // default "Correct Attempts"
   final String? labelLongestStreak;
   final String? labelIncorrectAttempts;
   final String? tryAgainLabel;
 
-  final String? basketTitlePrefix; // default "Basket"
+  // Basket title customization
+  final String? basketTitlePrefix;
   final Widget Function(BasketSpec spec)? basketTitleBuilder;
 
+  // Callbacks
   final VoidCallback onCompleted;
   final VoidCallback? onRestartRequested;
 
+  // Optional time formatter
   final String Function(double seconds)? timeValueBuilder;
 
-  const DragDropGame({
+  const DragDropGameBase({
     super.key,
-    required this.mode,
     required this.baskets,
     required this.tokens,
     this.titleText,
@@ -128,27 +112,19 @@ class DragDropGame extends StatefulWidget {
     required this.onCompleted,
     this.onRestartRequested,
   });
-
-  @override
-  State<DragDropGame> createState() => _DragDropGameState();
 }
 
 enum _Feedback { none, success, error }
 
-class _DragDropGameState extends State<DragDropGame>
-    with TickerProviderStateMixin {
+abstract class DragDropGameBaseState<T extends DragDropGameBase>
+    extends State<T> with TickerProviderStateMixin {
+  // Pool (all tokens not yet consumed)
   late List<DragToken> _pool;
-  final Map<String, DragToken?> _basket = {};
 
-  // ── New: dynamic classification binding ─────────────────────────
-  // basketKey -> categoryKey (once set by first accepted token)
-  final Map<String, String> _basketToCategory = {};
-  // categoryKey -> basketKey (enforces one basket per category)
-  final Map<String, String> _categoryToBasket = {};
+  // A single staged token per basket (used by PairMatch UI staging).
+  final Map<String, DragToken?> _staged = {};
 
-  DragToken? _firstInPair;
-  String? _firstBasketKey;
-
+  // Stats / analytics
   DateTime _createdAt = DateTime.now();
   DateTime? _startedAt;
   DateTime? _finishedAt;
@@ -157,15 +133,16 @@ class _DragDropGameState extends State<DragDropGame>
   int _currentStreak = 0;
   int _bestStreak = 0;
 
+  // Overlay choreography
   bool _completed = false;
   double _contentOpacity = 1.0;
   bool _showEndBox = false;
   double _endBoxOpacity = 0.0;
-  bool _compactVisible = false;
   bool _compactSlidUp = false;
   bool _revealed = false;
   double? _revealedEndCardHeight;
 
+  // Feedback state
   late final Map<String, AnimationController> _shakeCtrls;
   late final Map<String, Animation<Offset>> _shakeAnims;
   final Set<String> _flashRed = {};
@@ -173,17 +150,218 @@ class _DragDropGameState extends State<DragDropGame>
   _Feedback _feedback = _Feedback.none;
   int _successBadgeVersion = 0;
 
+  // Layout cache
   double? _reservedPoolHeight;
 
+  // ── Subclass hooks (must implement) ────────────────────────────
+  bool canAccept(String basketKey, DragToken t);
+  void onAcceptToken(String basketKey, DragToken t);
+
+  /// If false, prevent dropping when a basket already stages a token.
+  /// PairMatch uses default (false when staged not null).
+  /// ClassifyGame overrides to always allow (tokens are piled).
+  bool basketTemporarilyAvailable(String basketKey) =>
+      _staged[basketKey] == null;
+
+  /// Optional: custom reset for subclass state.
+  @protected
+  void onSubclassReset() {}
+
+  // ── Protected helpers for subclasses ───────────────────────────
+  @protected
+  bool poolContains(DragToken t) => _pool.contains(t);
+
+  @protected
+  void removeFromPool(DragToken t) => _pool.remove(t);
+
+  @protected
+  void stageTokenInBasket(String basketKey, DragToken t) {
+    _staged[basketKey] = t;
+  }
+
+  @protected
+  void unstageToken(String basketKey) {
+    _staged[basketKey] = null;
+  }
+
+  @protected
+  bool basketHasStaged(String basketKey) => _staged[basketKey] != null;
+
+  /// Success case: consume a single token (not kept visible).
+  @protected
+  void successConsumeSingle(String basketKey, DragToken t) {
+    _staged[basketKey] = t;
+
+    _currentStreak += 1;
+    if (_currentStreak > _bestStreak) _bestStreak = _currentStreak;
+    _correctCount += 1;
+
+    final myVersion = ++_successBadgeVersion;
+    _feedback = _Feedback.success;
+
+    _flashGreen..add(basketKey);
+    Future.delayed(_dGoodFlash, () {
+      if (!mounted) return;
+      setState(() => _flashGreen.remove(basketKey));
+    });
+
+    Future.microtask(() {
+      if (!mounted) return;
+      setState(() {
+        _pool.remove(t);
+        _staged[basketKey] = null;
+      });
+      maybeFinishIfDone();
+    });
+
+    Future.delayed(const Duration(milliseconds: _kSuccessFeedbackVisibleMs),
+        () {
+      if (!mounted) return;
+      if (!_completed && _successBadgeVersion == myVersion) {
+        setState(() => _feedback = _Feedback.none);
+      }
+    });
+  }
+
+  /// Success case: consume a pair and clear all staged visuals.
+  @protected
+  void successConsumePair({
+    required String firstBasketKey,
+    required DragToken first,
+    required String secondBasketKey,
+    required DragToken second,
+  }) {
+    _staged[secondBasketKey] = second;
+
+    _currentStreak += 1;
+    if (_currentStreak > _bestStreak) _bestStreak = _currentStreak;
+    _correctCount += 1;
+
+    final myVersion = ++_successBadgeVersion;
+    _feedback = _Feedback.success;
+
+    _flashGreen
+      ..add(firstBasketKey)
+      ..add(secondBasketKey);
+    Future.delayed(_dGoodFlash, () {
+      if (!mounted) return;
+      setState(() {
+        _flashGreen.remove(firstBasketKey);
+        _flashGreen.remove(secondBasketKey);
+      });
+    });
+
+    Future.microtask(() {
+      if (!mounted) return;
+      setState(() {
+        _pool.remove(first);
+        _pool.remove(second);
+        for (final b in widget.baskets) {
+          _staged[b.key] = null;
+        }
+      });
+      maybeFinishIfDone();
+    });
+
+    Future.delayed(const Duration(milliseconds: _kSuccessFeedbackVisibleMs),
+        () {
+      if (!mounted) return;
+      if (!_completed && _successBadgeVersion == myVersion) {
+        setState(() => _feedback = _Feedback.none);
+      }
+    });
+  }
+
+  @protected
+  void bumpSuccessAndFlash(String basketKey) {
+    _currentStreak += 1;
+    if (_currentStreak > _bestStreak) _bestStreak = _currentStreak;
+    _correctCount += 1;
+
+    final myVersion = ++_successBadgeVersion;
+    _feedback = _Feedback.success;
+
+    _flashGreen..add(basketKey);
+    Future.delayed(_dGoodFlash, () {
+      if (!mounted) return;
+      setState(() => _flashGreen.remove(basketKey));
+    });
+
+    Future.delayed(const Duration(milliseconds: _kSuccessFeedbackVisibleMs),
+        () {
+      if (!mounted) return;
+      if (!_completed && _successBadgeVersion == myVersion) {
+        setState(() => _feedback = _Feedback.none);
+      }
+    });
+  }
+
+  @protected
+  void triggerWrong(String basketKey) {
+    _feedback = _Feedback.error;
+    _incorrectAttempts += 1;
+    _currentStreak = 0;
+
+    _flashRed.add(basketKey);
+    _shakeCtrls[basketKey]!.forward(from: 0);
+    setState(() {});
+
+    Future.delayed(_dErrorFlash, () {
+      if (!mounted) return;
+      setState(() => _flashRed.remove(basketKey));
+    });
+
+    Future.delayed(_dErrorAutoHide, () {
+      if (!mounted) return;
+      if (_feedback == _Feedback.error && !_completed) {
+        setState(() => _feedback = _Feedback.none);
+      }
+    });
+  }
+
+  @protected
+  void maybeFinishIfDone() {
+    if (_pool.isNotEmpty) return;
+    _finishedAt ??= DateTime.now();
+
+    setState(() => _contentOpacity = 0);
+
+    Future.delayed(_dContentFadeOut, () {
+      if (!mounted) return;
+      setState(() {
+        _completed = true;
+        _showEndBox = true;
+      });
+
+      Future.delayed(const Duration(milliseconds: 30), () {
+        if (!mounted) return;
+        setState(() => _endBoxOpacity = 1.0);
+      });
+
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!mounted) return;
+        setState(() => _compactSlidUp = true);
+
+        Future.delayed(const Duration(milliseconds: _kSlideUpDurationMs), () {
+          if (!mounted) return;
+          setState(() => _revealed = true);
+
+          Future.delayed(_dContinueAfterReveal, () {
+            if (mounted) widget.onCompleted();
+          });
+        });
+      });
+    });
+  }
+
+  // ── Lifecycle ───────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    assert(widget.baskets.isNotEmpty && widget.baskets.length <= 4,
-        "baskets must be 1..4");
 
     _resetPool();
     for (final b in widget.baskets) {
-      _basket[b.key] = null;
+      _staged[b.key] = null;
     }
 
     _shakeCtrls = {
@@ -231,9 +409,10 @@ class _DragDropGameState extends State<DragDropGame>
         .toDouble();
   }
 
+  // ── Build (legacy visuals kept as-is) ───────────────────────────
   @override
   Widget build(BuildContext context) {
-    final poolCards = _pool.where((t) => !_basket.values.contains(t)).toList();
+    final poolCards = _pool.where((t) => !_staged.values.contains(t)).toList();
 
     return LayoutBuilder(builder: (context, constraints) {
       final double centerY = constraints.maxHeight * 0.5;
@@ -253,7 +432,7 @@ class _DragDropGameState extends State<DragDropGame>
                   children: [
                     const SizedBox(height: 20),
 
-                    // Title box (style locked; content customizable)
+                    // Title box
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 330),
@@ -300,7 +479,6 @@ class _DragDropGameState extends State<DragDropGame>
 
                     const SizedBox(height: 70),
 
-                    // Baskets 1..4 evenly spaced
                     _buildBasketsRow(),
 
                     const SizedBox(height: 12),
@@ -320,7 +498,7 @@ class _DragDropGameState extends State<DragDropGame>
             ),
           ),
 
-          // End overlay
+          // End overlay (fixed width measured before reveal)
           if (_showEndBox)
             Positioned.fill(
               child: Stack(
@@ -344,7 +522,7 @@ class _DragDropGameState extends State<DragDropGame>
 
                       return Stack(
                         children: [
-                          // Hidden measurement for perfect centering (fixed width)
+                          // Hidden measurement for centering (uses fixed width)
                           Opacity(
                             opacity: 0,
                             child: Center(
@@ -394,9 +572,7 @@ class _DragDropGameState extends State<DragDropGame>
     });
   }
 
-  // ────────────────────────────────────────────────────────────────
-  // Content builders (strings OR widgets)
-  // ────────────────────────────────────────────────────────────────
+  // ── Shared surface builders ─────────────────────────────────────
   Widget _buildTitleContent() {
     if (widget.title != null) return widget.title!;
     if (widget.titleText != null) {
@@ -436,9 +612,6 @@ class _DragDropGameState extends State<DragDropGame>
     );
   }
 
-  // ────────────────────────────────────────────────────────────────
-  // Hard-styled wrappers
-  // ────────────────────────────────────────────────────────────────
   Widget _hardBox({
     required Widget child,
     EdgeInsetsGeometry? margin,
@@ -507,11 +680,8 @@ class _DragDropGameState extends State<DragDropGame>
   Widget _sentence(List<InlineSpan> spans) =>
       RichText(text: TextSpan(children: spans));
 
-  // ────────────────────────────────────────────────────────────────
-  // End card (HEADER hardlocked; BODY customizable)
-  // ────────────────────────────────────────────────────────────────
   Widget _buildEndCard({required bool revealed}) {
-    // HARDLOCK header — bolded
+    // Header hard-locked
     final header = Text(
       "Great work 🎉",
       style: GoogleFonts.lato(
@@ -522,7 +692,7 @@ class _DragDropGameState extends State<DragDropGame>
       textAlign: TextAlign.center,
     );
 
-    // Body is customizable (widget > text > default sentence)
+    // Body (customizable)
     final body = widget.endCardBody ??
         (widget.endCardBodyText != null
             ? Text(
@@ -534,8 +704,8 @@ class _DragDropGameState extends State<DragDropGame>
                 _word("You", Colors.black87, size: 18),
                 _word("chose", Colors.black87, size: 18),
                 _word("all", Colors.black87, size: 18),
-                _word("correct", _kKeyGreen, size: 18, bold: true),
-                _word("binary", _kMainConceptColor, size: 18, bold: true),
+                _word("correct", kKeyGreenLocked, size: 18, bold: true),
+                _word("binary", kMainConceptColorLocked, size: 18, bold: true),
                 _word("pairs!", Colors.black87, size: 18),
               ]));
 
@@ -543,9 +713,8 @@ class _DragDropGameState extends State<DragDropGame>
         ? widget.timeValueBuilder!(_secondsTaken())
         : "${_secondsTaken().toStringAsFixed(1)} s";
 
-    // Fixed width + green card for both compact & revealed states
     return SizedBox(
-      width: _kNarrowMaxWidth,
+      width: _kNarrowMaxWidth, // fixed: compact == revealed width
       child: _hardCardGreen(
         Column(
           mainAxisSize: MainAxisSize.min,
@@ -576,7 +745,7 @@ class _DragDropGameState extends State<DragDropGame>
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
-                    backgroundColor: _kKeyGreen,
+                    backgroundColor: kKeyGreenLocked,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -643,11 +812,12 @@ class _DragDropGameState extends State<DragDropGame>
     );
   }
 
-  // Reset state and notify parent when "Try Again" is pressed.
+  // Try Again
   void _handleTryAgain() {
     widget.onRestartRequested?.call();
 
     setState(() {
+      // analytics
       _createdAt = DateTime.now();
       _startedAt = null;
       _finishedAt = null;
@@ -656,31 +826,29 @@ class _DragDropGameState extends State<DragDropGame>
       _currentStreak = 0;
       _bestStreak = 0;
 
+      // gameplay / UI
       _resetPool();
       for (final b in widget.baskets) {
-        _basket[b.key] = null;
+        _staged[b.key] = null;
       }
-      _firstInPair = null;
-      _firstBasketKey = null;
       _feedback = _Feedback.none;
       _successBadgeVersion++;
       _flashRed.clear();
       _flashGreen.clear();
 
-      // clear dynamic bindings
-      _basketToCategory.clear();
-      _categoryToBasket.clear();
-
+      // overlay & scene
       _showEndBox = false;
       _endBoxOpacity = 0.0;
-      _compactVisible = false;
       _compactSlidUp = false;
       _revealed = false;
       _revealedEndCardHeight = null;
       _contentOpacity = 1.0;
       _completed = false;
 
+      // layout cache
       _reservedPoolHeight = null;
+
+      onSubclassReset();
     });
   }
 
@@ -704,7 +872,7 @@ class _DragDropGameState extends State<DragDropGame>
                         style: GoogleFonts.lato(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: _kKeyGreen)),
+                            color: kKeyGreenLocked)),
                   ],
                 ),
               ),
@@ -740,17 +908,19 @@ class _DragDropGameState extends State<DragDropGame>
     }
   }
 
-  // Draggables & Baskets
+  // Draggables & baskets
   Widget _buildDraggable(DragToken t) {
     return Draggable<DragToken>(
       data: t,
-      feedback: _emojiTile(t.emoji, dragging: true),
-      childWhenDragging: Opacity(opacity: 0.3, child: _emojiTile(t.emoji)),
-      child: _emojiTile(t.emoji),
+      feedback: emojiTile(t.emoji, dragging: true),
+      childWhenDragging: Opacity(opacity: 0.3, child: emojiTile(t.emoji)),
+      child: emojiTile(t.emoji),
     );
   }
 
-  Widget _emojiTile(String emoji, {bool dragging = false}) {
+  /// Exposed protected emoji tile builder so subclasses can reuse styling.
+  @protected
+  Widget emojiTile(String emoji, {bool dragging = false}) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -776,24 +946,6 @@ class _DragDropGameState extends State<DragDropGame>
     return Row(children: children);
   }
 
-  // ── New: classify rule helper ───────────────────────────────────
-  bool _canDropClassify(String basketKey, DragToken t) {
-    final String? cat = t.targetBasketKey;
-    if (cat == null) return false;
-
-    final String? basketBoundCat = _basketToCategory[basketKey];
-    final String? catBoundBasket = _categoryToBasket[cat];
-
-    // If this basket already bound to a category, only that category can go in.
-    if (basketBoundCat != null && basketBoundCat != cat) return false;
-
-    // If this category already bound to a different basket, disallow here.
-    if (catBoundBasket != null && catBoundBasket != basketKey) return false;
-
-    // Otherwise allowed: either both unbound, or both already matched together.
-    return true;
-  }
-
   Widget _buildBasket(BasketSpec spec) {
     final slideAnim = _shakeAnims[spec.key]!;
     final isRed = _flashRed.contains(spec.key);
@@ -815,77 +967,18 @@ class _DragDropGameState extends State<DragDropGame>
         child: DragTarget<DragToken>(
           onWillAccept: (t) {
             if (t == null) return false;
-            if (!_pool.contains(t)) return false;
-            if (_basket[spec.key] != null) return false; // occupied briefly
-            switch (widget.mode) {
-              case DragDropMode.classify:
-                return _canDropClassify(spec.key, t);
-              case DragDropMode.pairMatch:
-                return true;
-            }
+            if (!poolContains(t)) return false;
+            // Only block if the basket is at capacity for its mode
+            // (PairMatch: one staged slot; MiniClassify: top-row capacity; Classify: always true)
+            return basketTemporarilyAvailable(spec.key);
           },
           onAccept: (t) {
             _startedAt ??= DateTime.now();
             setState(() {
-              switch (widget.mode) {
-                case DragDropMode.classify:
-                  {
-                    final String basketKey = spec.key;
-                    final String? cat = t.targetBasketKey;
-
-                    if (cat == null) {
-                      _triggerWrong(basketKey);
-                      break;
-                    }
-
-                    final String? basketBoundCat = _basketToCategory[basketKey];
-                    final String? catBoundBasket = _categoryToBasket[cat];
-
-                    // Case A: basket already bound → must match same category
-                    if (basketBoundCat != null && basketBoundCat != cat) {
-                      _triggerWrong(basketKey);
-                      break;
-                    }
-                    // Case B: category already bound → must be the same basket
-                    if (catBoundBasket != null && catBoundBasket != basketKey) {
-                      _triggerWrong(basketKey);
-                      break;
-                    }
-                    // Bind if both unbound (first placement defines the mapping)
-                    if (basketBoundCat == null && catBoundBasket == null) {
-                      _basketToCategory[basketKey] = cat;
-                      _categoryToBasket[cat] = basketKey;
-                    }
-                    // Success for this drop
-                    _applySuccessClassify(t, basketKey);
-                    break;
-                  }
-
-                case DragDropMode.pairMatch:
-                  {
-                    if (_firstInPair == null) {
-                      _basket[spec.key] = t;
-                      _firstInPair = t;
-                      _firstBasketKey = spec.key;
-                      _feedback = _Feedback.none;
-                      return;
-                    }
-                    if (_basket[spec.key] != null) {
-                      _triggerWrong(spec.key);
-                      return;
-                    }
-                    final first = _firstInPair!;
-                    final isCorrectPair = (t.pairId != null &&
-                        first.pairId != null &&
-                        t.pairId == first.pairId &&
-                        t != first);
-                    if (isCorrectPair) {
-                      _applySuccessPair(first, t, spec.key);
-                    } else {
-                      _triggerWrong(spec.key);
-                    }
-                    break;
-                  }
+              if (canAccept(spec.key, t)) {
+                onAcceptToken(spec.key, t); // ✅ correct → success flow
+              } else {
+                triggerWrong(spec.key); // ❌ wrong → red flash + shake
               }
             });
           },
@@ -913,11 +1006,7 @@ class _DragDropGameState extends State<DragDropGame>
                   _buildBasketTitle(spec),
                   const SizedBox(height: 8),
                   Expanded(
-                    child: Center(
-                      child: _basket[spec.key] == null
-                          ? const SizedBox.shrink()
-                          : _emojiTile(_basket[spec.key]!.emoji),
-                    ),
+                    child: Center(child: basketContent(spec.key)),
                   ),
                 ],
               ),
@@ -926,6 +1015,14 @@ class _DragDropGameState extends State<DragDropGame>
         ),
       ),
     );
+  }
+
+  /// Default basket content: show single staged token (PairMatch).
+  @protected
+  Widget basketContent(String basketKey) {
+    final t = _staged[basketKey];
+    if (t == null) return const SizedBox.shrink();
+    return emojiTile(t.emoji);
   }
 
   Color _basketTitleColor(BasketSpec spec) {
@@ -941,149 +1038,9 @@ class _DragDropGameState extends State<DragDropGame>
         return Colors.deepPurple;
     }
   }
-
-  // Success paths
-  void _applySuccessClassify(DragToken t, String basketKey) {
-    _basket[basketKey] = t;
-
-    _currentStreak += 1;
-    if (_currentStreak > _bestStreak) _bestStreak = _currentStreak;
-    _correctCount += 1;
-
-    final myVersion = ++_successBadgeVersion;
-    _feedback = _Feedback.success;
-
-    _flashGreen..add(basketKey);
-    Future.delayed(_dGoodFlash, () {
-      if (!mounted) return;
-      setState(() => _flashGreen.remove(basketKey));
-    });
-
-    Future.microtask(() {
-      if (!mounted) return;
-      setState(() {
-        _pool.remove(t);
-        _basket[basketKey] = null;
-      });
-      _maybeFinishIfDone();
-    });
-
-    Future.delayed(_dHidePerPairSuccess, () {
-      if (!mounted) return;
-      if (!_completed && _successBadgeVersion == myVersion) {
-        setState(() => _feedback = _Feedback.none);
-      }
-    });
-  }
-
-  void _applySuccessPair(
-      DragToken first, DragToken second, String secondBasketKey) {
-    final firstKey = _firstBasketKey ?? secondBasketKey;
-
-    _basket[secondBasketKey] = second;
-
-    _currentStreak += 1;
-    if (_currentStreak > _bestStreak) _bestStreak = _currentStreak;
-    _correctCount += 1;
-
-    final myVersion = ++_successBadgeVersion;
-    _feedback = _Feedback.success;
-
-    _flashGreen
-      ..add(firstKey)
-      ..add(secondBasketKey);
-    Future.delayed(_dGoodFlash, () {
-      if (!mounted) return;
-      setState(() {
-        _flashGreen.remove(firstKey);
-        _flashGreen.remove(secondBasketKey);
-      });
-    });
-
-    Future.microtask(() {
-      if (!mounted) return;
-      setState(() {
-        _pool.remove(first);
-        _pool.remove(second);
-        for (final b in widget.baskets) {
-          _basket[b.key] = null;
-        }
-        _firstInPair = null;
-        _firstBasketKey = null;
-      });
-      _maybeFinishIfDone();
-    });
-
-    Future.delayed(_dHidePerPairSuccess, () {
-      if (!mounted) return;
-      if (!_completed && _successBadgeVersion == myVersion) {
-        setState(() => _feedback = _Feedback.none);
-      }
-    });
-  }
-
-  void _maybeFinishIfDone() {
-    if (_pool.isNotEmpty) return;
-    _finishedAt ??= DateTime.now();
-
-    setState(() => _contentOpacity = 0);
-
-    Future.delayed(_dContentFadeOut, () {
-      if (!mounted) return;
-      setState(() {
-        _completed = true;
-        _showEndBox = true;
-      });
-
-      Future.delayed(const Duration(milliseconds: 30), () {
-        if (!mounted) return;
-        setState(() {
-          _endBoxOpacity = 1.0;
-          _compactVisible = true;
-        });
-      });
-
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (!mounted) return;
-        setState(() => _compactSlidUp = true);
-
-        Future.delayed(const Duration(milliseconds: _kSlideUpDurationMs), () {
-          if (!mounted) return;
-          setState(() => _revealed = true);
-
-          Future.delayed(_dContinueAfterReveal, () {
-            if (mounted) widget.onCompleted();
-          });
-        });
-      });
-    });
-  }
-
-  // Errors
-  void _triggerWrong(String basketKey) {
-    _feedback = _Feedback.error;
-    _incorrectAttempts += 1;
-    _currentStreak = 0;
-
-    _flashRed.add(basketKey);
-    _shakeCtrls[basketKey]!.forward(from: 0);
-    setState(() {});
-
-    Future.delayed(_dErrorFlash, () {
-      if (!mounted) return;
-      setState(() => _flashRed.remove(basketKey));
-    });
-
-    Future.delayed(_dErrorAutoHide, () {
-      if (!mounted) return;
-      if (_feedback == _Feedback.error && !_completed) {
-        setState(() => _feedback = _Feedback.none);
-      }
-    });
-  }
 }
 
-/// Measure child size after layout (for centering the revealed card)
+/// Helper to measure end-card height for perfect centering (fixed width)
 class _MeasureSize extends SingleChildRenderObjectWidget {
   final ValueChanged<Size> onChange;
   const _MeasureSize({required this.onChange, required Widget child, Key? key})

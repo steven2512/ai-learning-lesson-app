@@ -78,7 +78,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
 
         // Classification drag-and-drop game
         SubLesson(
-          topOffset: 160,
+          topOffset: 120,
           mechanic: LessonMechanic.emit,
           build: (done, reset) => SortGroupQuiz(
             onCompleted: done,
