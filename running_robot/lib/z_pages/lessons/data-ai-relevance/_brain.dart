@@ -7,6 +7,7 @@ import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict.dart'
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ask_yourself_homework.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/data-example.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/data_ai_intro.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group-quiz.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/student_homework.dart';
 
@@ -75,15 +76,15 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
                   onCompleted: done,
                 )),
 
-        //   // Classification drag-and-drop game
-        //   SubLesson(
-        //     topOffset: 160,
-        //     mechanic: LessonMechanic.emit,
-        //     build: (done, reset) => SortGroupQuiz(
-        //       onCompleted: done,
-        //       onRestartRequested: reset,
-        //     ),
-        //   ),
+        // Classification drag-and-drop game
+        SubLesson(
+          topOffset: 160,
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => SortGroupQuiz(
+            onCompleted: done,
+            onRestartRequested: reset,
+          ),
+        ),
 
         //   // Generation explained
         //   SubLesson(
