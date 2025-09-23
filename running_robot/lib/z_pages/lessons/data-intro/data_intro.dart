@@ -41,7 +41,7 @@ class DataIntroLesson extends StatelessWidget {
                 mascotAsset: 'assets/images/mascot_pointing_up.png', // your PNG
                 mascotHeight: 256,
                 gapBelowBubble: -22,
-                horizontalOffset: -10,
+                horizontalOffset: -15,
                 anchor: MascotAnchor.left,
                 dialogue: DialogueBox(
                   finishButton: true,

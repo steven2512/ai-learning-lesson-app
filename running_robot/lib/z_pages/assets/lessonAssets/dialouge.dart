@@ -132,9 +132,9 @@ class _BubblePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double radius = 16;
+    const double radius = 12;
     const double tailWidth = 20;
-    const double tailHeight = 18;
+    const double tailHeight = 25;
     const double tailOffset = 40; // move tail horizontally
 
     final path = Path();

@@ -28,7 +28,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
   List<SubLesson> buildSubLessons() => [
         // Dialogue: “Why do we care about data?”
         SubLesson(
-          topOffset: 260,
+          topOffset: 200,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataAiIntro(onFinished: done),
         ),
@@ -46,7 +46,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
         ),
         // Data as examples
         SubLesson(
-          topOffset: 280,
+          topOffset: 200,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataExample(onFinished: done),
         ),
@@ -89,9 +89,9 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
 
         // Wrap-up dialogue
         SubLesson(
-          topOffset: 220,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => WrapUpDialogue(),
-        ),
+          topOffset: 200,
+          mechanic: LessonMechanic.auto,
+          build: (done, __) => WrapUpDialogue(onFinished: done),
+        )
       ];
 }

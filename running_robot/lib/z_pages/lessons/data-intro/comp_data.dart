@@ -131,7 +131,7 @@ class _ComputerToDataState extends State<ComputerToData>
       _completionCounts[i]++;
 
       // 🔹 Fire only after this controller finishes twice
-      if (_completionCounts[i] == 2 && !_hasFired) {
+      if (_completionCounts[i] == 1 && !_hasFired) {
         _hasFired = true;
         if (mounted) widget.onCompleted?.call(); // 👉 fire immediately
       }
