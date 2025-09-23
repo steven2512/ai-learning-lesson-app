@@ -143,9 +143,9 @@ class _MiniBasketView extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, cts) {
-        // Tighter spacing to make room for bigger content
-        const double gap = 6.0;
-        const double cushion = 2.0; // tiny breathing room to prevent clipping
+        // Increased spacing
+        const double gap = 12.0; // was 6.0
+        const double cushion = 6.0; // was 2.0
 
         final double maxW = cts.maxWidth;
         final double maxH = cts.maxHeight;
@@ -158,20 +158,17 @@ class _MiniBasketView extends StatelessWidget {
         final double slotFromHeight = (safeH - gap - cushion) / 2.0;
         final double slotFromWidth = (safeW - gap) / 2.0;
 
-        // Allow a larger slot ceiling, but still respect the basket’s height.
         final double slot =
             (slotFromHeight < slotFromWidth ? slotFromHeight : slotFromWidth)
                 .clamp(44.0, 64.0);
 
-        // Scale the base emoji tile so it visually fills more of the slot
-        // (less perceived padding) without changing the global styling.
         Widget fittedTile(String emoji) => SizedBox(
               width: slot,
               height: slot,
               child: FittedBox(
                 fit: BoxFit.contain,
                 child: Transform.scale(
-                  scale: 1.18, // ↔ bigger icon vs. slot
+                  scale: 1.18,
                   child: emojiTileBuilder(emoji),
                 ),
               ),
@@ -185,12 +182,11 @@ class _MiniBasketView extends StatelessWidget {
         }
 
         return Padding(
-          // Tiny safety margin so bottom row never touches basket border.
-          padding: const EdgeInsets.only(bottom: 2.0),
+          padding: const EdgeInsets.only(
+              bottom: 4.0), // slightly bigger bottom margin
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Top carved row (2 slots)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -200,7 +196,6 @@ class _MiniBasketView extends StatelessWidget {
                 ],
               ),
               SizedBox(height: gap),
-              // Bottom “given” row (2 emojis, not draggable)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

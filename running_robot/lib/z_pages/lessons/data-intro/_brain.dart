@@ -36,8 +36,10 @@ class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
         // Step 1 → Computer to Data
         SubLesson(
           topOffset: 220,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const ComputerToData(),
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => ComputerToData(
+            onCompleted: done,
+          ),
         ),
 
         // Step 2 → Data Types

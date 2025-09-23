@@ -1,11 +1,17 @@
 // ✅ LessonStepThree — Slide 4 (Quantitative data question)
 // Smooth animation: numbers (with units) + words fading in/out
-// ❗ Fixes:
+// ❗ Guarantees kept:
 //   - No overlap at any time (slot is exclusive until fade-out completes)
 //   - No overflow: all text stays inside the box bounds (measured + clamped)
 //   - No duplicate strings visible at once
-//   - Global variable firstSpawnDelayMs controls delay before first word appears
-//   - Immediately spawns one word that fades in as soon as the page loads
+//   - No immediate spawn on page load (blank until start delay)
+//
+// 🔷 UPDATED (looping behavior):
+//   - animationStartDelayMs: page shows a blank animation area for 3s
+//   - runWindowMs: run the animation for exactly 10s per cycle
+//   - delayBetweenLoopMs: wait 2s between cycles (no new spawns during the gap)
+//   - onCompleted fires ONCE right after the first 10s window ends
+//   - Animation keeps looping indefinitely even after onCompleted
 
 import 'dart:async';
 import 'dart:math';
@@ -20,7 +26,7 @@ const double lesson3FontSize = 20;
 // Box height
 const double _animBoxHeight = 160.0;
 
-// Animation timing controls
+// Animation timing controls (per item)
 const int fadeInMs = 500; // fade in duration
 const int visibleMs = 1000; // full opacity duration
 const int fadeOutMs = 500; // fade out duration
@@ -28,13 +34,20 @@ const int fadeOutMs = 500; // fade out duration
 // How many slots (non-overlapping positions)
 const int slotCount = 8;
 
-// 🔧 Delay before first spawn loop starts (ms)
+// Optional extra delay before the first spawn (AFTER the global start delay)
 const int firstSpawnDelayMs = 0;
+
+// 🔷 Global timing for the loop controller
+const int animationStartDelayMs = 2000; // 3s — container stays blank until this
+const int runWindowMs = 10000; // 10s — active spawning window per cycle
+const int delayBetweenLoopMs = 2000; // 2s — gap between cycles (no new spawns)
 
 // =================================================================
 
 class NumberAndCategoryIntro extends StatefulWidget {
-  const NumberAndCategoryIntro({super.key});
+  final VoidCallback? onCompleted;
+
+  const NumberAndCategoryIntro({super.key, this.onCompleted});
 
   @override
   State<NumberAndCategoryIntro> createState() => _NumberAndCategoryIntroState();
@@ -45,7 +58,7 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
   final Random _rand = Random();
 
   // Expanded words (categories, qualitative examples)
-  final List<String> _words = [
+  final List<String> _words = const [
     "Apple",
     "Metal",
     "Blue",
@@ -74,7 +87,7 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
   ];
 
   // Expanded numbers (quantitative examples)
-  final List<String> _nums = [
+  final List<String> _nums = const [
     "170",
     "55",
     "2.5",
@@ -101,7 +114,7 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
     "360"
   ];
 
-  final List<String> _units = [
+  final List<String> _units = const [
     "kg",
     "cm",
     "ml",
@@ -122,46 +135,76 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
   // -------- Runtime state --------
   final List<_Slot?> _slots = List.filled(slotCount, null);
 
-  // 🔧 Track active texts to avoid duplicates across the whole box
+  // Track active texts to avoid duplicates across the whole box
   final Set<String> _activeTexts = {};
 
-  // 🔧 Layout info (computed via LayoutBuilder)
+  // Layout info (computed via LayoutBuilder)
   List<Rect> _slotRects = [];
   double _boxWidth = 0;
   double _boxHeight = _animBoxHeight;
+
+  // Timers & guards
+  Timer? _startTimer; // 3s blank delay (once)
+  Timer? _spawnDelayTimer; // optional firstSpawnDelayMs (once)
+  Timer? _spawnTimer; // periodic spawner (active during run windows)
+  Timer? _cycleEndTimer; // ends each 10s run window
+  Timer? _betweenCyclesTimer; // 2s gap between cycles
+  bool _firstCompletionFired = false;
+  bool _loopStarted = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Spawn one item immediately so something fades in right away
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_slotRects.length == slotCount) {
-        final item = _newItemForSlot(0);
-        if (item != null) {
-          setState(() {
-            _slots[0] = item;
-            _activeTexts.add(item.text);
-          });
-          item.controller.forward(); // start fade-in instantly
-        }
-      }
+    // 🔷 Do NOT spawn anything immediately: container must remain blank for 3s.
+    _startTimer = Timer(Duration(milliseconds: animationStartDelayMs), () {
+      if (!mounted) return;
 
-      // Then start the normal loop after optional delay
-      Future.delayed(Duration(milliseconds: firstSpawnDelayMs), () {
-        if (mounted) _spawnLoop();
-      });
+      // Optional additional delay before the very first spawn (kept for parity)
+      if (firstSpawnDelayMs > 0) {
+        _spawnDelayTimer =
+            Timer(Duration(milliseconds: firstSpawnDelayMs), _startLoopCycle);
+      } else {
+        _startLoopCycle();
+      }
     });
   }
 
-  void _spawnLoop() {
-    // Timer that tries to spawn into any free slot
-    Timer.periodic(const Duration(milliseconds: 700), (timer) {
+  // Start a 10s run window: begin spawning and schedule its end.
+  void _startLoopCycle() {
+    if (!mounted) return;
+
+    _loopStarted = true;
+    _beginSpawning();
+
+    // End this active window after exactly runWindowMs
+    _cycleEndTimer?.cancel();
+    _cycleEndTimer = Timer(Duration(milliseconds: runWindowMs), () {
+      if (!mounted) return;
+      _endActiveWindow();
+
+      // Fire onCompleted once after the FIRST run window finishes
+      if (!_firstCompletionFired) {
+        _firstCompletionFired = true;
+        widget.onCompleted?.call();
+      }
+
+      // Schedule the next cycle after the configured gap
+      _betweenCyclesTimer?.cancel();
+      _betweenCyclesTimer =
+          Timer(Duration(milliseconds: delayBetweenLoopMs), _startLoopCycle);
+    });
+  }
+
+  // Begin periodic spawning (called at the start of each run window)
+  void _beginSpawning() {
+    _spawnTimer?.cancel();
+    _spawnTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      if (_slotRects.length != slotCount) return;
+      if (_slotRects.length != slotCount) return; // wait for layout to be ready
 
       // Find free slots
       final free = <int>[];
@@ -182,9 +225,17 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
     });
   }
 
+  // End a run window: stop spawning (existing items finish their own fade-outs)
+  void _endActiveWindow() {
+    _spawnTimer?.cancel();
+    _spawnTimer = null;
+  }
+
   _Slot? _newItemForSlot(int slotIndex) {
     String? text;
     bool isNumber = false;
+
+    // Pick a unique candidate (avoid duplicates currently on screen)
     for (int tries = 0; tries < 12; tries++) {
       final candidateIsNum = _rand.nextBool();
       final candidate = candidateIsNum
@@ -209,13 +260,11 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
     const double baseFont = 26.0;
     const double pad = 8.0;
 
+    // Measure at base font to scale down if needed
     final textPainterBase = TextPainter(
       text: TextSpan(
         text: text,
-        style: const TextStyle(
-          fontSize: baseFont,
-          fontWeight: FontWeight.w900,
-        ),
+        style: const TextStyle(fontSize: baseFont, fontWeight: FontWeight.w900),
       ),
       maxLines: 1,
       textDirection: TextDirection.ltr,
@@ -230,13 +279,11 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
       fontSize = (baseFont * scale).clamp(16.0, baseFont);
     }
 
+    // Layout at final font size to get exact width/height
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-        ),
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
       ),
       maxLines: 1,
       textDirection: TextDirection.ltr,
@@ -283,9 +330,16 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
 
   @override
   void dispose() {
+    // Dispose all animation controllers
     for (final slot in _slots) {
       slot?.controller.dispose();
     }
+    // Cancel timers
+    _startTimer?.cancel();
+    _spawnDelayTimer?.cancel();
+    _spawnTimer?.cancel();
+    _cycleEndTimer?.cancel();
+    _betweenCyclesTimer?.cancel();
     super.dispose();
   }
 
@@ -341,7 +395,7 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
                     _boxWidth = constraints.maxWidth;
                     _boxHeight = _animBoxHeight;
 
-                    final minSlotW = 140.0;
+                    const minSlotW = 140.0;
                     int cols = (_boxWidth / minSlotW).floor().clamp(2, 4);
                     final rows = (slotCount / cols).ceil();
                     final slotW = _boxWidth / cols;
@@ -368,16 +422,14 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
                           return AnimatedBuilder(
                             animation: slot.controller,
                             builder: (context, child) {
+                              final total =
+                                  (fadeInMs + visibleMs + fadeOutMs).toDouble();
                               final fadeIn =
                                   Tween<double>(begin: 0, end: 1).animate(
                                 CurvedAnimation(
                                   parent: slot.controller,
-                                  curve: Interval(
-                                    0.0,
-                                    fadeInMs /
-                                        (fadeInMs + visibleMs + fadeOutMs),
-                                    curve: Curves.linear,
-                                  ),
+                                  curve: Interval(0.0, fadeInMs / total,
+                                      curve: Curves.linear),
                                 ),
                               );
                               final fadeOut =
@@ -385,23 +437,16 @@ class _NumberAndCategoryIntroState extends State<NumberAndCategoryIntro>
                                 CurvedAnimation(
                                   parent: slot.controller,
                                   curve: Interval(
-                                    (fadeInMs + visibleMs) /
-                                        (fadeInMs + visibleMs + fadeOutMs),
-                                    1.0,
-                                    curve: Curves.linear,
-                                  ),
+                                      (fadeInMs + visibleMs) / total, 1.0,
+                                      curve: Curves.linear),
                                 ),
                               );
 
-                              double opacity;
                               final v = slot.controller.value;
-                              if (v <
-                                  fadeInMs /
-                                      (fadeInMs + visibleMs + fadeOutMs)) {
+                              double opacity;
+                              if (v < fadeInMs / total) {
                                 opacity = fadeIn.value;
-                              } else if (v <
-                                  (fadeInMs + visibleMs) /
-                                      (fadeInMs + visibleMs + fadeOutMs)) {
+                              } else if (v < (fadeInMs + visibleMs) / total) {
                                 opacity = 1.0;
                               } else {
                                 opacity = fadeOut.value;

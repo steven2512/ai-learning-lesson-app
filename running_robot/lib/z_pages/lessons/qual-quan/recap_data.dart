@@ -35,7 +35,7 @@ class RecapData extends StatelessWidget {
             // 🔹 Recap Box: Lesson 1
             LessonText.recapBox(
               child: LessonText.sentence([
-                recapWord("Lesson 1"),
+                recapWord("Past Lesson"),
                 LessonText.word("We learnt that", Colors.black87,
                     fontSize: lesson3FontSize),
                 LessonText.word("data", mainConceptColor,

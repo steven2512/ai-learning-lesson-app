@@ -43,7 +43,7 @@ class QuanExample extends StatelessWidget {
                       fontSize: lesson3FontSize),
                   LessonText.word("quantitative data",
                       const Color.fromARGB(221, 255, 115, 0),
-                      fontSize: lesson3FontSize),
+                      fontWeight: FontWeight.w900, fontSize: lesson3FontSize),
                 ]),
                 const SizedBox(height: 10),
                 const _ActionRow(actions: [
@@ -66,6 +66,7 @@ class QuanExample extends StatelessWidget {
                   LessonText.word("Examples of", Colors.black, fontSize: 20),
                   LessonText.word(
                     "Quantitative Data",
+                    fontWeight: FontWeight.w900,
                     const Color.fromARGB(255, 255, 123, 0),
                     fontSize: 20,
                   ),

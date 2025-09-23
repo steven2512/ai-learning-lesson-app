@@ -39,7 +39,7 @@ class RecapBinary extends StatelessWidget {
             // 🔹 Recap Box: Lesson 2
             LessonText.recapBox(
               child: LessonText.sentence([
-                recapWord("Lesson 2"),
+                recapWord("Past Lesson"),
                 LessonText.word("Then we know that Computers",
                     const Color.fromARGB(255, 0, 0, 0),
                     fontSize: lesson3FontSize, fontWeight: FontWeight.w800),

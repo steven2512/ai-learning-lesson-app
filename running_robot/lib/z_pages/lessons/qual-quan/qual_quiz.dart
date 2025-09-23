@@ -1,4 +1,8 @@
 // ✅ LessonStepSeven — Tricky MCQ for Qualitative data with illustration + tinted feedback box
+//
+// ✔ Layout preserved exactly (question box → image box → MCQ box → feedback box)
+// ✔ New question: “Which one is qualitative data?”
+// ✔ Answers short; A/B/C quantitative, D qualitative (correctAnswer = 3)
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,18 +31,19 @@ class _QualQuizState extends State<QualQuiz> {
       isCorrectAnswer = isCorrect;
       if (isCorrect) {
         feedbackMessage =
-            "Correct ✅ Temperature is measurable with numbers, so it’s quantitative — not qualitative.";
+            "Correct ✅ Postcode is a label/identifier — a category, not a measurement.";
         widget.onStepCompleted?.call(); // ✅ trigger completion event
       } else if (index == 0) {
-        feedbackMessage = "Incorrect ❌ Colors are descriptive, not measurable.";
+        feedbackMessage =
+            "Incorrect ❌ Height is measured in cm — quantitative.";
       } else if (index == 1) {
         feedbackMessage =
-            "Incorrect ❌ Moods are feelings, not measurable in numbers.";
+            "Incorrect ❌ Test score (/100) is numeric — quantitative.";
       } else if (index == 2) {
         feedbackMessage =
-            "Incorrect ❌ Blood types are categories, not numerical values.";
+            "Incorrect ❌ Temperature (°C) is measured — quantitative.";
       } else {
-        feedbackMessage = "Incorrect ❌ This one is descriptive.";
+        feedbackMessage = "Incorrect ❌ That option isn’t qualitative.";
       }
     });
   }
@@ -58,23 +63,19 @@ class _QualQuizState extends State<QualQuiz> {
                   fontSize: lesson3FontSize),
               LessonText.word("one", Colors.black87, fontSize: lesson3FontSize),
               LessonText.word("is", Colors.black87, fontSize: lesson3FontSize),
-              LessonText.word("NOT", Colors.red,
-                  fontSize: lesson3FontSize,
-                  fontWeight: FontWeight.w900,
-                  italic: true),
-              LessonText.word("qualitative", mainConceptColor,
+              LessonText.word("Qualitative", mainConceptColor,
                   fontSize: lesson3FontSize, fontWeight: FontWeight.w900),
-              LessonText.word("data?", Colors.black87,
-                  fontSize: lesson3FontSize),
+              LessonText.word("Data?", mainConceptColor,
+                  fontSize: lesson3FontSize, fontWeight: FontWeight.w900),
             ]),
           ),
 
-          // 🟦 Illustration box
+          // 🟦 Illustration box (kept as-is for layout parity)
           LessonText.box(
             margin: const EdgeInsets.only(bottom: 18),
             child: Center(
               child: Image.asset(
-                "assets/images/qualitative_not.png", // 🔧 placeholder
+                "assets/images/qualitative_not.png", // kept to avoid asset changes
                 height: 180,
                 fit: BoxFit.contain,
               ),
@@ -83,12 +84,12 @@ class _QualQuizState extends State<QualQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
-            correctAnswer: 3, // Temperature 🌡️ is quantitative
-            answers: [
-              "Favorite color",
-              "Mood (happy/sad)",
-              "Blood type (A, B, AB, O)",
-              "Temperature (°C/°F)",
+            correctAnswer: 3, // ✅ D is qualitative
+            answers: const [
+              "Height (cm)",
+              "Test score (/100)",
+              "Temperature (°C)",
+              "Postcode",
             ],
             lockCorrectAnswer: true,
             answerFill: Colors.white,

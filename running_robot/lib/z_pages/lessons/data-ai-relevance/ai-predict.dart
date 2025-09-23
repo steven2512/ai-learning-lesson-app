@@ -224,7 +224,7 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
                   LessonText.word("predict", brandBlue,
                       fontSize: headerFontSize, fontWeight: FontWeight.w900),
                   LessonText.word("unknown", brandBlue,
-                      fontSize: headerFontSize),
+                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
                   LessonText.word("values", brandBlue,
                       fontSize: headerFontSize, fontWeight: FontWeight.w900),
                 ]),
@@ -307,9 +307,9 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     final suffixes = ["(Data)", "(Data)", "(Data)", "(prediction)"];
     final images = [
       "assets/images/house1.png",
+      "assets/images/house4.png",
       "assets/images/house2.png",
       "assets/images/house3.png",
-      "assets/images/house4.png",
     ];
 
     final bool isFinal = (index == 3);

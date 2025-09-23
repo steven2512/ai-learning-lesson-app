@@ -45,9 +45,9 @@ class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
           build: (_, __) => const HumanLookForMeaning(),
         ),
         SubLesson(
-          topOffset: 200,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const NumberAndCategoryIntro(),
+          topOffset: 230,
+          mechanic: LessonMechanic.emit,
+          build: (done, _) => NumberAndCategoryIntro(onCompleted: done),
         ),
         SubLesson(
           topOffset: 180,

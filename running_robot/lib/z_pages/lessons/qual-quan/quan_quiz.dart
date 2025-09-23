@@ -30,9 +30,9 @@ class _QuanQuizState extends State<QuanQuiz> {
         feedbackMessage =
             "Correct ✅ There is no real meaning to calculate or measure phone numbers";
         widget.onStepCompleted?.call(); // ✅ trigger completion event
-      } else if (index == 1) {
+      } else if (index == 0) {
         feedbackMessage = "Incorrect ❌ You can measure and calculate with age.";
-      } else if (index == 2) {
+      } else if (index == 1) {
         feedbackMessage =
             "Incorrect ❌ You can measure and calculate with height.";
       } else if (index == 3) {
@@ -84,11 +84,11 @@ class _QuanQuizState extends State<QuanQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
-            correctAnswer: 0, // Phone number ❌
+            correctAnswer: 2, // Phone number ❌
             answers: [
-              "Phone number",
               "Age (years)",
               "Height (cm)",
+              "Phone number",
               "Weight (kg)",
             ],
             lockCorrectAnswer: true,

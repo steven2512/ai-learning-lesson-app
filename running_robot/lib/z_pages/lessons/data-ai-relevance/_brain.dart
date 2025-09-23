@@ -10,6 +10,7 @@ import 'package:running_robot/z_pages/lessons/data-ai-relevance/data_ai_intro.da
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group-quiz.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/student_homework.dart';
+import 'package:running_robot/z_pages/lessons/data-ai-relevance/wrap-up.dart';
 
 class DataAiRelevance extends BaseLessonBrain {
   const DataAiRelevance({super.key, required AppNavigate onNavigate})
@@ -86,28 +87,11 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
           ),
         ),
 
-        //   // Generation explained
-        //   SubLesson(
-        //     topOffset: 200,
-        //     mechanic: LessonMechanic.manual,
-        //     build: (_, __) => const GenerationExplained(),
-        //   ),
-
-        //   // Reverse-engineer wheel game (image shown, user deduces recipe)
-        //   SubLesson(
-        //     topOffset: 160,
-        //     mechanic: LessonMechanic.emit,
-        //     build: (done, reset) => ReverseWheelGame(
-        //       onCompleted: done,
-        //       onRestartRequested: reset,
-        //     ),
-        //   ),
-
-        //   // Wrap-up dialogue
-        //   SubLesson(
-        //     topOffset: 220,
-        //     mechanic: LessonMechanic.auto,
-        //     build: (done, __) => WrapupDialogue(onFinished: done),
-        //   ),
+        // Wrap-up dialogue
+        SubLesson(
+          topOffset: 220,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => WrapUpDialogue(),
+        ),
       ];
 }

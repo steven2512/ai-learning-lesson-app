@@ -34,7 +34,9 @@ final List<Map<String, Offset>> itemTrajectories = [
 ];
 
 class ComputerToData extends StatefulWidget {
-  const ComputerToData({super.key});
+  final VoidCallback? onCompleted;
+
+  const ComputerToData({super.key, this.onCompleted});
 
   @override
   State<ComputerToData> createState() => _ComputerToDataState();
@@ -45,6 +47,9 @@ class _ComputerToDataState extends State<ComputerToData>
   late final List<AnimationController> _controllers;
   late final List<Animation<double>> _fadeAnimations;
   late final List<Animation<Offset>> _moveAnimations;
+
+  final List<int> _completionCounts = []; // 🔹 Track per-controller cycles
+  bool _hasFired = false; // 🔹 Ensure only once
 
   final List<String> _dataImages = [
     "assets/images/voice.png",
@@ -81,6 +86,8 @@ class _ComputerToDataState extends State<ComputerToData>
         duration: Duration(milliseconds: totalCycleMs),
       ),
     );
+
+    _completionCounts.addAll(List.filled(_controllers.length, 0));
 
     _fadeAnimations = _controllers.map((controller) {
       return TweenSequence([
@@ -121,6 +128,14 @@ class _ComputerToDataState extends State<ComputerToData>
 
   void _startLoop(int i) {
     _controllers[i].forward().whenComplete(() async {
+      _completionCounts[i]++;
+
+      // 🔹 Fire only after this controller finishes twice
+      if (_completionCounts[i] == 2 && !_hasFired) {
+        _hasFired = true;
+        if (mounted) widget.onCompleted?.call(); // 👉 fire immediately
+      }
+
       await Future.delayed(const Duration(milliseconds: delayBetweenMs));
       if (mounted) {
         _controllers[i].reset();

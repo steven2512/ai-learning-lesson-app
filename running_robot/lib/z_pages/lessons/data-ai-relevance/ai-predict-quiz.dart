@@ -69,7 +69,8 @@ class _PredictionExerciseState extends State<PredictionExercise> {
         LessonText.word("the", Colors.black87, fontSize: 18),
         LessonText.word("next", dataOrange,
             fontSize: 18, fontWeight: FontWeight.bold), // stays black
-        LessonText.word("number", dataOrange, fontSize: 18),
+        LessonText.word("number", dataOrange,
+            fontSize: 18, fontWeight: FontWeight.w900),
         LessonText.word("like", Colors.black87, fontSize: 18),
         LessonText.word("you", Colors.black87,
             fontWeight: FontWeight.w900, fontSize: 18),
@@ -90,7 +91,8 @@ class _PredictionExerciseState extends State<PredictionExercise> {
               child: Center(
                 child: LessonText.sentence([
                   LessonText.word("What", Colors.black87, fontSize: 22),
-                  LessonText.word("number", _mainConceptColor, fontSize: 22),
+                  LessonText.word("number", _mainConceptColor,
+                      fontSize: 22, fontWeight: FontWeight.w800),
                   LessonText.word("comes", Colors.black87, fontSize: 22),
                   LessonText.word("next", Colors.black87,
                       fontSize: 22), // stays black
