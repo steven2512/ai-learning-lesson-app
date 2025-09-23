@@ -42,7 +42,7 @@ class _BinaryIntroBrainState extends BaseLessonBrainState<BinaryIntroBrain> {
           build: (done, __) => ComputerSeeZeroOne(onStarted: done),
         ),
         SubLesson(
-          topOffset: 250,
+          topOffset: 200,
           mechanic: LessonMechanic.auto,
           build: (done, __) => BinaryIntro(
             onFinished: done,
