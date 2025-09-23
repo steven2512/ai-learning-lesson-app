@@ -25,7 +25,7 @@ class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   List<SubLesson> buildSubLessons() => [
         // Step 0 → Intro with conditional continue
         SubLesson(
-          topOffset: 280,
+          topOffset: 200,
           mechanic: LessonMechanic.auto, // ✅ auto, not manual
           build: (done, reset) => DataIntroLesson(
             onFinished: () => done(), // fallback if needed

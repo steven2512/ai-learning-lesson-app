@@ -3,9 +3,9 @@
 // ✅ Two ways to notify parent: unlock Continue OR skip straight.
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/dialouge.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // LessonText helper
+import 'package:running_robot/z_pages/assets/lessonAssets/mascot_dialouge.dart'; // 👈 example use
 
 const Color lessonOneColor = Color(0xFF00897B); // Teal
 const Color conceptColor = Color(0xFF6A1B9A); // Deep Purple
@@ -35,121 +35,130 @@ class DataIntroLesson extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(left: 15),
-              child: DialogueBox(
-                finishButton: true,
-                finishCallback: () {
-                  if (onRequestNext != null) {
-                    onRequestNext!(); // ✅ skip continue
-                  } else {
-                    onFinished(); // ✅ legacy behavior
-                  }
-                },
-                width: 320,
-                content: [
-                  // Welcome
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LessonText.sentence([
-                        LessonText.word("Welcome", Colors.black87,
-                            fontSize: 28),
-                        LessonText.word("to", Colors.black87, fontSize: 28),
-                        LessonText.word("Lesson 1!", dataOrange,
-                            fontSize: 28, fontWeight: FontWeight.w900),
-                      ]),
-                    ],
-                  ),
+              padding: const EdgeInsets.only(left: 20),
+              // 👇 Example use: wrap your existing DialogueBox with MascotDialogue
+              child: MascotDialogue(
+                mascotAsset: 'assets/images/mascot_pointing_up.png', // your PNG
+                mascotHeight: 256,
+                gapBelowBubble: -22,
+                horizontalOffset: -10,
+                anchor: MascotAnchor.left,
+                dialogue: DialogueBox(
+                  finishButton: true,
+                  finishCallback: () {
+                    if (onRequestNext != null) {
+                      onRequestNext!(); // ✅ skip continue
+                    } else {
+                      onFinished(); // ✅ legacy behavior
+                    }
+                  },
+                  width: 320,
+                  content: [
+                    // Welcome
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LessonText.sentence([
+                          LessonText.word("Welcome", Colors.black87,
+                              fontSize: 28),
+                          LessonText.word("to", Colors.black87, fontSize: 28),
+                          LessonText.word("Lesson 1!", dataOrange,
+                              fontSize: 28, fontWeight: FontWeight.w900),
+                        ]),
+                      ],
+                    ),
 
-                  // Foundational Concept in AI
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LessonText.sentence([
-                        LessonText.word("We", Colors.black87, fontSize: 22),
-                        LessonText.word("will", Colors.black87, fontSize: 22),
-                        LessonText.word("now", Colors.black87, fontSize: 22),
-                        LessonText.word("learn", Colors.black87, fontSize: 22),
-                        LessonText.word("the", Colors.black87, fontSize: 22),
-                        LessonText.word("most", Colors.black87, fontSize: 22),
-                        LessonText.word("foundational",
-                            const Color.fromARGB(255, 0, 14, 211),
-                            fontSize: 22, fontWeight: FontWeight.w900),
-                        LessonText.word(
-                            "concept", Color.fromARGB(255, 0, 14, 211),
-                            fontSize: 22, fontWeight: FontWeight.w900),
-                        LessonText.word("in", Colors.black87, fontSize: 22),
-                        LessonText.word(
-                            "AI", const Color.fromARGB(255, 233, 0, 0),
-                            fontSize: 22, fontWeight: FontWeight.w900),
-                      ]),
-                    ],
-                  ),
+                    // Foundational Concept in AI
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LessonText.sentence([
+                          LessonText.word("We", Colors.black87, fontSize: 22),
+                          LessonText.word("will", Colors.black87, fontSize: 22),
+                          LessonText.word("now", Colors.black87, fontSize: 22),
+                          LessonText.word("learn", Colors.black87,
+                              fontSize: 22),
+                          LessonText.word("the", Colors.black87, fontSize: 22),
+                          LessonText.word("most", Colors.black87, fontSize: 22),
+                          LessonText.word("foundational",
+                              const Color.fromARGB(255, 0, 14, 211),
+                              fontSize: 22, fontWeight: FontWeight.w900),
+                          LessonText.word(
+                              "concept", Color.fromARGB(255, 0, 14, 211),
+                              fontSize: 22, fontWeight: FontWeight.w900),
+                          LessonText.word("in", Colors.black87, fontSize: 22),
+                          LessonText.word(
+                              "AI", const Color.fromARGB(255, 233, 0, 0),
+                              fontSize: 22, fontWeight: FontWeight.w900),
+                        ]),
+                      ],
+                    ),
 
-                  // The Concept of Data ⚡
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LessonText.sentence([
-                        LessonText.word("The", Colors.black87, fontSize: 26),
-                        LessonText.word("concept", Colors.black87,
-                            fontSize: 26),
-                        LessonText.word("of", Colors.black87, fontSize: 26),
-                        LessonText.word("Data ⚡", dataOrange,
-                            fontSize: 26, fontWeight: FontWeight.w900),
-                      ]),
-                    ],
-                  ),
+                    // The Concept of Data ⚡
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LessonText.sentence([
+                          LessonText.word("The", Colors.black87, fontSize: 26),
+                          LessonText.word("concept", Colors.black87,
+                              fontSize: 26),
+                          LessonText.word("of", Colors.black87, fontSize: 26),
+                          LessonText.word("Data ⚡", dataOrange,
+                              fontSize: 26, fontWeight: FontWeight.w900),
+                        ]),
+                      ],
+                    ),
 
-                  // What is Data?
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LessonText.sentence([
-                        LessonText.word("So", Colors.black87, fontSize: 30),
-                        LessonText.word("what", Colors.black87, fontSize: 30),
-                        LessonText.word("is", Colors.black87, fontSize: 30),
-                        LessonText.word("Data?", dataOrange,
-                            fontSize: 30, fontWeight: FontWeight.w900),
-                      ]),
-                      const SizedBox(height: 12),
-                      LessonText.sentence([
-                        const Padding(
-                          padding: EdgeInsets.only(top: 3, right: 1),
-                          child: Icon(Icons.arrow_forward_rounded,
-                              size: 26, color: Colors.black54),
-                        ),
-                        LessonText.word("Data", dataOrange,
-                            fontSize: secondLineSize,
-                            fontWeight: FontWeight.w800),
-                        LessonText.word("is", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("the", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("information", lessonOneColor,
-                            fontSize: secondLineSize,
-                            fontWeight: FontWeight.w800),
-                        LessonText.word("we", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("feed", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("into", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("a", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                        LessonText.word("computer.", Colors.black87,
-                            fontSize: secondLineSize,
-                            fontWeight: secondLineWeight),
-                      ]),
-                    ],
-                  ),
-                ],
+                    // What is Data?
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LessonText.sentence([
+                          LessonText.word("So", Colors.black87, fontSize: 30),
+                          LessonText.word("what", Colors.black87, fontSize: 30),
+                          LessonText.word("is", Colors.black87, fontSize: 30),
+                          LessonText.word("Data?", dataOrange,
+                              fontSize: 30, fontWeight: FontWeight.w900),
+                        ]),
+                        const SizedBox(height: 12),
+                        LessonText.sentence([
+                          const Padding(
+                            padding: EdgeInsets.only(top: 3, right: 1),
+                            child: Icon(Icons.arrow_forward_rounded,
+                                size: 26, color: Colors.black54),
+                          ),
+                          LessonText.word("Data", dataOrange,
+                              fontSize: secondLineSize,
+                              fontWeight: FontWeight.w800),
+                          LessonText.word("is", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("the", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("information", lessonOneColor,
+                              fontSize: secondLineSize,
+                              fontWeight: FontWeight.w800),
+                          LessonText.word("we", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("feed", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("into", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("a", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                          LessonText.word("computer.", Colors.black87,
+                              fontSize: secondLineSize,
+                              fontWeight: secondLineWeight),
+                        ]),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

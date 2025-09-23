@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 /// Instant-switch DialogueBox:
 /// - Supports a single Widget or List<Widget> as `content` (use your LessonText widgets).
 /// - No animations/effects; page changes happen immediately.
-/// - Optional width/height to manually size the bubble.
+/// - Optional width/height to control the anchor zone (height = bubble zone height).
 /// - Bottom-right "Next" button appears only when there are more pages.
 /// - If [finishButton] and [finishCallback] are both provided → show "Finish" button at end.
 class DialogueBox extends StatefulWidget {
   final dynamic content; // Widget or List<Widget>
   final EdgeInsets padding;
   final double? width;
+
+  /// Height = anchor zone height. Bubble pins to the bottom of this zone and
+  /// expands upward only. If null, we use a sensible default (160).
   final double? height;
 
-  /// ✅ NEW: show Finish button at end
   final bool finishButton;
-
-  /// ✅ NEW: callback when Finish pressed
   final VoidCallback? finishCallback;
 
   const DialogueBox({
@@ -57,33 +57,52 @@ class _DialogueBoxState extends State<DialogueBox> {
 
   @override
   Widget build(BuildContext context) {
+    final isLastPage = _currentIndex == _pages.length - 1;
+
+    // Bubble paint (content grows upward inside)
     final bubble = CustomPaint(
       painter: const _BubblePainter(),
-      child: Container(
-        padding: widget.padding,
-        child: _pages[_currentIndex], // 🔥 Instant swap: no animations
+      child: Align(
+        alignment: Alignment.bottomLeft,
+        child: Container(
+          padding: widget.padding,
+          child: _pages[_currentIndex],
+        ),
       ),
     );
 
-    final sized = SizedBox(
-      width: widget.width, // if null → takes parent constraints
-      height: widget.height, // if null → wraps content
-      child: bubble,
-    );
+    final bubbleSized = widget.width != null
+        ? SizedBox(width: widget.width, child: bubble)
+        : bubble;
 
-    final isLastPage = _currentIndex == _pages.length - 1;
+    // 🔑 Anchor zone: fixes the absolute Y of the bottom edge + pointer.
+    final double zoneHeight =
+        widget.height ?? 160; // set explicitly per placement
+    final anchoredBubble = SizedBox(
+      width: widget.width,
+      height: zoneHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+              left: 0,
+              bottom: 0, // bottom edge + pointer are fixed here
+              child: bubbleSized // bubble expands upward only
+              ),
+        ],
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        sized,
+        anchoredBubble,
         if (_pages.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: 8, right: 8),
             child: Builder(
               builder: (_) {
                 if (!isLastPage) {
-                  // ✅ Regular "Next" button
                   return ElevatedButton.icon(
                     onPressed: _next,
                     icon: const Icon(Icons.chevron_right),
@@ -91,14 +110,13 @@ class _DialogueBoxState extends State<DialogueBox> {
                   );
                 } else if (widget.finishButton &&
                     widget.finishCallback != null) {
-                  // ✅ Show Finish button only if BOTH provided
                   return ElevatedButton.icon(
                     onPressed: widget.finishCallback,
                     icon: const Icon(Icons.check),
                     label: const Text("Finish"),
                   );
                 } else {
-                  return const SizedBox.shrink(); // nothing
+                  return const SizedBox.shrink();
                 }
               },
             ),
@@ -117,6 +135,7 @@ class _BubblePainter extends CustomPainter {
     const double radius = 16;
     const double tailWidth = 20;
     const double tailHeight = 18;
+    const double tailOffset = 40; // move tail horizontally
 
     final path = Path();
 
@@ -130,14 +149,17 @@ class _BubblePainter extends CustomPainter {
     path.quadraticBezierTo(
         size.width, size.height, size.width - radius, size.height);
 
-    // Bottom edge to start of tail
-    path.lineTo(tailWidth + radius, size.height);
+    // Bottom edge (straight) until tail
+    path.lineTo(tailWidth + radius + tailOffset, size.height);
 
     // Tail
-    path.lineTo(tailWidth / 2, size.height + tailHeight); // tip
+    path.lineTo((tailWidth / 2) + tailOffset, size.height + tailHeight); // tip
+    path.lineTo(radius + tailOffset, size.height);
+
+    // Continue flat bottom edge to left corner
     path.lineTo(radius, size.height);
 
-    // Bottom-left corner + left edge + close
+    // Bottom-left corner + left edge
     path.quadraticBezierTo(0, size.height, 0, size.height - radius);
     path.lineTo(0, radius);
     path.quadraticBezierTo(0, 0, radius, 0);

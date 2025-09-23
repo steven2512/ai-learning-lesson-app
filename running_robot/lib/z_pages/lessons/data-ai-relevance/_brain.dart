@@ -46,7 +46,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
         ),
         // Data as examples
         SubLesson(
-          topOffset: 180,
+          topOffset: 280,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataExample(onFinished: done),
         ),
