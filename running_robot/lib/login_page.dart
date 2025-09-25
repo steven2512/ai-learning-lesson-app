@@ -10,17 +10,17 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color kBrandPurple = Color(0xFF7F56D9);
 
-    // --- Equal-gap correction (top-of-screen vs bottom-of-screen) ---
-    // AppBar total height = toolbar (56) + status bar padding.
     final media = MediaQuery.of(context);
     final double appBarTotal = kToolbarHeight + media.padding.top;
     final double delta = appBarTotal - media.padding.bottom;
+
     final Widget topExtra =
         delta < 0 ? SizedBox(height: -delta) : const SizedBox.shrink();
     final Widget bottomExtra =
         delta > 0 ? SizedBox(height: delta) : const SizedBox.shrink();
-    // With two equal Spacers, adding `bottomExtra` (or `topExtra` when needed)
-    // ensures: appBarTotal + topGap == bottomGap + bottomInset.
+
+    // 👇 NEW: nudge the whole block lower by this much
+    const double topOffset = 40; // adjust to taste
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -48,10 +48,10 @@ class LoginPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // If the bottom inset is bigger than the AppBar, add correction on top
                         topExtra,
+                        SizedBox(height: topOffset), // 👈 NEW
 
-                        const Spacer(), // top flexible gap (equals bottom Spacer)
+                        const Spacer(),
 
                         // --- Header ---
                         Align(
@@ -155,9 +155,8 @@ class LoginPage extends StatelessWidget {
                           ],
                         ),
 
-                        const Spacer(), // bottom flexible gap (equals top Spacer)
+                        const Spacer(),
 
-                        // If AppBar area is taller than the bottom inset, add correction on bottom
                         bottomExtra,
                       ],
                     ),
