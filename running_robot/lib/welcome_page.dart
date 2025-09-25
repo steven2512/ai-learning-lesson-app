@@ -1,35 +1,25 @@
 // lib/ui/welcome_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // ✅ Added for CupertinoPageRoute
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // LessonText
-import 'package:running_robot/z_pages/assets/lessonAssets/start_button.dart';
+import 'package:running_robot/z_pages/assets/lessonAssets/start_button.dart'; // PillCta
 import 'login_page.dart';
 import 'signup_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
-  // Slide-up transition
-  Route _slideUp(Widget page) {
-    return PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 450),
-      pageBuilder: (_, __, ___) => page,
-      transitionsBuilder: (_, animation, __, child) {
-        final curved =
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-        return SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .animate(curved),
-          child: child,
-        );
-      },
-    );
+  // ✅ NEW: Pure right-to-left slide (both pages move), platform-consistent.
+  // Uses CupertinoPageRoute which animates incoming from right and outgoing to left.
+  Route _slideRightToLeft(Widget page) {
+    return CupertinoPageRoute(builder: (_) => page);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Brand purple (change here if you want a different shade)
-    const Color kBrandPurple = Color(0xFF7F56D9); // rich modern purple
+    // Brand purple (unique to your app)
+    const Color kBrandPurple = Color(0xFF7F56D9);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,7 +32,7 @@ class WelcomePage extends StatelessWidget {
 
             return Column(
               children: [
-                // -------- Top 80%: Illustration placeholder --------
+                // -------- Top 80%: Illustration --------
                 SizedBox(
                   height: topH,
                   child: Center(
@@ -71,17 +61,21 @@ class WelcomePage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // 🔁 CHANGED: Use _slideRightToLeft instead of fade route.
                       PillCta(
-                        label: 'Begin Your Journey',
+                        padding: EdgeInsetsDirectional.symmetric(
+                            horizontal: 120, vertical: 20),
+                        fontSize: 22,
+                        label: 'Get Started',
                         color: kBrandPurple,
                         onTap: () => Navigator.of(context)
-                            .push(_slideUp(const SignupPage())),
+                            .push(_slideRightToLeft(const SignupPage())),
                       ),
                       const SizedBox(height: 18),
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () => Navigator.of(context)
-                            .push(_slideUp(const LoginPage())),
+                            .push(_slideRightToLeft(const LoginPage())),
                         child: LessonText.sentence(
                           [
                             LessonText.word(

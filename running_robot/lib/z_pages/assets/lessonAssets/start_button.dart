@@ -7,11 +7,21 @@ class PillCta extends StatefulWidget {
   final VoidCallback onTap;
   final Color color; // e.g. const Color(0xFF7F56D9)
 
+  // NEW: optional padding control
+  // Pass any EdgeInsets (e.g., EdgeInsets.symmetric(horizontal: 48, vertical: 20))
+  // If null, we use the original snug default.
+  final EdgeInsetsGeometry? padding; // <-- NEW
+
+  // NEW: optional font size for the label (default 18)
+  final double fontSize; // <-- NEW
+
   const PillCta({
     super.key,
     required this.label,
     required this.onTap,
     required this.color,
+    this.padding, // <-- NEW
+    this.fontSize = 18, // <-- NEW (default)
   });
 
   @override
@@ -32,6 +42,10 @@ class _PillCtaState extends State<PillCta> {
 
     final borderRadius = BorderRadius.circular(30);
 
+    // NEW: resolve padding (default keeps the previous look)
+    final EdgeInsetsGeometry resolvedPadding = widget.padding ??
+        const EdgeInsets.symmetric(horizontal: 35, vertical: 18); // <-- NEW
+
     return Semantics(
       button: true,
       label: widget.label,
@@ -47,15 +61,19 @@ class _PillCtaState extends State<PillCta> {
           curve: Curves.easeOut,
           scale: _pressed ? 0.98 : 1.0,
           child: IntrinsicWidth(
-            // 👈 forces width = content + padding
+            // keeps width = content + padding (snug) unless parent constraints expand it
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 18),
+              padding:
+                  resolvedPadding, // <-- CHANGED to use custom/default padding
               decoration: BoxDecoration(
                 color: base,
                 borderRadius: borderRadius,
                 boxShadow: [
                   BoxShadow(
-                      color: rim, offset: const Offset(0, 3), blurRadius: 0),
+                    color: rim,
+                    offset: const Offset(0, 3),
+                    blurRadius: 0,
+                  ),
                   BoxShadow(
                     color: ambient,
                     offset: const Offset(0, 12),
@@ -69,7 +87,8 @@ class _PillCtaState extends State<PillCta> {
                   widget.label,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
-                    fontSize: 18,
+                    fontSize:
+                        widget.fontSize, // <-- NEW (uses custom/default size)
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     height: 1.0,
