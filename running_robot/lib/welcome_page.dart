@@ -63,8 +63,8 @@ class WelcomePage extends StatelessWidget {
                     children: [
                       // 🔁 CHANGED: Use _slideRightToLeft instead of fade route.
                       PillCta(
-                        padding: EdgeInsetsDirectional.symmetric(
-                            horizontal: 120, vertical: 20),
+                        padding: EdgeInsetsGeometry.symmetric(
+                            horizontal: 80, vertical: 20),
                         fontSize: 22,
                         label: 'Get Started',
                         color: kBrandPurple,
