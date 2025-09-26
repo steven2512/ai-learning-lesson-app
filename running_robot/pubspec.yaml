@@ -39,7 +39,6 @@ dependencies:
   # 👥 Auth Providers
   google_sign_in: ^7.2.0
   flutter_facebook_auth: ^7.1.2
-
   # 🎨 UI / other
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.9

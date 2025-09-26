@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">running_robot</string>
+
+    <!-- Replace with real values from your FB Developer Console -->
+    <string name="facebook_app_id">1142357644657188</string>
+    <string name="facebook_client_token">YOUR_CLIENT_TOKEN</string>
+    <string name="fb_login_protocol_scheme">fb1142357644657188</string>
+</resources>
