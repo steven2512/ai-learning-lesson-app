@@ -7,21 +7,23 @@ class PillCta extends StatefulWidget {
   final VoidCallback onTap;
   final Color color; // e.g. const Color(0xFF7F56D9)
 
-  // NEW: optional padding control
-  // Pass any EdgeInsets (e.g., EdgeInsets.symmetric(horizontal: 48, vertical: 20))
-  // If null, we use the original snug default.
-  final EdgeInsetsGeometry? padding; // <-- NEW
+  // Optional padding (manual control). If null, fallback default.
+  final EdgeInsetsGeometry? padding;
 
-  // NEW: optional font size for the label (default 18)
-  final double fontSize; // <-- NEW
+  // Optional font size for the label (default 18).
+  final double fontSize;
+
+  // NEW: expand to full width if true
+  final bool expand;
 
   const PillCta({
     super.key,
     required this.label,
     required this.onTap,
     required this.color,
-    this.padding, // <-- NEW
-    this.fontSize = 18, // <-- NEW (default)
+    this.padding,
+    this.fontSize = 18,
+    this.expand = false,
   });
 
   @override
@@ -42,9 +44,9 @@ class _PillCtaState extends State<PillCta> {
 
     final borderRadius = BorderRadius.circular(30);
 
-    // NEW: resolve padding (default keeps the previous look)
+    // Always use either provided padding or fixed default
     final EdgeInsetsGeometry resolvedPadding = widget.padding ??
-        const EdgeInsets.symmetric(horizontal: 35, vertical: 18); // <-- NEW
+        const EdgeInsets.symmetric(horizontal: 35, vertical: 18);
 
     return Semantics(
       button: true,
@@ -60,43 +62,73 @@ class _PillCtaState extends State<PillCta> {
           duration: const Duration(milliseconds: 90),
           curve: Curves.easeOut,
           scale: _pressed ? 0.98 : 1.0,
-          child: IntrinsicWidth(
-            // keeps width = content + padding (snug) unless parent constraints expand it
-            child: Container(
-              padding:
-                  resolvedPadding, // <-- CHANGED to use custom/default padding
-              decoration: BoxDecoration(
-                color: base,
-                borderRadius: borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: rim,
-                    offset: const Offset(0, 3),
-                    blurRadius: 0,
+          child: widget.expand
+              ? Container(
+                  width: double.infinity, // full width
+                  padding: resolvedPadding,
+                  decoration: BoxDecoration(
+                    color: base,
+                    borderRadius: borderRadius,
+                    boxShadow: [
+                      BoxShadow(
+                        color: rim,
+                        offset: const Offset(0, 3),
+                        blurRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: ambient,
+                        offset: const Offset(0, 12),
+                        blurRadius: 20,
+                        spreadRadius: -4,
+                      ),
+                    ],
                   ),
-                  BoxShadow(
-                    color: ambient,
-                    offset: const Offset(0, 12),
-                    blurRadius: 20,
-                    spreadRadius: -4,
+                  child: Center(
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lato(
+                        fontSize: widget.fontSize,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  widget.label,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(
-                    fontSize:
-                        widget.fontSize, // <-- NEW (uses custom/default size)
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.0,
+                )
+              : Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: resolvedPadding,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: borderRadius,
+                      boxShadow: [
+                        BoxShadow(
+                          color: rim,
+                          offset: const Offset(0, 3),
+                          blurRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: ambient,
+                          offset: const Offset(0, 12),
+                          blurRadius: 20,
+                          spreadRadius: -4,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lato(
+                        fontSize: widget.fontSize,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
