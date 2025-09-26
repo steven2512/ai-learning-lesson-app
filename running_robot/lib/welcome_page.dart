@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart'; // ✅ Added for CupertinoPageRoute
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // LessonText
-import 'package:running_robot/z_pages/assets/lessonAssets/start_button.dart'; // PillCta
+import 'package:running_robot/start_button.dart'; // PillCta
 import 'login_page.dart';
 import 'signup_page.dart';
 

@@ -1,7 +1,7 @@
 // lib/ui/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/lessonAssets/start_button.dart'; // PillCta
+import 'package:running_robot/start_button.dart'; // PillCta
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
