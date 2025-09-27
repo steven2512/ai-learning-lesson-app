@@ -1,8 +1,8 @@
-/// FILE: lib/z_pages/assets/settings/settings_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 🔹 Added for logout
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -23,7 +23,7 @@ class SettingsPage extends StatelessWidget {
               size: 55,
               image: const AssetImage("assets/images/default_avatar.png"),
               imageScale: 1.2,
-              onPressed: () => print("Avatar tapped!"),
+              onPressed: () => debugPrint("Avatar tapped!"),
               fillColor: const Color.fromARGB(255, 228, 228, 228),
             ),
           ),
@@ -124,6 +124,26 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+
+                // === Log Out Button (red text) ===
+                Center(
+                  child: TextButton(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      // AuthGate will detect logout and rebuild → WelcomePage
+                    },
+                    child: Text(
+                      "Log Out",
+                      style: GoogleFonts.lato(
+                        color: Colors.red,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
