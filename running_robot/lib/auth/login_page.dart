@@ -15,6 +15,7 @@ class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   // 🔹 Save/update Firestore user document
+  // 🔹 Save/update Firestore user document
   Future<void> _onLoginSuccess(BuildContext context, User user) async {
     await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
       'uid': user.uid,
@@ -24,8 +25,20 @@ class LoginPage extends StatelessWidget {
       'lastLogin': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    // ✅ Don’t push AuthGate again. Just pop everything back to root.
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // ✅ Replace stack with AuthGate (no animation)
+    Navigator.of(context).pushAndRemoveUntil(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const AuthGate(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+      (route) => false,
+    );
   }
 
   @override
