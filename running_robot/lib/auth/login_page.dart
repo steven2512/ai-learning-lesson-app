@@ -1,17 +1,32 @@
-// lib/ui/login_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart'; // CupertinoIcons.logo_apple
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/start_button.dart'; // PillCta
+import 'package:running_robot/auth/start_button.dart'; // PillCta
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
+import 'auth_gate.dart'; // 🔹 For navigation after login
+
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
+
+  // 🔹 Save/update Firestore user document
+  Future<void> _onLoginSuccess(BuildContext context, User user) async {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'uid': user.uid,
+      'name': user.displayName,
+      'email': user.email,
+      'photoUrl': user.photoURL,
+      'lastLogin': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // ✅ Don’t push AuthGate again. Just pop everything back to root.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -249,14 +264,15 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  // --- Firebase Email/Password login ---
+  // --- Email login ---
   Future<void> _signInWithEmail(
       BuildContext context, String email, String password) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      await _onLoginSuccess(context, cred.user!);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Logged in with Email/Password')),
       );
@@ -267,7 +283,7 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  // --- Google sign-in (google_sign_in 7.x) ---
+  // --- Google login ---
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
       final GoogleSignIn gsi = GoogleSignIn.instance;
@@ -275,7 +291,8 @@ class LoginPage extends StatelessWidget {
 
       if (gsi.supportsAuthenticate()) {
         final GoogleSignInAccount account = await gsi.authenticate();
-        final GoogleSignInAuthentication authTokens = account.authentication;
+        final GoogleSignInAuthentication authTokens =
+            await account.authentication;
         final String? idToken = authTokens.idToken;
 
         if (idToken == null) {
@@ -288,9 +305,13 @@ class LoginPage extends StatelessWidget {
         final OAuthCredential credential =
             GoogleAuthProvider.credential(idToken: idToken);
 
-        await FirebaseAuth.instance.signInWithCredential(credential);
+        final cred =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+        await _onLoginSuccess(context, cred.user!);
       } else if (kIsWeb) {
-        await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+        final cred =
+            await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+        await _onLoginSuccess(context, cred.user!);
       } else {
         throw FirebaseAuthException(
           code: 'UNSUPPORTED_PLATFORM',
@@ -313,22 +334,21 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  // --- Facebook sign-in ---
+  // --- Facebook login ---
   Future<void> _signInWithFacebook(BuildContext context) async {
     try {
       final LoginResult result = await FacebookAuth.instance.login(
         permissions: ['email', 'public_profile'],
       );
 
-      print("Facebook login result: ${result.status} ${result.message}");
-
       if (result.status == LoginStatus.success) {
         final accessToken = result.accessToken!;
-        print("Got FB access token: ${accessToken.tokenString}");
-
         final credential =
             FacebookAuthProvider.credential(accessToken.tokenString);
-        await FirebaseAuth.instance.signInWithCredential(credential);
+
+        final cred =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+        await _onLoginSuccess(context, cred.user!);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logged in with Facebook')),
@@ -339,19 +359,20 @@ class LoginPage extends StatelessWidget {
         );
       }
     } on FirebaseAuthException catch (e, st) {
-      print("FirebaseAuthException: $e\n$st");
+      debugPrint("FirebaseAuthException: $e\n$st");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Firebase error: ${e.message}')),
       );
     } catch (e, st) {
-      print("Generic Facebook login error: $e\n$st");
+      debugPrint("Generic Facebook login error: $e\n$st");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during Facebook login: $e')),
       );
     }
   }
 
-  // --- Apple sign-in (if you plan to support later) ---
+  // --- Apple login (commented out for now) ---
+  /*
   Future<void> _signInWithApple(BuildContext context) async {
     try {
       final apple = AppleAuthProvider()
@@ -359,9 +380,11 @@ class LoginPage extends StatelessWidget {
         ..addScope('name');
 
       if (kIsWeb) {
-        await FirebaseAuth.instance.signInWithPopup(apple);
+        final cred = await FirebaseAuth.instance.signInWithPopup(apple);
+        await _onLoginSuccess(context, cred.user!);
       } else {
-        await FirebaseAuth.instance.signInWithProvider(apple);
+        final cred = await FirebaseAuth.instance.signInWithProvider(apple);
+        await _onLoginSuccess(context, cred.user!);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -377,4 +400,5 @@ class LoginPage extends StatelessWidget {
       );
     }
   }
+  */
 }
