@@ -38,7 +38,7 @@ const int slotCount = 8;
 const int firstSpawnDelayMs = 0;
 
 // 🔷 Global timing for the loop controller
-const int animationStartDelayMs = 2000; // 3s — container stays blank until this
+const int animationStartDelayMs = 1000; // 3s — container stays blank until this
 const int runWindowMs = 6000; // 10s — active spawning window per cycle
 const int delayBetweenLoopMs = 1500; // 2s — gap between cycles (no new spawns)
 

@@ -1,12 +1,10 @@
-/// FILE: lib/ui/main_menu.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/core/app_router.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart'; // 👈 use new class
+import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/simple_box.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/weekly_streak.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/weekly_streak.dart'; // 👈 new reusable widget
 
 /// =========================
 /// COLORS — edit here
@@ -33,8 +31,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
       body: Stack(
         children: [
           _buildBackground(),
-          _buildAvatar(),
-          _buildTextBox(),
+          const HeaderGreeting(), // 👈 Replaces avatar + name + bell
           _buildMainContent(),
         ],
       ),
@@ -43,60 +40,6 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
   Widget _buildBackground() => const Positioned.fill(
         child: ColoredBox(color: Colors.white),
-      );
-
-  Widget _buildAvatar() => Positioned(
-        left: 19,
-        top: 60,
-        child: ProfileAvatar(
-          size: 55,
-          image: const AssetImage("assets/images/default_avatar.png"),
-          imageScale: 1.2,
-          onPressed: () => print("Avatar tapped!"),
-          fillColor: const Color.fromARGB(255, 228, 228, 228),
-        ),
-      );
-
-  Widget _buildTextBox() => Positioned(
-        left: 86,
-        right: 24,
-        top: 67,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Good afternoon!",
-                    style: GoogleFonts.lato(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black87,
-                      height: 0.9,
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                  Text(
-                    "Steven Duong",
-                    style: GoogleFonts.lato(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.only(top: 3, right: 8),
-              child: const Bell(),
-            ),
-          ],
-        ),
       );
 
   Widget _buildMainContent() => Positioned(

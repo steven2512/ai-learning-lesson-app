@@ -50,7 +50,7 @@ const int kScoreMissPenalty = -10;
 
 // Layout
 const double kHeaderBoxesTopMargin = 70.0;
-const double kIntroBoxesTopMargin = 100.0;
+const double kIntroBoxesTopMargin = 40.0;
 
 /// 🧷 keep the top-left area (close button + progress bar) tappable
 const double kTopSafeInsetForClose = 205.0;
