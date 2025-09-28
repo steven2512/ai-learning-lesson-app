@@ -1,11 +1,12 @@
+// FILE: lib/auth/sign_up_flow.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:running_robot/auth/start_button.dart'; // ✅ your PillCta
 
 import 'auth_gate.dart';
-import 'start_button.dart'; // 👈 your PillCta
 
 class SignupFlow extends StatefulWidget {
   final String initialEmail;
@@ -23,7 +24,6 @@ class _SignupFlowState extends State<SignupFlow> {
       TextEditingController();
 
   DateTime? _selectedDob;
-
   int _currentPage = 0;
 
   // 🔹 Save/update Firestore user document
@@ -64,6 +64,10 @@ class _SignupFlowState extends State<SignupFlow> {
     try {
       final cred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
+
+      // 🔹 Save displayName into FirebaseAuth profile
+      await cred.user!.updateDisplayName(_nameController.text.trim());
+      await cred.user!.reload();
 
       await _onLoginSuccess(context, cred.user!);
 
@@ -167,7 +171,7 @@ class _SignupFlowState extends State<SignupFlow> {
                       const SizedBox(height: 40),
                       Center(
                         child: Text(
-                          "What is your name? ✨",
+                          "What is your name?",
                           style: GoogleFonts.lato(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
@@ -185,7 +189,6 @@ class _SignupFlowState extends State<SignupFlow> {
                         label: "Continue",
                         color: kBrandPurple,
                         expand: true,
-                        fontSize: 20,
                         onTap: _nextPage,
                       ),
                     ],
@@ -227,7 +230,6 @@ class _SignupFlowState extends State<SignupFlow> {
                         label: "Continue",
                         color: kBrandPurple,
                         expand: true,
-                        fontSize: 20,
                         onTap: _nextPage,
                       ),
                     ],
@@ -269,7 +271,6 @@ class _SignupFlowState extends State<SignupFlow> {
                         label: "Finish",
                         color: kBrandPurple,
                         expand: true,
-                        fontSize: 20,
                         onTap: _nextPage,
                       ),
                     ],
