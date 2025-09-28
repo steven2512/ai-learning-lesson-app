@@ -15,7 +15,6 @@ class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   // 🔹 Save/update Firestore user document
-  // 🔹 Save/update Firestore user document
   Future<void> _onLoginSuccess(BuildContext context, User user) async {
     await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
       'uid': user.uid,
@@ -25,15 +24,11 @@ class LoginPage extends StatelessWidget {
       'lastLogin': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    // ✅ Replace stack with AuthGate (no animation)
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const AuthGate(),
         transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
         transitionDuration: const Duration(milliseconds: 300),
       ),
@@ -44,200 +39,216 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color kBrandPurple = Color(0xFF7F56D9);
-    const Color kDarkNavy = Color.fromARGB(255, 87, 87, 87);
 
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
 
-    const double topOffset = 60;
+    const double topOffset = 40;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: topOffset),
-
-              // --- Big Header ---
-              Center(
-                child: Text(
-                  "Sign in",
-                  style: GoogleFonts.lato(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // --- Social Icons Row (Google + Facebook) ---
-              Row(
+    return GestureDetector(
+      // 👇 Tap outside a TextField to hide keyboard + cursor
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: true, // shows back button
+          iconTheme: const IconThemeData(color: Colors.black87),
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFF3E9FF), // light purple top
+                Color(0xFFFFFFFF), // fade into white bottom
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _signInWithGoogle(context);
-                      },
-                      child: _socialButtonGoogle(),
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _signInWithFacebook(context);
-                      },
-                      child: _socialButtonFacebook(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  SizedBox(height: topOffset),
 
-              // --- Divider ---
-              Row(
-                children: [
-                  const Expanded(child: Divider(thickness: .6)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  // --- Big Header ---
+                  Center(
                     child: Text(
-                      'Or sign in with',
-                      style: GoogleFonts.lato(color: Colors.black54),
-                    ),
-                  ),
-                  const Expanded(child: Divider(thickness: .6)),
-                ],
-              ),
-              const SizedBox(height: 28),
-
-              // --- Email ---
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  hintText: 'Email',
-                  hintStyle: GoogleFonts.lato(color: Colors.black45),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Colors.transparent),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: kDarkNavy,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // --- Password ---
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  hintStyle: GoogleFonts.lato(color: Colors.black45),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Colors.transparent),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: kDarkNavy,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // --- CTA ---
-              PillCta(
-                label: 'Log In',
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 150, vertical: 20),
-                color: kBrandPurple,
-                onTap: () async {
-                  await _signInWithEmail(
-                    context,
-                    emailController.text.trim(),
-                    passwordController.text.trim(),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // --- Forgot Password ---
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Forgot password tapped')),
-                    );
-                  },
-                  child: Text(
-                    "Forgot Password?",
-                    style: GoogleFonts.lato(
-                      color: kBrandPurple,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // --- Sign Up Prompt ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Don’t have an account?",
-                    style: GoogleFonts.lato(
-                      color: Colors.black54,
-                      fontSize: 16,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sign up tapped')),
-                      );
-                    },
-                    child: Text(
-                      "Sign Up",
+                      "Sign in",
                       style: GoogleFonts.lato(
-                        color: kBrandPurple,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 32),
+
+                  // --- Social Icons Row (Google + Facebook) ---
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async => await _signInWithGoogle(context),
+                          child: _socialButtonGoogle(),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async => await _signInWithFacebook(context),
+                          child: _socialButtonFacebook(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Divider ---
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(thickness: .6)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Or sign in with',
+                          style: GoogleFonts.lato(color: Colors.black54),
+                        ),
+                      ),
+                      const Expanded(child: Divider(thickness: .6)),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // --- Email ---
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      hintText: 'Email',
+                      hintStyle: GoogleFonts.lato(color: Colors.black45),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 18),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFCCCCCC), // ✅ faint grey at rest
+                          width: 0.8,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.black, // ✅ solid black on focus
+                          width: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- Password ---
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Password',
+                      hintStyle: GoogleFonts.lato(color: Colors.black45),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 18),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFCCCCCC), // ✅ faint grey at rest
+                          width: 0.8,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.black, // ✅ solid black on focus
+                          width: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- CTA ---
+                  PillCta(
+                    label: 'Log In',
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 150, vertical: 20),
+                    color: kBrandPurple,
+                    onTap: () async {
+                      await _signInWithEmail(
+                        context,
+                        emailController.text.trim(),
+                        passwordController.text.trim(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- Forgot Password ---
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Forgot password tapped')),
+                        );
+                      },
+                      child: Text(
+                        "Forgot Password?",
+                        style: GoogleFonts.lato(
+                          color: kBrandPurple,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Sign Up Prompt ---
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don’t have an account?",
+                        style: GoogleFonts.lato(
+                          color: Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sign up tapped')),
+                          );
+                        },
+                        child: Text(
+                          "Sign Up",
+                          style: GoogleFonts.lato(
+                            color: kBrandPurple,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -383,35 +394,4 @@ class LoginPage extends StatelessWidget {
       );
     }
   }
-
-  // --- Apple login (commented out for now) ---
-  /*
-  Future<void> _signInWithApple(BuildContext context) async {
-    try {
-      final apple = AppleAuthProvider()
-        ..addScope('email')
-        ..addScope('name');
-
-      if (kIsWeb) {
-        final cred = await FirebaseAuth.instance.signInWithPopup(apple);
-        await _onLoginSuccess(context, cred.user!);
-      } else {
-        final cred = await FirebaseAuth.instance.signInWithProvider(apple);
-        await _onLoginSuccess(context, cred.user!);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logged in with Apple')),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Apple sign-in error: ${e.message}')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Apple sign-in failed: $e')),
-      );
-    }
-  }
-  */
 }
