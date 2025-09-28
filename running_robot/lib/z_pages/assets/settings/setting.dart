@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // 🔹 Added for logout
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart'; // 👈 Reuse header
 
 class SettingsPage extends StatelessWidget {
@@ -77,7 +79,8 @@ class SettingsPage extends StatelessWidget {
                   child: TextButton(
                     onPressed: () async {
                       await FirebaseAuth.instance.signOut();
-                      // AuthGate will detect logout and rebuild → WelcomePage
+                      await FacebookAuth.instance.logOut();
+                      await GoogleSignIn.instance.signOut();
                     },
                     child: Text(
                       "Log Out",
