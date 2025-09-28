@@ -1,4 +1,4 @@
-package com.example.running_robot
+package com.ai.runningrobot
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -9,12 +9,12 @@ plugins {
 }
 
 android {
-    namespace = "com.example.running_robot"
+    namespace = "com.ai.runningrobot"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        applicationId = "com.example.running_robot"
+        applicationId = "com.ai.runningrobot"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
