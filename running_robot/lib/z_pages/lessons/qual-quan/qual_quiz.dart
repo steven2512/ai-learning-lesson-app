@@ -75,7 +75,7 @@ class _QualQuizState extends State<QualQuiz> {
             margin: const EdgeInsets.only(bottom: 18),
             child: Center(
               child: Image.asset(
-                "assets/images/qualitative_not.png", // kept to avoid asset changes
+                "assets/images/qualitative.png", // kept to avoid asset changes
                 height: 180,
                 fit: BoxFit.contain,
               ),

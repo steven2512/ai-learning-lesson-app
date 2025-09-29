@@ -22,6 +22,27 @@ class DataIntroBrain extends BaseLessonBrain {
 
 class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   @override
+  void initState() {
+    super.initState();
+    // ✅ NEW: Precache lesson1 images at brain level
+    Future.microtask(() {
+      final ctx = context;
+      precacheImage(
+          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
+      precacheImage(const AssetImage("assets/images/computer.png"), ctx);
+      precacheImage(const AssetImage("assets/images/voice.png"), ctx);
+      precacheImage(const AssetImage("assets/images/notebook.png"), ctx);
+      precacheImage(const AssetImage("assets/images/tabular.png"), ctx);
+      precacheImage(const AssetImage("assets/images/recording.png"), ctx);
+      precacheImage(const AssetImage("assets/images/car.jpg"), ctx);
+      precacheImage(const AssetImage("assets/images/data_analyst.png"), ctx);
+      precacheImage(const AssetImage("assets/images/dialogue_box.png"), ctx);
+      precacheImage(const AssetImage("assets/images/record_icon.png"), ctx);
+      precacheImage(const AssetImage("assets/images/basketball.png"), ctx);
+    });
+  }
+
+  @override
   List<SubLesson> buildSubLessons() => [
         // Step 0 → Intro with conditional continue
         SubLesson(

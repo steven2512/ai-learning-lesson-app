@@ -51,6 +51,24 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _precacheTabAssets();
+  }
+
+  Future<void> _precacheTabAssets() async {
+    final ctx = context;
+    // Example assets — replace with real ones you use in each tab
+    precacheImage(const AssetImage("assets/images/home_banner.png"), ctx);
+    precacheImage(const AssetImage("assets/images/robot.png"), ctx);
+    precacheImage(const AssetImage("assets/images/lesson_cover.png"), ctx);
+    precacheImage(const AssetImage("assets/images/book.png"), ctx);
+    precacheImage(const AssetImage("assets/images/settings_icon.png"), ctx);
+    precacheImage(
+        const AssetImage("assets/images/puzzle_placeholder.png"), ctx);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageStorage(

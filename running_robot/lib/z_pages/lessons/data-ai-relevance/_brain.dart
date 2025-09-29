@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+
+// lesson steps
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict-quiz.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ask_yourself_homework.dart';
@@ -25,6 +27,25 @@ class DataAiRelevance extends BaseLessonBrain {
 
 class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
   @override
+  void initState() {
+    super.initState();
+    // ✅ NEW: Precache lesson assets once at Brain level
+    Future.microtask(() {
+      final ctx = context;
+      precacheImage(
+          const AssetImage("assets/images/data-ai-student-homework.png"), ctx);
+      precacheImage(const AssetImage("assets/images/ask_yourself.png"), ctx);
+      precacheImage(const AssetImage("assets/images/15913.png"), ctx);
+      precacheImage(const AssetImage("assets/images/house1.png"), ctx);
+      precacheImage(const AssetImage("assets/images/house2.png"), ctx);
+      precacheImage(const AssetImage("assets/images/house3.png"), ctx);
+      precacheImage(const AssetImage("assets/images/house4.png"), ctx);
+      precacheImage(
+          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
+    });
+  }
+
+  @override
   List<SubLesson> buildSubLessons() => [
         // Dialogue: “Why do we care about data?”
         SubLesson(
@@ -44,6 +65,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
           mechanic: LessonMechanic.manual,
           build: (_, __) => const AskYourselfHomework(),
         ),
+
         // Data as examples
         SubLesson(
           topOffset: 200,
@@ -55,27 +77,22 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
         SubLesson(
           topOffset: 200,
           mechanic: LessonMechanic.emit,
-          build: (done, __) => AIPredict(
-            onCompleted: done,
-          ),
+          build: (done, __) => AIPredict(onCompleted: done),
         ),
 
         // Prediction exercise (MCQ sequence)
         SubLesson(
           topOffset: 160,
           mechanic: LessonMechanic.emit,
-          build: (done, reset) => PredictionExercise(
-            onCompleted: done,
-          ),
+          build: (done, reset) => PredictionExercise(onCompleted: done),
         ),
 
-        // Classification explained (non-technical phrasing, like “sorting/grouping”)
+        // Classification explained
         SubLesson(
-            topOffset: 200,
-            mechanic: LessonMechanic.emit,
-            build: (done, __) => SortGroup(
-                  onCompleted: done,
-                )),
+          topOffset: 200,
+          mechanic: LessonMechanic.emit,
+          build: (done, __) => SortGroup(onCompleted: done),
+        ),
 
         // Classification drag-and-drop game
         SubLesson(

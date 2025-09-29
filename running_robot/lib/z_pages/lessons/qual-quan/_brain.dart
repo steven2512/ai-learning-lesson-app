@@ -27,6 +27,22 @@ class QualQuanBrain extends BaseLessonBrain {
 }
 
 class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
+  // 🔹 NEW: Precache lesson-specific images when lesson starts
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final ctx = context;
+      precacheImage(const AssetImage("assets/images/data_chart.png"), ctx);
+      precacheImage(const AssetImage("assets/images/quantitative.png"), ctx);
+      precacheImage(const AssetImage("assets/images/qualitative.png"), ctx);
+      precacheImage(
+          const AssetImage("assets/images/quantitative_not.png"), ctx);
+      precacheImage(const AssetImage("assets/images/happy_life.jpg"), ctx);
+    });
+  }
+  // 🔹 END NEW
+
   @override
   List<SubLesson> buildSubLessons() => [
         SubLesson(

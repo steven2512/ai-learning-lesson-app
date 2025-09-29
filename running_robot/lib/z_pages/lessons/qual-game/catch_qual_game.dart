@@ -42,8 +42,8 @@ const double kFadeInDistance = 160;
 const double kMinVerticalGap = 100; // vertical spacing
 
 // Scoring
-const int kPointsToWin = 10;
-const int kPointsToLose = -10;
+const int kPointsToWin = 100;
+const int kPointsToLose = -100;
 const int kScoreCorrect = 10;
 const int kScoreIncorrect = -10;
 const int kScoreMissPenalty = -10;
