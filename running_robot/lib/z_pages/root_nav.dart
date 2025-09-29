@@ -42,7 +42,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
     // PUZZLES
     const _SimpleScaffold(
       title: 'Puzzles',
-      body: Center(child: Text('Puzzle-solving games will appear here')),
+      body: Center(child: Text('This feature is in development (coming soon)')),
       storageKey: PageStorageKey('puzzles_tab'),
     ),
 
