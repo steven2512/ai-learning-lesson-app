@@ -46,6 +46,7 @@ dependencies:
   flame_forge2d: ^0.18.0
   animations: ^2.0.11
   cupertino_icons: ^1.0.8
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:

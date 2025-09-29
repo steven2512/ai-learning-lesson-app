@@ -1,3 +1,10 @@
-Step 1:"C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -exportcert -alias androiddebugkey -keystore "debug.keystore" -storepass android -keypass android | "C:\OpenSSL\bin\openssl.exe" sha1 -binary | "C:\OpenSSL\bin\openssl.exe" base64
+Facebook
 
-04gM+EAfhnq4ALbhOX8jG5oRuow=
+Go to C Program Files Java bin -> find keytool.exe
+Open cmd
+
+keytool -list -v -keystore "C:\Users\HP\.android\debug.keystore" -exportcert -alias androiddebugkey -keystore "debug.keystore" -storepass android -keypass android | "C:\OpenSSL\bin\openssl.exe" sha1 -binary | "C:\OpenSSL\bin\openssl.exe" base64
+
+
+Google and others
+.\keytool.exe -list -v -keystore "C:\Users\HP\.android\debug.keystore" -alias androiddebugkey -storepass android -keypass android

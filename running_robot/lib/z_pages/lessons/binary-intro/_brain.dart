@@ -24,6 +24,22 @@ class BinaryIntroBrain extends BaseLessonBrain {
 }
 
 class _BinaryIntroBrainState extends BaseLessonBrainState<BinaryIntroBrain> {
+  // 🔹 NEW: Precache lesson-specific images when lesson starts
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final ctx = context;
+      precacheImage(const AssetImage("assets/images/monitor.png"), ctx);
+      precacheImage(const AssetImage("assets/images/cameraman.png"), ctx);
+      precacheImage(const AssetImage("assets/images/dialogue_box.png"), ctx);
+      precacheImage(const AssetImage("assets/images/music_listening.png"), ctx);
+      // 👆 covers all Image.asset calls used inside HumanSeePhoto, HumanHearMusic,
+      // ComputerSeeZeroOne, and dialogue overlays.
+    });
+  }
+  // 🔹 END NEW
+
   @override
   List<SubLesson> buildSubLessons() => [
         SubLesson(

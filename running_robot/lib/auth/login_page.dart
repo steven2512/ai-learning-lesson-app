@@ -10,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import 'auth_gate.dart'; // 🔹 For navigation after login
+import 'signup_page.dart'; // ✅ Added import
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -46,14 +47,13 @@ class LoginPage extends StatelessWidget {
     const double topOffset = 40;
 
     return GestureDetector(
-      // 👇 Tap outside a TextField to hide keyboard + cursor
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          automaticallyImplyLeading: true, // shows back button
+          automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.black87),
         ),
         body: Container(
@@ -62,8 +62,8 @@ class LoginPage extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFF3E9FF), // light purple top
-                Color(0xFFFFFFFF), // fade into white bottom
+                Color(0xFFF3E9FF),
+                Color(0xFFFFFFFF),
               ],
             ),
           ),
@@ -137,14 +137,14 @@ class LoginPage extends StatelessWidget {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(
-                          color: Color(0xFFCCCCCC), // ✅ faint grey at rest
+                          color: Color(0xFFCCCCCC),
                           width: 0.8,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(
-                          color: Colors.black, // ✅ solid black on focus
+                          color: Colors.black,
                           width: 1.4,
                         ),
                       ),
@@ -166,14 +166,14 @@ class LoginPage extends StatelessWidget {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(
-                          color: Color(0xFFCCCCCC), // ✅ faint grey at rest
+                          color: Color(0xFFCCCCCC),
                           width: 0.8,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(
-                          color: Colors.black, // ✅ solid black on focus
+                          color: Colors.black,
                           width: 1.4,
                         ),
                       ),
@@ -231,8 +231,23 @@ class LoginPage extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Sign up tapped')),
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const SignupPage(),
+                              transitionsBuilder: (_, animation, __, child) {
+                                const begin = Offset(1.0, 0.0); // 👉 from right
+                                const end = Offset.zero;
+                                const curve = Curves.easeInOut;
+                                final tween = Tween(begin: begin, end: end)
+                                    .chain(CurveTween(curve: curve));
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 400),
+                            ),
                           );
                         },
                         child: Text(

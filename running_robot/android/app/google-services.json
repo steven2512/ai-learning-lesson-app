@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "592474569593-4visiniu7v3p8lat1l60rkqi3tqsesbe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ai.runningrobot",
+            "certificate_hash": "a4d7d179a71d31e68a174ce52901b9b7feadd47f"
+          }
+        },
+        {
           "client_id": "592474569593-3ts3m4q32ppd677f7hls6mlndb3sg7gh.apps.googleusercontent.com",
           "client_type": 3
         }

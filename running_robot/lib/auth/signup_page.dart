@@ -155,7 +155,7 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Join Robo to start learning AI ✨",
+                          "Start learning AI today✨",
                           style: GoogleFonts.lato(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -229,7 +229,7 @@ class _SignupPageState extends State<SignupPage> {
                             "Continue with Facebook",
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w500,
                               color: Colors.black87,
                             ),
                           ),
