@@ -1,36 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // CupertinoIcons.logo_apple
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/auth/start_button.dart'; // PillCta
-
+import 'package:running_robot/auth/start_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-
-import 'auth_gate.dart'; // 🔹 For navigation after login
-import 'signup_page.dart'; // ✅ Added import
+import 'package:running_robot/services/user_profile_service.dart';
+import 'auth_gate.dart';
+import 'signup_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
-  // 🔹 Save/update Firestore user document
-  Future<void> _onLoginSuccess(BuildContext context, User user) async {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      'uid': user.uid,
-      'name': user.displayName,
-      'email': user.email,
-      'photoUrl': user.photoURL,
-      'lastLogin': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> _onLoginSuccess(
+    BuildContext context,
+    User user, {
+    required String provider,
+  }) async {
+    await UserProfileService.createOrUpdateUserProfile(
+      user,
+      lastDevice: _detectPlatform(context), // ✅ track platform
+      appVersion: "1.0.0+1", // ✅ replace with package_info_plus later
+      provider: provider, // ✅ google / facebook / password
+    );
 
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const AuthGate(),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 300),
       ),
       (route) => false,
@@ -40,11 +39,8 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color kBrandPurple = Color(0xFF7F56D9);
-
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
-
-    const double topOffset = 40;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -61,10 +57,7 @@ class LoginPage extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF3E9FF),
-                Color(0xFFFFFFFF),
-              ],
+              colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
             ),
           ),
           child: SafeArea(
@@ -73,9 +66,7 @@ class LoginPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(height: topOffset),
-
-                  // --- Big Header ---
+                  const SizedBox(height: 40),
                   Center(
                     child: Text(
                       "Sign in",
@@ -88,7 +79,7 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // --- Social Icons Row (Google + Facebook) ---
+                  // Social buttons
                   Row(
                     children: [
                       Expanded(
@@ -108,7 +99,6 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // --- Divider ---
                   Row(
                     children: [
                       const Expanded(child: Divider(thickness: .6)),
@@ -124,64 +114,18 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // --- Email ---
                   TextField(
                     controller: emailController,
-                    decoration: InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: GoogleFonts.lato(color: Colors.black45),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 18),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFCCCCCC),
-                          width: 0.8,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
+                    decoration: _inputDecoration("Email"),
                   ),
                   const SizedBox(height: 16),
-
-                  // --- Password ---
                   TextField(
                     controller: passwordController,
                     obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Password',
-                      hintStyle: GoogleFonts.lato(color: Colors.black45),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 18),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFCCCCCC),
-                          width: 0.8,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
+                    decoration: _inputDecoration("Password"),
                   ),
                   const SizedBox(height: 24),
 
-                  // --- CTA ---
                   PillCta(
                     label: 'Log In',
                     padding: const EdgeInsets.symmetric(
@@ -197,7 +141,6 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- Forgot Password ---
                   Center(
                     child: TextButton(
                       onPressed: () {
@@ -218,7 +161,6 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // --- Sign Up Prompt ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -235,7 +177,7 @@ class LoginPage extends StatelessWidget {
                             PageRouteBuilder(
                               pageBuilder: (_, __, ___) => const SignupPage(),
                               transitionsBuilder: (_, animation, __, child) {
-                                const begin = Offset(1.0, 0.0); // 👉 from right
+                                const begin = Offset(1.0, 0.0);
                                 const end = Offset.zero;
                                 const curve = Curves.easeInOut;
                                 final tween = Tween(begin: begin, end: end)
@@ -270,51 +212,53 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  // --- Google Button ---
-  Widget _socialButtonGoogle() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black, width: 1),
-        color: Colors.white,
-      ),
-      child: Center(
-        child: Image.asset(
-          'assets/images/google_icon.png',
-          height: 28,
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.lato(color: Colors.black45),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 0.8),
         ),
-      ),
-    );
-  }
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
+        ),
+      );
 
-  // --- Facebook Button ---
-  Widget _socialButtonFacebook() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black, width: 1),
-        color: Colors.white,
-      ),
-      child: const Center(
-        child: Icon(Icons.facebook, size: 32, color: Color(0xFF1877F2)),
-      ),
-    );
-  }
+  Widget _socialButtonGoogle() => Container(
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 1),
+          color: Colors.white,
+        ),
+        child: Center(
+          child: Image.asset('assets/images/google_icon.png', height: 28),
+        ),
+      );
 
-  // --- Email login ---
+  Widget _socialButtonFacebook() => Container(
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 1),
+          color: Colors.white,
+        ),
+        child: const Center(
+          child: Icon(Icons.facebook, size: 32, color: Color(0xFF1877F2)),
+        ),
+      );
+
   Future<void> _signInWithEmail(
       BuildContext context, String email, String password) async {
     try {
-      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      await _onLoginSuccess(context, cred.user!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logged in with Email/Password')),
-      );
+      final cred = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      await _onLoginSuccess(context, cred.user!, provider: "password");
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message}')),
@@ -322,16 +266,14 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  // --- Google login ---
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
       final GoogleSignIn gsi = GoogleSignIn.instance;
       await gsi.initialize();
 
       if (gsi.supportsAuthenticate()) {
-        final GoogleSignInAccount account = await gsi.authenticate();
-        final GoogleSignInAuthentication authTokens =
-            await account.authentication;
+        final account = await gsi.authenticate();
+        final authTokens = await account.authentication;
         final String? idToken = authTokens.idToken;
 
         if (idToken == null) {
@@ -341,16 +283,13 @@ class LoginPage extends StatelessWidget {
           );
         }
 
-        final OAuthCredential credential =
-            GoogleAuthProvider.credential(idToken: idToken);
-
-        final cred =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        await _onLoginSuccess(context, cred.user!);
+        final cred = await FirebaseAuth.instance.signInWithCredential(
+            GoogleAuthProvider.credential(idToken: idToken));
+        await _onLoginSuccess(context, cred.user!, provider: "google");
       } else if (kIsWeb) {
         final cred =
             await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
-        await _onLoginSuccess(context, cred.user!);
+        await _onLoginSuccess(context, cred.user!, provider: "google");
       } else {
         throw FirebaseAuthException(
           code: 'UNSUPPORTED_PLATFORM',
@@ -358,14 +297,6 @@ class LoginPage extends StatelessWidget {
               'GoogleSignIn.authenticate() not supported on this platform.',
         );
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logged in with Google')),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google sign-in error: ${e.message}')),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google sign-in failed: $e')),
@@ -373,40 +304,31 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  // --- Facebook login ---
   Future<void> _signInWithFacebook(BuildContext context) async {
     try {
-      final LoginResult result = await FacebookAuth.instance.login(
-        permissions: ['email', 'public_profile'],
-      );
-
+      final result = await FacebookAuth.instance
+          .login(permissions: ['email', 'public_profile']);
       if (result.status == LoginStatus.success) {
-        final accessToken = result.accessToken!;
-        final credential =
-            FacebookAuthProvider.credential(accessToken.tokenString);
-
-        final cred =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        await _onLoginSuccess(context, cred.user!);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logged in with Facebook')),
+        final cred = await FirebaseAuth.instance.signInWithCredential(
+          FacebookAuthProvider.credential(result.accessToken!.tokenString),
         );
+        await _onLoginSuccess(context, cred.user!, provider: "facebook");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Facebook login failed: ${result.message}')),
         );
       }
-    } on FirebaseAuthException catch (e, st) {
-      debugPrint("FirebaseAuthException: $e\n$st");
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Firebase error: ${e.message}')),
-      );
-    } catch (e, st) {
-      debugPrint("Generic Facebook login error: $e\n$st");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during Facebook login: $e')),
+        SnackBar(content: Text('Facebook error: $e')),
       );
     }
+  }
+
+  // ✅ Helper to detect device platform
+  String _detectPlatform(BuildContext context) {
+    if (Theme.of(context).platform == TargetPlatform.iOS) return "ios";
+    if (Theme.of(context).platform == TargetPlatform.android) return "android";
+    return "web";
   }
 }

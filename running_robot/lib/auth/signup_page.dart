@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:running_robot/auth/sign_up_flow.dart';
-import 'package:running_robot/auth/start_button.dart'; // ✅ your PillCta
-
+import 'package:running_robot/auth/start_button.dart';
+import 'package:running_robot/services/user_profile_service.dart';
 import 'auth_gate.dart';
 
 class SignupPage extends StatefulWidget {
@@ -21,18 +20,20 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
 
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
-  }
+  bool _isValidEmail(String email) =>
+      RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
 
-  Future<void> _onLoginSuccess(BuildContext context, User user) async {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      'uid': user.uid,
-      'name': user.displayName,
-      'email': user.email,
-      'photoUrl': user.photoURL,
-      'lastLogin': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> _onLoginSuccess(
+    BuildContext context,
+    User user, {
+    required String provider,
+  }) async {
+    await UserProfileService.createOrUpdateUserProfile(
+      user,
+      provider: provider, // ✅ track signup method
+      lastDevice: _detectPlatform(context), // ✅ iOS/Android/Web
+      appVersion: "1.0.0+1", // ✅ replace with package_info_plus
+    );
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const AuthGate()),
@@ -46,9 +47,8 @@ class _SignupPageState extends State<SignupPage> {
       await gsi.initialize();
 
       if (gsi.supportsAuthenticate()) {
-        final GoogleSignInAccount account = await gsi.authenticate();
-        final GoogleSignInAuthentication authTokens =
-            await account.authentication;
+        final account = await gsi.authenticate();
+        final authTokens = await account.authentication;
         final String? idToken = authTokens.idToken;
 
         if (idToken == null) {
@@ -58,22 +58,14 @@ class _SignupPageState extends State<SignupPage> {
           );
         }
 
-        final OAuthCredential credential =
-            GoogleAuthProvider.credential(idToken: idToken);
-
-        final cred =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        await _onLoginSuccess(context, cred.user!);
+        final cred = await FirebaseAuth.instance.signInWithCredential(
+          GoogleAuthProvider.credential(idToken: idToken),
+        );
+        await _onLoginSuccess(context, cred.user!, provider: "google");
       } else if (kIsWeb) {
         final cred =
             await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
-        await _onLoginSuccess(context, cred.user!);
-      } else {
-        throw FirebaseAuthException(
-          code: 'UNSUPPORTED_PLATFORM',
-          message:
-              'GoogleSignIn.authenticate() not supported on this platform.',
-        );
+        await _onLoginSuccess(context, cred.user!, provider: "google");
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,18 +76,13 @@ class _SignupPageState extends State<SignupPage> {
 
   Future<void> _signUpWithFacebook(BuildContext context) async {
     try {
-      final LoginResult result = await FacebookAuth.instance.login(
-        permissions: ['email', 'public_profile'],
-      );
-
+      final result = await FacebookAuth.instance
+          .login(permissions: ['email', 'public_profile']);
       if (result.status == LoginStatus.success) {
-        final accessToken = result.accessToken!;
-        final credential =
-            FacebookAuthProvider.credential(accessToken.tokenString);
-
-        final cred =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        await _onLoginSuccess(context, cred.user!);
+        final cred = await FirebaseAuth.instance.signInWithCredential(
+          FacebookAuthProvider.credential(result.accessToken!.tokenString),
+        );
+        await _onLoginSuccess(context, cred.user!, provider: "facebook");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Facebook sign-up failed: ${result.message}')),
@@ -127,10 +114,7 @@ class _SignupPageState extends State<SignupPage> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF3E9FF),
-                Color(0xFFFFFFFF),
-              ],
+              colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
             ),
           ),
           child: SafeArea(
@@ -140,8 +124,6 @@ class _SignupPageState extends State<SignupPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 70),
-
-                  // --- Title & subtitle
                   Center(
                     child: Column(
                       children: [
@@ -167,79 +149,28 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // --- Google Button
+                  // Google
                   GestureDetector(
                     onTap: () => _signUpWithGoogle(context),
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset('assets/images/google_icon.png',
-                              height: 32),
-                          const SizedBox(width: 12),
-                          Text(
-                            "Continue with Google",
-                            style: GoogleFonts.lato(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: _socialButton(
+                      icon: Image.asset('assets/images/google_icon.png',
+                          height: 32),
+                      text: "Continue with Google",
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // --- Facebook Button
+                  // Facebook
                   GestureDetector(
                     onTap: () => _signUpWithFacebook(context),
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.facebook,
-                              color: Color(0xFF1877F2), size: 34),
-                          SizedBox(width: 12),
-                          Text(
-                            "Continue with Facebook",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: _socialButton(
+                      icon: const Icon(Icons.facebook,
+                          color: Color(0xFF1877F2), size: 34),
+                      text: "Continue with Facebook",
                     ),
                   ),
                   const SizedBox(height: 38),
 
-                  // --- Divider
                   Row(
                     children: [
                       const Expanded(child: Divider(thickness: .6)),
@@ -258,7 +189,6 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 28),
 
-                  // --- Email field
                   TextField(
                     controller: _emailController,
                     onChanged: (value) {
@@ -270,33 +200,10 @@ class _SignupPageState extends State<SignupPage> {
                         }
                       });
                     },
-                    decoration: InputDecoration(
-                      hintText: 'Enter your email',
-                      hintStyle: GoogleFonts.lato(color: Colors.black45),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 18),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFCCCCCC),
-                          width: 0.8,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
+                    decoration: _inputDecoration("Enter your email"),
                   ),
-
                   const SizedBox(height: 20),
 
-                  // --- Continue button
                   PillCta(
                     label: "Continue",
                     color: kBrandPurple,
@@ -330,7 +237,6 @@ class _SignupPageState extends State<SignupPage> {
                     },
                   ),
 
-                  // --- Error box (below the button)
                   if (_emailError != null) ...[
                     const SizedBox(height: 12),
                     Container(
@@ -360,5 +266,61 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ),
     );
+  }
+
+  Widget _socialButton({required Widget icon, required String text}) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          icon,
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: GoogleFonts.lato(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.lato(color: Colors.black45),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 0.8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
+        ),
+      );
+
+  // ✅ Detect platform for lastDevice
+  String _detectPlatform(BuildContext context) {
+    if (Theme.of(context).platform == TargetPlatform.iOS) return "ios";
+    if (Theme.of(context).platform == TargetPlatform.android) return "android";
+    return "web";
   }
 }

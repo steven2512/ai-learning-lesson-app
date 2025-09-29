@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:running_robot/auth/start_button.dart'; // ✅ your PillCta
-
+import 'package:running_robot/auth/start_button.dart';
+import 'package:running_robot/services/user_profile_service.dart';
 import 'auth_gate.dart';
 
 class SignupFlow extends StatefulWidget {
@@ -23,26 +22,25 @@ class _SignupFlowState extends State<SignupFlow> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  DateTime? _selectedDob;
+  // ✅ Default DOB so it’s never null
+  DateTime? _selectedDob = DateTime(2000, 1, 1);
+
   int _currentPage = 0;
 
-  // 🔹 Save/update Firestore user document
-  Future<void> _onLoginSuccess(BuildContext context, User user) async {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      'uid': user.uid,
-      'email': user.email,
-      'name': _nameController.text.trim(),
-      'dob': _selectedDob?.toIso8601String(),
-      'photoUrl': user.photoURL,
-      'lastLogin': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> _onSignupSuccess(BuildContext context, User user) async {
+    await UserProfileService.createOrUpdateUserProfile(
+      user,
+      name: _nameController.text.trim(),
+      dob: _selectedDob, // ✅ keep dob
+      lastDevice: _detectPlatform(), // ✅ new
+      appVersion: "1.0.0+1", // ✅ replace with real app version
+    );
 
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const AuthGate(),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 300),
       ),
       (route) => false,
@@ -50,7 +48,7 @@ class _SignupFlowState extends State<SignupFlow> {
   }
 
   Future<void> _finishSignup() async {
-    final email = widget.initialEmail;
+    final email = widget.initialEmail.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
@@ -65,11 +63,10 @@ class _SignupFlowState extends State<SignupFlow> {
       final cred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // 🔹 Save displayName into FirebaseAuth profile
       await cred.user!.updateDisplayName(_nameController.text.trim());
       await cred.user!.reload();
 
-      await _onLoginSuccess(context, cred.user!);
+      await _onSignupSuccess(context, cred.user!);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account created successfully")),
@@ -105,29 +102,22 @@ class _SignupFlowState extends State<SignupFlow> {
     }
   }
 
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: GoogleFonts.lato(color: Colors.black45),
-      filled: true,
-      fillColor: Colors.grey.shade100,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Color(0xFFCCCCCC), // faint grey at rest
-          width: 0.8,
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.lato(color: Colors.black45),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 0.8),
         ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Colors.black, // solid black on focus
-          width: 1.4,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
         ),
-      ),
-    );
-  }
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -150,10 +140,7 @@ class _SignupFlowState extends State<SignupFlow> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF3E9FF),
-                Color(0xFFFFFFFF),
-              ],
+              colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
             ),
           ),
           child: SafeArea(
@@ -161,100 +148,34 @@ class _SignupFlowState extends State<SignupFlow> {
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                // --- Page 1: Name ---
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 40),
-                      Center(
-                        child: Text(
-                          "What is your name?",
-                          style: GoogleFonts.lato(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      TextField(
-                        controller: _nameController,
-                        decoration: _inputDecoration("Your name"),
-                      ),
-                      const Spacer(),
-                      PillCta(
-                        label: "Continue",
-                        color: kBrandPurple,
-                        expand: true,
-                        onTap: _nextPage,
-                      ),
-                    ],
+                // Page 1: Name
+                _pageContent(
+                  "What is your name?",
+                  TextField(
+                    controller: _nameController,
+                    decoration: _inputDecoration("Your name"),
                   ),
+                  "Continue",
                 ),
-
-                // --- Page 2: DOB ---
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 40),
-                      Center(
-                        child: Text(
-                          "What is your Date of Birth?",
-                          style: GoogleFonts.lato(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Expanded(
-                        child: CupertinoDatePicker(
-                          mode: CupertinoDatePickerMode.date,
-                          maximumDate: DateTime.now(),
-                          initialDateTime: DateTime(2000, 1, 1),
-                          onDateTimeChanged: (val) {
-                            setState(() => _selectedDob = val);
-                          },
-                        ),
-                      ),
-                      const Spacer(),
-                      PillCta(
-                        label: "Continue",
-                        color: kBrandPurple,
-                        expand: true,
-                        onTap: _nextPage,
-                      ),
-                    ],
+                // Page 2: DOB
+                _pageContent(
+                  "What is your Date of Birth?",
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.date,
+                      maximumDate: DateTime.now(),
+                      initialDateTime: _selectedDob,
+                      onDateTimeChanged: (val) =>
+                          setState(() => _selectedDob = val),
+                    ),
                   ),
+                  "Continue",
                 ),
-
-                // --- Page 3: Password ---
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                // Page 3: Password
+                _pageContent(
+                  "Set your password",
+                  Column(
                     children: [
-                      const SizedBox(height: 40),
-                      Center(
-                        child: Text(
-                          "Set your password",
-                          style: GoogleFonts.lato(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
@@ -266,15 +187,9 @@ class _SignupFlowState extends State<SignupFlow> {
                         obscureText: true,
                         decoration: _inputDecoration("Repeat password"),
                       ),
-                      const Spacer(),
-                      PillCta(
-                        label: "Finish",
-                        color: kBrandPurple,
-                        expand: true,
-                        onTap: _nextPage,
-                      ),
                     ],
                   ),
+                  "Finish",
                 ),
               ],
             ),
@@ -282,5 +197,45 @@ class _SignupFlowState extends State<SignupFlow> {
         ),
       ),
     );
+  }
+
+  Widget _pageContent(String title, Widget input, String ctaLabel) {
+    const Color kBrandPurple = Color(0xFF7F56D9);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 40),
+          Center(
+            child: Text(
+              title,
+              style: GoogleFonts.lato(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 28),
+          input,
+          const Spacer(),
+          PillCta(
+            label: ctaLabel,
+            color: kBrandPurple,
+            expand: true,
+            onTap: _nextPage,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ detect platform for lastDevice
+  String _detectPlatform() {
+    if (Theme.of(context).platform == TargetPlatform.iOS) return "ios";
+    if (Theme.of(context).platform == TargetPlatform.android) return "android";
+    return "web";
   }
 }
