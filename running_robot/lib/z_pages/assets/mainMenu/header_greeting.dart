@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ for local caching
 import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 
@@ -28,42 +29,43 @@ class _HeaderGreetingState extends State<HeaderGreeting> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Always keep displayName from Firebase
+      // Load profile basics
       setState(() {
         _displayName = user.displayName ?? "User";
       });
 
-      // Try to fetch real picture from Facebook Graph API
       try {
-        final userData = await FacebookAuth.instance.getUserData(
-          fields:
-              "id,name,email,picture.width(256).height(256){url,is_silhouette}",
-        );
-        final pic = userData['picture']?['data'];
-        final bool isSilhouette = (pic?['is_silhouette'] ?? true) as bool;
-        final String? url = isSilhouette ? null : (pic?['url'] as String?);
+        // 🔹 Fetch latest photoUrl from Firestore (faster + more consistent)
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-        if (url != null && url.isNotEmpty) {
-          // Update FirebaseAuth user photo too, for consistency
-          await user.updatePhotoURL(url);
-          await user.reload();
-
+        if (doc.exists && doc.data()?['photoUrl'] != null) {
           setState(() {
-            _photoUrl = url;
+            _photoUrl = doc.data()!['photoUrl'] as String;
           });
         } else {
-          // fallback to Firebase photoURL (may be null or silhouette)
+          // fallback to FirebaseAuth photoURL
           setState(() {
             _photoUrl = user.photoURL;
           });
         }
       } catch (e) {
-        debugPrint("⚠️ Failed to fetch Facebook picture: $e");
+        debugPrint("⚠️ Failed to fetch Firestore user photo: $e");
         setState(() {
           _photoUrl = user.photoURL;
         });
       }
     }
+  }
+
+  // ✅ Helper: always returns an ImageProvider<Object>
+  ImageProvider<Object> _getAvatarProvider() {
+    if (_photoUrl != null && _photoUrl!.isNotEmpty) {
+      return CachedNetworkImageProvider(_photoUrl!); // cached locally
+    }
+    return const AssetImage("assets/images/default_avatar.png");
   }
 
   @override
@@ -75,10 +77,7 @@ class _HeaderGreetingState extends State<HeaderGreeting> {
           top: widget.topOffset,
           child: ProfileAvatar(
             size: 55,
-            image: (_photoUrl != null && _photoUrl!.isNotEmpty)
-                ? NetworkImage(_photoUrl!)
-                : const AssetImage("assets/images/default_avatar.png")
-                    as ImageProvider,
+            image: _getAvatarProvider(),
             imageScale: 1.2,
             onPressed: () => debugPrint("Avatar tapped!"),
             fillColor: const Color.fromARGB(255, 228, 228, 228),
