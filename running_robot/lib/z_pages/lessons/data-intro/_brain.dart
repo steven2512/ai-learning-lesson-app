@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+import 'package:running_robot/core/widgets.dart'; // ✅ ScreenSize now comes from widgets.dart
 
 // legacy lesson steps
 import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // StepZero + StepOne
@@ -24,7 +25,7 @@ class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   @override
   void initState() {
     super.initState();
-    // ✅ NEW: Precache lesson1 images at brain level
+    // ✅ Consistent with lesson3: precache via Future.microtask
     Future.microtask(() {
       final ctx = context;
       precacheImage(
@@ -43,43 +44,45 @@ class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   }
 
   @override
-  List<SubLesson> buildSubLessons() => [
-        // Step 0 → Intro with conditional continue
-        SubLesson(
-          topOffset: 200,
-          mechanic: LessonMechanic.auto, // ✅ auto, not manual
-          build: (done, reset) => DataIntroLesson(
-            onFinished: () => done(), // fallback if needed
-            onRequestNext: () => goNext(), // skip Continue if triggered
-          ),
-        ),
+  List<SubLesson> buildSubLessons() {
+    final screenH = ScreenSize.height; // ✅ central height
 
-        // Step 1 → Computer to Data
+    return [
+      // Step 0 → Intro with conditional continue
+      SubLesson(
+        topOffset: screenH * 0.18,
+        mechanic: LessonMechanic.auto,
+        build: (done, reset) => DataIntroLesson(
+          onFinished: () => done(),
+          onRequestNext: () => goNext(),
+        ),
+      ),
+
+      // Step 1 → Computer to Data
+      SubLesson(
+        topOffset: screenH * 0.23,
+        mechanic: LessonMechanic.emit,
+        build: (done, reset) => ComputerToData(onCompleted: done),
+      ),
+
+      // Step 2 → Data Types
+      SubLesson(
+        topOffset: screenH * 0.10,
+        mechanic: LessonMechanic.manual,
+        build: (_, __) => const DataTypes(),
+      ),
+
+      // Steps 3+ → Dynamic quiz pages
+      for (int i = 0; i < DataTypeQuiz.quizCount; i++)
         SubLesson(
-          topOffset: 220,
+          topOffset: screenH * 0.15,
           mechanic: LessonMechanic.emit,
-          build: (done, reset) => ComputerToData(
-            onCompleted: done,
+          build: (done, reset) => DataTypeQuiz(
+            key: ValueKey('quiz-$i'),
+            quizIndex: i,
+            onQuizCompleted: (_) => done(),
           ),
         ),
-
-        // Step 2 → Data Types
-        SubLesson(
-          topOffset: 150,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const DataTypes(),
-        ),
-
-        // Steps 3+ → Dynamic quiz pages
-        for (int i = 0; i < DataTypeQuiz.quizCount; i++)
-          SubLesson(
-            topOffset: 160,
-            mechanic: LessonMechanic.emit,
-            build: (done, reset) => DataTypeQuiz(
-              key: ValueKey('quiz-$i'),
-              quizIndex: i,
-              onQuizCompleted: (_) => done(),
-            ),
-          ),
-      ];
+    ];
+  }
 }

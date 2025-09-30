@@ -3,6 +3,7 @@
 // Uses PairMatch with scrambled tokens.
 
 import 'package:flutter/material.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/mini-games/drag_drop_game.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 import 'package:running_robot/z_pages/mini-games/pair_match.dart';
@@ -11,10 +12,7 @@ const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 
 class BinaryDragDropGame extends StatelessWidget {
-  /// Call this when ALL pairs are correctly matched and removed.
   final VoidCallback onCompleted;
-
-  /// Parent can hide Continue when user restarts the round.
   final VoidCallback? onRestartRequested;
 
   const BinaryDragDropGame({
@@ -25,38 +23,48 @@ class BinaryDragDropGame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = ScreenSize.category == ScreenCategory.large
+        ? [
+            // ✅ All 6 pairs (12 emojis)
+            DragToken.pair(emoji: "🙂", pairId: "face"),
+            DragToken.pair(emoji: "🙁", pairId: "face"),
+
+            DragToken.pair(emoji: "🔒", pairId: "lock"),
+            DragToken.pair(emoji: "🔓", pairId: "lock"),
+
+            DragToken.pair(emoji: "🌚", pairId: "celestial"),
+            DragToken.pair(emoji: "🌞", pairId: "celestial"),
+
+            DragToken.pair(emoji: "👎", pairId: "vote"),
+            DragToken.pair(emoji: "👍", pairId: "vote"),
+
+            DragToken.pair(emoji: "💔", pairId: "love"),
+            DragToken.pair(emoji: "❤️", pairId: "love"),
+
+            DragToken.pair(emoji: "❌", pairId: "check"),
+            DragToken.pair(emoji: "✅", pairId: "check"),
+          ]
+        : [
+            // ✅ Only 4 pairs (8 emojis total)
+            DragToken.pair(emoji: "🙂", pairId: "face"),
+            DragToken.pair(emoji: "🙁", pairId: "face"),
+
+            DragToken.pair(emoji: "🔒", pairId: "lock"),
+            DragToken.pair(emoji: "🔓", pairId: "lock"),
+
+            DragToken.pair(emoji: "👎", pairId: "vote"),
+            DragToken.pair(emoji: "👍", pairId: "vote"),
+
+            DragToken.pair(emoji: "❌", pairId: "check"),
+            DragToken.pair(emoji: "✅", pairId: "check"),
+          ];
+
     return PairMatch(
-      // Exactly two baskets, labeled 0 and 1 like before
       baskets: const [
         BasketSpec(key: "0", displayName: "0"),
         BasketSpec(key: "1", displayName: "1"),
       ],
-
-      // ✅ Tokens: all 6 pairs, scrambled
-      tokens: [
-        DragToken.pair(emoji: "🙂", pairId: "face"),
-        DragToken.pair(emoji: "🙁", pairId: "face"),
-
-        DragToken.pair(emoji: "🔒", pairId: "lock"),
-        DragToken.pair(emoji: "🔓", pairId: "lock"),
-
-        DragToken.pair(emoji: "🌚", pairId: "celestial"),
-        DragToken.pair(emoji: "🌞", pairId: "celestial"),
-
-        DragToken.pair(emoji: "👎", pairId: "vote"),
-        DragToken.pair(emoji: "👍", pairId: "vote"),
-
-        DragToken.pair(emoji: "💔", pairId: "love"),
-        DragToken.pair(emoji: "❤️", pairId: "love"),
-
-        // ✅ New pair: correct vs incorrect
-        DragToken.pair(emoji: "✅", pairId: "check"),
-        DragToken.pair(emoji: "❌", pairId: "check"),
-      ],
-
-      // ──────────────────────────────────────────────────────────
-      // Title
-      // ──────────────────────────────────────────────────────────
+      tokens: tokens,
       title: LessonText.sentence(
         alignment: WrapAlignment.center,
         [
@@ -72,8 +80,6 @@ class BinaryDragDropGame extends StatelessWidget {
               fontSize: 20, fontWeight: FontWeight.w800),
         ],
       ),
-
-      // End card body
       endCardBody: LessonText.sentence([
         LessonText.word("You", Colors.black87, fontSize: 18),
         LessonText.word("chose", Colors.black87, fontSize: 18),
@@ -84,21 +90,14 @@ class BinaryDragDropGame extends StatelessWidget {
             fontSize: 18, fontWeight: FontWeight.w800),
         LessonText.word("pairs!", Colors.black87, fontSize: 18),
       ]),
-
-      // Labels
       labelTime: "Time taken",
       labelCorrectAttempts: "Correct Pairs",
       labelLongestStreak: "Longest Streak",
       labelIncorrectAttempts: "Incorrect Attempts",
       tryAgainLabel: "Try Again",
-
       basketTitlePrefix: "Basket",
-
-      // Callbacks
       onCompleted: onCompleted,
       onRestartRequested: onRestartRequested,
-
-      // Time string
       timeValueBuilder: (sec) => "${sec.toStringAsFixed(1)} s",
     );
   }

@@ -2,93 +2,85 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 import 'package:running_robot/z_pages/lessons/unknown/bin_classf.dart'; // LessonText
 
-// ====== EXISTING: LessonStepZero remains in this file, unchanged ======
-// (Not repeated here; keep your current implementation.)
-
-// ====== NEW: LessonStepOne (intro) ======
 const Color _mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color _keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
-const double _maxTextWidth = 350;
+final screenW = ScreenSize.width;
+final screenH = ScreenSize.height;
 
-// ✅ Global font-size flag (controls both lines)
-const double kIntroFontSize = 21.0;
-const double kSecondLineSize = kIntroFontSize - 1.5;
+/// Instead of hardcoding, we define a function that scales slowly
+double _scaledFontSize(BuildContext context, double baseSize) {
+  // Example: Pixel 9 ≈ 1080px (logical width ~411dp)
+  // Use width/411 as scaling, but dampen with 0.15 to make it "slow"
+  final scale = 1 + ((screenW / 411) - 1) * 0.15;
+
+  return baseSize * scale;
+}
 
 class DataTypes extends StatelessWidget {
   const DataTypes({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final introSize = _scaledFontSize(context, 21); // base = 21
+    final secondLineSize = introSize - 1.5;
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// ─────────────────────────────────────────────────────────
-            /// BOX 1: "There are many types of data 📊"
-            /// ─────────────────────────────────────────────────────────
+            /// ───────────────────────────────────────────
+            /// BOX 1
+            /// ───────────────────────────────────────────
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10, top: 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LessonText.sentence([
-                    LessonText.word("There", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("are", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("many", _mainConceptColor,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("types", _mainConceptColor,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                    LessonText.word("of", Colors.black87,
-                        fontSize: kIntroFontSize),
-                    LessonText.word("data", _keyConceptGreen,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                    LessonText.word("📊", _keyConceptGreen,
-                        fontSize: kIntroFontSize, fontWeight: FontWeight.w800),
-                  ]),
-                ],
-              ),
+              child: LessonText.sentence([
+                LessonText.word("There", Colors.black87, fontSize: introSize),
+                LessonText.word("are", Colors.black87, fontSize: introSize),
+                LessonText.word("many", _mainConceptColor, fontSize: introSize),
+                LessonText.word("types", _mainConceptColor,
+                    fontSize: introSize, fontWeight: FontWeight.w800),
+                LessonText.word("of", Colors.black87, fontSize: introSize),
+                LessonText.word("data", _keyConceptGreen,
+                    fontSize: introSize, fontWeight: FontWeight.w800),
+                LessonText.word("📊", _keyConceptGreen,
+                    fontSize: introSize, fontWeight: FontWeight.w800),
+              ]),
             ),
 
-            /// ─────────────────────────────────────────────────────────
-            /// BOX 2: "Most of which you actually use on a daily basis 😉"
-            /// ─────────────────────────────────────────────────────────
+            /// ───────────────────────────────────────────
+            /// BOX 2
+            /// ───────────────────────────────────────────
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LessonText.sentence([
-                    LessonText.word("You", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("might even", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("work", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("with", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("them", const Color.fromARGB(255, 0, 0, 0),
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("every day", _mainConceptColor,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                    LessonText.word("without knowing 😉", Colors.black87,
-                        fontSize: kSecondLineSize, fontWeight: FontWeight.w800),
-                  ]),
-                ],
-              ),
+              child: LessonText.sentence([
+                LessonText.word("You", Colors.black87,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("might even", Colors.black87,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("work", Colors.black87,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("with", Colors.black87,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("them", Colors.black,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("every day", _mainConceptColor,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+                LessonText.word("without knowing 😉", Colors.black87,
+                    fontSize: secondLineSize, fontWeight: FontWeight.w800),
+              ]),
             ),
 
             const SizedBox(height: 20),
 
-            /// ─────────────────────────────────────────────────────────
-            /// CHARACTER + DIALOGUE STACK
-            /// ─────────────────────────────────────────────────────────
+            /// ───────────────────────────────────────────
+            /// CHARACTER + DIALOGUE
+            /// ───────────────────────────────────────────
             Center(
               child: SizedBox(
                 width: 400,
@@ -96,7 +88,6 @@ class DataTypes extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Character (base layer)
                     Positioned(
                       bottom: 0,
                       left: 10,
@@ -107,8 +98,6 @@ class DataTypes extends StatelessWidget {
                         fit: BoxFit.contain,
                       ),
                     ),
-
-                    // Dialogue box (top-right of character)
                     Positioned(
                       top: 40,
                       right: 60,

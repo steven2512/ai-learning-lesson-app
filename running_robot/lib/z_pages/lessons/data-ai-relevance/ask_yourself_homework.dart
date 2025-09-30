@@ -1,24 +1,28 @@
 // FILE: lib/z_pages/lessons/data-ai-relevance/student_homework.dart
 import 'package:flutter/material.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color dataOrange = Color.fromARGB(255, 255, 109, 12); // homework
 const Color aiPink = Color(0xFFE91E63); // student
 const Color practiceGreen = Color.fromARGB(255, 0, 163, 54); // practice/improve
-const double globalFontSize = 22;
+
+/// ✅ Global font size that scales slowly with device width
 
 class AskYourselfHomework extends StatelessWidget {
   const AskYourselfHomework({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final fontSize = ScreenSize.globalFontSize();
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🟦 Box 1 — "Ask Yourself" + question (same box)
+            // 🟦 Box 1 — "Ask Yourself" + question
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 15),
               child: Column(
@@ -36,25 +40,24 @@ class AskYourselfHomework extends StatelessWidget {
                   // Question
                   LessonText.sentence([
                     LessonText.word("Without the", Colors.black87,
-                        fontSize: globalFontSize),
-                    LessonText.word("homework (data)", dataOrange,
-                        fontSize: globalFontSize, fontWeight: FontWeight.w900),
-                    LessonText.word(",", Colors.black87,
-                        fontSize: globalFontSize),
+                        fontSize: fontSize),
+                    LessonText.word("homework", dataOrange,
+                        fontSize: fontSize, fontWeight: FontWeight.w900),
+                    LessonText.word("(data),", dataOrange,
+                        fontSize: fontSize, fontWeight: FontWeight.w900),
                     LessonText.word("can the", Colors.black87,
-                        fontSize: globalFontSize),
+                        fontSize: fontSize),
                     LessonText.word("student (AI)", aiPink,
-                        fontSize: globalFontSize, fontWeight: FontWeight.w900),
-                    LessonText.word(
-                        "improve?", const Color.fromARGB(255, 0, 0, 0),
-                        fontSize: globalFontSize, fontWeight: FontWeight.w900),
+                        fontSize: fontSize, fontWeight: FontWeight.w900),
+                    LessonText.word("improve?", Colors.black,
+                        fontSize: fontSize, fontWeight: FontWeight.w900),
                   ]),
                 ],
               ),
             ),
 
             LessonText.box(
-              padding: EdgeInsetsGeometry.all(8),
+              padding: const EdgeInsets.all(8),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -64,7 +67,7 @@ class AskYourselfHomework extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

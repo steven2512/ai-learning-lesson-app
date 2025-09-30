@@ -31,12 +31,13 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.language,
                       title: "Language",
-                      subtitle: "English (US)",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                     _SettingsTile(
                       icon: Icons.dark_mode_outlined,
                       title: "Dark Mode",
+                      subtitle: "(in development 🛠️)",
                       trailing: Switch(
                         value: false,
                         onChanged: (v) {}, // TODO: hook into theme
@@ -51,11 +52,13 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.person_outline,
                       title: "Profile",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                     _SettingsTile(
                       icon: Icons.lock_outline,
                       title: "Privacy",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                   ],
@@ -67,7 +70,7 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.info_outline,
                       title: "About App",
-                      subtitle: "Version 1.0.0",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                   ],

@@ -3,12 +3,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double lesson3FontSize = 20;
 const double feedbackFontSize = 16; // ✅ global font size for feedback
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
+final double screenH = ScreenSize.height;
 
 class QuanQuiz extends StatefulWidget {
   final VoidCallback? onStepCompleted; // ✅ notify parent when correct
@@ -72,11 +74,11 @@ class _QuanQuizState extends State<QuanQuiz> {
 
           // 🟦 Illustration box
           LessonText.box(
-            margin: const EdgeInsets.only(bottom: 18),
+            margin: const EdgeInsets.only(bottom: 10),
             child: Center(
               child: Image.asset(
                 "assets/images/quantitative_not.png",
-                height: 180,
+                height: screenH * 0.18,
                 fit: BoxFit.contain,
               ),
             ),
@@ -84,12 +86,13 @@ class _QuanQuizState extends State<QuanQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
+            style: ScreenSize.category == ScreenCategory.large ? 0 : 1,
             correctAnswer: 2, // Phone number ❌
             answers: [
-              "Age (years)",
-              "Height (cm)",
+              "Age",
+              "Height",
               "Phone number",
-              "Weight (kg)",
+              "Weight",
             ],
             lockCorrectAnswer: true,
             answerFill: Colors.white,

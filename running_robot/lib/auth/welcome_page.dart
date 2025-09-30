@@ -17,7 +17,7 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color kBrandPurple = Color(0xFF7F56D9);
-
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -59,9 +59,9 @@ class WelcomePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       PillCta(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 80, vertical: 20),
-                        fontSize: 22,
+                        fontSize: 24,
+                        width: screenWidth / 1.5,
+                        height: 60,
                         label: 'Get Started',
                         color: kBrandPurple,
                         onTap: () => Navigator.of(context)
