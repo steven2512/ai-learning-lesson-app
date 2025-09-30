@@ -121,7 +121,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
             NavigationDestination(
               icon: Icon(Icons.interests_outlined), // 🧩 puzzles vibe
               selectedIcon: Icon(Icons.interests),
-              label: 'Puzzles',
+              label: 'Games',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),

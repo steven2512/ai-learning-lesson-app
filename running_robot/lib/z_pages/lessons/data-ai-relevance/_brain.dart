@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+import 'package:running_robot/core/widgets.dart';
 
 // lesson steps
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/ai-predict-quiz.dart';
@@ -13,6 +14,9 @@ import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group-quiz.
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/sort-group.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/student_homework.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/wrap-up.dart';
+
+final double screenW = ScreenSize.width;
+final double screenH = ScreenSize.height;
 
 class DataAiRelevance extends BaseLessonBrain {
   const DataAiRelevance({super.key, required AppNavigate onNavigate})
@@ -49,54 +53,54 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
   List<SubLesson> buildSubLessons() => [
         // Dialogue: “Why do we care about data?”
         SubLesson(
-          topOffset: 200,
+          topOffset: screenH * 0.20,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataAiIntro(onFinished: done),
         ),
 
         // Analogy: Student & Homework
         SubLesson(
-          topOffset: 230,
+          topOffset: screenH * 0.25,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const StudentHomework(),
         ),
         SubLesson(
-          topOffset: 230,
+          topOffset: screenH * 0.25,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const AskYourselfHomework(),
         ),
 
         // Data as examples
         SubLesson(
-          topOffset: 200,
+          topOffset: screenH * 0.20,
           mechanic: LessonMechanic.auto,
           build: (done, __) => DataExample(onFinished: done),
         ),
 
         // Prediction explained
         SubLesson(
-          topOffset: 200,
+          topOffset: screenH * 0.23,
           mechanic: LessonMechanic.emit,
           build: (done, __) => AIPredict(onCompleted: done),
         ),
 
         // Prediction exercise (MCQ sequence)
         SubLesson(
-          topOffset: 160,
+          topOffset: screenH * 0.15,
           mechanic: LessonMechanic.emit,
           build: (done, reset) => PredictionExercise(onCompleted: done),
         ),
 
         // Classification explained
         SubLesson(
-          topOffset: 200,
+          topOffset: screenH * 0.2,
           mechanic: LessonMechanic.emit,
           build: (done, __) => SortGroup(onCompleted: done),
         ),
 
         // Classification drag-and-drop game
         SubLesson(
-          topOffset: 120,
+          topOffset: screenH * 0.10,
           mechanic: LessonMechanic.emit,
           build: (done, reset) => SortGroupQuiz(
             onCompleted: done,
@@ -106,7 +110,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
 
         // Wrap-up dialogue
         SubLesson(
-          topOffset: 200,
+          topOffset: screenH * 0.2,
           mechanic: LessonMechanic.auto,
           build: (done, __) => WrapUpDialogue(onFinished: done),
         )

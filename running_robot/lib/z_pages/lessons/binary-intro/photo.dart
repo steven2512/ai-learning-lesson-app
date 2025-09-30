@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
+final screenH = ScreenSize.height;
+final screenW = ScreenSize.width;
 
 class HumanSeePhoto extends StatefulWidget {
   const HumanSeePhoto({super.key});
@@ -74,7 +77,7 @@ class _HumanSeePhotoState extends State<HumanSeePhoto>
                         left: 20,
                         child: Image.asset(
                           "assets/images/cameraman.png",
-                          width: 380,
+                          width: screenW * 0.9,
                           height: 300,
                           fit: BoxFit.contain,
                         ),
@@ -83,7 +86,7 @@ class _HumanSeePhotoState extends State<HumanSeePhoto>
                       // Dialogue box
                       Positioned(
                         top: 40,
-                        right: -50,
+                        right: -screenW * 0.15,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [

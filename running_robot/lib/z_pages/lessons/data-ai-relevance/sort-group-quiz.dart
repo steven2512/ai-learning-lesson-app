@@ -35,8 +35,6 @@ class SortGroupQuiz extends StatelessWidget {
       DragToken.classify(emoji: '🚗', targetBasketKey: 'vehicles'),
 
       // ❌ decoys (other categories)
-      DragToken.classify(emoji: '😀', targetBasketKey: 'emotions'),
-      DragToken.classify(emoji: '😢', targetBasketKey: 'emotions'),
       DragToken.classify(emoji: '🤩', targetBasketKey: 'emotions'),
       DragToken.classify(emoji: '😡', targetBasketKey: 'emotions'),
       DragToken.classify(emoji: '🌞', targetBasketKey: 'celestial'),

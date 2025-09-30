@@ -38,6 +38,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     const Color kBrandPurple = Color(0xFF7F56D9);
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
@@ -128,8 +129,6 @@ class LoginPage extends StatelessWidget {
 
                   PillCta(
                     label: 'Log In',
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 150, vertical: 20),
                     color: kBrandPurple,
                     onTap: () async {
                       await _signInWithEmail(
