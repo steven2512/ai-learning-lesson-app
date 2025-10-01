@@ -1,5 +1,4 @@
 // lib/core/lesson_manifest.dart
-import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/lessons/data-ai-relevance/_brain.dart';
 
@@ -37,10 +36,23 @@ class ChapterMeta {
   });
 }
 
-/// ===== MASTER MANIFEST =====
+/// ===== COURSE =====
+class CourseMeta {
+  final String id; // semantic id (e.g. "ai-course-1")
+  final String title; // display title
+  final List<ChapterMeta> chapters; // ordered chapters
+
+  const CourseMeta({
+    required this.id,
+    required this.title,
+    required this.chapters,
+  });
+}
+
+/// ===== MASTER MANIFEST (backward-compatible) =====
 final List<ChapterMeta> chapterManifest = [
   ChapterMeta(
-    id: "foundations",
+    id: "data-basics",
     title: "Foundations of AI",
     lessons: [
       LessonMeta(
@@ -49,9 +61,10 @@ final List<ChapterMeta> chapterManifest = [
         builder: (nav) => DataIntroBrain(onNavigate: nav),
       ),
       LessonMeta(
-          id: "data-ai-relevance",
-          title: "Why is Data so important for AI?",
-          builder: (nav) => DataAiRelevance(onNavigate: nav)),
+        id: "data-ai-relevance",
+        title: "Why is Data so important for AI?",
+        builder: (nav) => DataAiRelevance(onNavigate: nav),
+      ),
       LessonMeta(
         id: "binary-intro",
         title: "Binary Intro",
@@ -69,11 +82,14 @@ final List<ChapterMeta> chapterManifest = [
       ),
     ],
   ),
+];
 
-  // 🔮 Future example:
-  // ChapterMeta(
-  //   id: "ml-basics",
-  //   title: "Machine Learning Basics",
-  //   lessons: [...],
-  // ),
+/// ===== NEW: COURSE MANIFEST =====
+final List<CourseMeta> courseManifest = [
+  CourseMeta(
+    id: "ai-theory-foundations",
+    title: "AI Foundations Course",
+    chapters: chapterManifest, // reuse existing chapters
+  ),
+  // 🔮 Add more courses later
 ];

@@ -6,12 +6,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
 const double lesson3FontSize = 20;
 const double feedbackFontSize = 16; // ✅ global font size for feedback
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
+final double screenH = ScreenSize.height;
 
 class QualQuiz extends StatefulWidget {
   final VoidCallback? onStepCompleted; // ✅ notify parent when correct
@@ -72,11 +74,11 @@ class _QualQuizState extends State<QualQuiz> {
 
           // 🟦 Illustration box (kept as-is for layout parity)
           LessonText.box(
-            margin: const EdgeInsets.only(bottom: 18),
+            margin: const EdgeInsets.only(bottom: 10),
             child: Center(
               child: Image.asset(
-                "assets/images/qualitative_not.png", // kept to avoid asset changes
-                height: 180,
+                "assets/images/qualitative.png", // kept to avoid asset changes
+                height: screenH * 0.18,
                 fit: BoxFit.contain,
               ),
             ),
@@ -84,11 +86,12 @@ class _QualQuizState extends State<QualQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
+            style: ScreenSize.category == ScreenCategory.large ? 0 : 1,
             correctAnswer: 3, // ✅ D is qualitative
             answers: const [
-              "Height (cm)",
-              "Test score (/100)",
-              "Temperature (°C)",
+              "Height",
+              "Test score",
+              "Temperature",
               "Postcode",
             ],
             lockCorrectAnswer: true,

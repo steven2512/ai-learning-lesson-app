@@ -5,8 +5,11 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 // LessonText helpers (your file)
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+
+final double screenH = ScreenSize.height;
 
 /// ─────────────────────────────────────────────────────────────────
 /// 🔧 GLOBAL TUNING KNOBS
@@ -42,18 +45,18 @@ const double kFadeInDistance = 160;
 const double kMinVerticalGap = 100; // vertical spacing
 
 // Scoring
-const int kPointsToWin = 10;
-const int kPointsToLose = -10;
+const int kPointsToWin = 100;
+const int kPointsToLose = -100;
 const int kScoreCorrect = 10;
 const int kScoreIncorrect = -10;
 const int kScoreMissPenalty = -10;
 
 // Layout
-const double kHeaderBoxesTopMargin = 70.0;
-const double kIntroBoxesTopMargin = 100.0;
+double kHeaderBoxesTopMargin = screenH * 0.13;
+double kIntroBoxesTopMargin = 0;
 
 /// 🧷 keep the top-left area (close button + progress bar) tappable
-const double kTopSafeInsetForClose = 205.0;
+double kTopSafeInsetForClose = screenH * 0.22;
 
 /// 🎯 End-box & stats alignment (left icon/text gutter & right chip gutter)
 const double kStatsLeftGutter = 8.0;
@@ -71,8 +74,8 @@ const double kSlideUpFromBottomPx = 120.0; // how far the compact box slides up
 
 /// 🔧 NEW (separate anchors): where the compact end box stops before unveiling
 /// (Y from the top of the step area below the close/progress zone)
-const double finalYPositionAfterSlideUpSuccess = 30.0;
-const double finalYPositionAfterSlideUpFail = 00.0;
+double finalYPositionAfterSlideUpSuccess = screenH * 0.03;
+double finalYPositionAfterSlideUpFail = screenH * 0.01;
 
 // End box font sizes (consistent win/lose)
 const double kEndTitleFont = 22;
@@ -638,7 +641,7 @@ class _CatchQualGameState extends State<CatchQualGame>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const SizedBox(height: kIntroBoxesTopMargin),
+                        SizedBox(height: kIntroBoxesTopMargin),
                         _narrowBox(
                           color: const Color(0xFFFFF3E0),
                           child: Text(

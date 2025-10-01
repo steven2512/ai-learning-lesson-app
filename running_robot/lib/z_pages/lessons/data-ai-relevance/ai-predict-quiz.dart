@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ LessonText helpers
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // ✅ Your MCQBox with style: 1 support
@@ -7,7 +8,13 @@ import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // �
 const Color _mainConceptColor =
     Color.fromARGB(255, 255, 109, 12); // 🔸 Numbers stay orange
 const Color _aiConceptColor = Colors.green; // ✅ AI/predict emphasis = green
-const double _correctTextSize = 20;
+final double _correctTextSize = ScreenSize.category == ScreenCategory.medium
+    ? 17
+    : ScreenSize.category == ScreenCategory.small
+        ? 14
+        : 18;
+final double screenH = ScreenSize.height;
+final double screenW = ScreenSize.width;
 
 /// ✅ PredictionExercise
 class PredictionExercise extends StatefulWidget {
@@ -45,37 +52,42 @@ class _PredictionExerciseState extends State<PredictionExercise> {
       // 🔹 First line — Rule
       LessonText.sentence([
         LessonText.word("Rule:", Colors.black87,
-            fontWeight: FontWeight.w900, fontSize: 18),
-        LessonText.word("add", Colors.black87, fontSize: 18),
+            fontWeight: FontWeight.w900, fontSize: _correctTextSize),
+        LessonText.word("add", Colors.black87, fontSize: _correctTextSize),
         LessonText.word("7", _mainConceptColor,
-            fontSize: 18, fontWeight: FontWeight.w700),
-        LessonText.word("each step → next is", Colors.black87, fontSize: 18),
+            fontSize: _correctTextSize, fontWeight: FontWeight.w700),
+        LessonText.word("each step → next is", Colors.black87,
+            fontSize: _correctTextSize),
         LessonText.word("22", _mainConceptColor,
-            fontSize: 18, fontWeight: FontWeight.w700),
+            fontSize: _correctTextSize, fontWeight: FontWeight.w700),
       ]),
 
       const SizedBox(height: 6),
 
       // 🔹 Second line — AI link
       LessonText.sentence([
-        LessonText.word("With", Colors.black87, fontSize: 18),
-        LessonText.word("enough", Colors.black87, fontSize: 18),
-        LessonText.word("data,", Colors.black87, fontSize: 18),
+        LessonText.word("With", Colors.black87, fontSize: _correctTextSize),
+        LessonText.word("enough", Colors.black87, fontSize: _correctTextSize),
+        LessonText.word("data,", Colors.black87, fontSize: _correctTextSize),
         LessonText.word("AI", _aiConceptColor,
-            fontSize: 18, italic: true, fontWeight: FontWeight.bold),
-        LessonText.word("can", Colors.black87, fontSize: 18),
-        LessonText.word("also", Colors.black87, fontSize: 18),
-        LessonText.word("predict", _aiConceptColor, fontSize: 18, italic: true),
-        LessonText.word("the", Colors.black87, fontSize: 18),
+            fontSize: _correctTextSize,
+            italic: true,
+            fontWeight: FontWeight.bold),
+        LessonText.word("can", Colors.black87, fontSize: _correctTextSize),
+        LessonText.word("also", Colors.black87, fontSize: _correctTextSize),
+        LessonText.word("predict", _aiConceptColor,
+            fontSize: _correctTextSize, italic: true),
+        LessonText.word("the", Colors.black87, fontSize: _correctTextSize),
         LessonText.word("next", dataOrange,
-            fontSize: 18, fontWeight: FontWeight.bold), // stays black
+            fontSize: _correctTextSize,
+            fontWeight: FontWeight.bold), // stays black
         LessonText.word("number", dataOrange,
-            fontSize: 18, fontWeight: FontWeight.w900),
-        LessonText.word("like", Colors.black87, fontSize: 18),
+            fontSize: _correctTextSize, fontWeight: FontWeight.w900),
+        LessonText.word("like", Colors.black87, fontSize: _correctTextSize),
         LessonText.word("you", Colors.black87,
-            fontWeight: FontWeight.w900, fontSize: 18),
+            fontWeight: FontWeight.w900, fontSize: _correctTextSize),
         LessonText.word("did!", Colors.black87,
-            fontWeight: FontWeight.w900, fontSize: 18),
+            fontWeight: FontWeight.w900, fontSize: _correctTextSize),
       ]),
     ];
 
@@ -86,8 +98,8 @@ class _PredictionExerciseState extends State<PredictionExercise> {
           children: [
             // ✅ Heading box
             LessonText.box(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
               child: Center(
                 child: LessonText.sentence([
                   LessonText.word("What", Colors.black87, fontSize: 22),
@@ -111,7 +123,7 @@ class _PredictionExerciseState extends State<PredictionExercise> {
               ),
               child: SizedBox(
                 width: double.infinity,
-                height: 220,
+                height: screenH * 0.25,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.all(Radius.circular(12)),
                   child: Image.asset(
@@ -127,7 +139,7 @@ class _PredictionExerciseState extends State<PredictionExercise> {
               answers: const ["38", "20", "22", "4"],
               correctAnswer: 2, // index of "22"
               width: double.infinity,
-              height: 250,
+              height: screenH * 0.3,
               padding: const [16, 15, 10, 16, 16, 16],
               colorFill: Colors.white,
               borderRadius: 12,
@@ -135,14 +147,14 @@ class _PredictionExerciseState extends State<PredictionExercise> {
               textColor: Colors.black,
               answerFill: Colors.white,
               answerFontWeight: FontWeight.w500,
-              answerFontSize: 18,
+              answerFontSize: _correctTextSize,
               defaultAnimation: true,
               lockCorrectAnswer: true,
               style: 1,
               onAnswerTap: (index, _) => _handleAnswerTap(index),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             if (_triedWrong && !_answeredCorrect)
               _feedbackBoxText(
@@ -166,7 +178,7 @@ class _PredictionExerciseState extends State<PredictionExercise> {
   // ✅ Feedback helpers
   Widget _feedbackBoxText(String msg, Color bg, Color borderColor) {
     return LessonText.box(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),

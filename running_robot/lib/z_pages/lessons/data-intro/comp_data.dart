@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
@@ -21,9 +22,10 @@ const int timeBeforeFirstAnimation = 200;
 
 const int staggerMs = 0; // was 400
 const int delayBetweenMs = 1000; // extra pause before repeating loop
-
+final screenH = ScreenSize.height;
+final screenW = ScreenSize.width;
 const double computerHeight = 200;
-const Offset computerOffset = Offset(70, 40);
+final Offset computerOffset = Offset(screenW / 2, 40);
 
 final List<Map<String, Offset>> itemTrajectories = [
   {"begin": Offset(0, 0), "end": Offset(1, 2.2)}, // voice
@@ -184,12 +186,13 @@ class _ComputerToDataState extends State<ComputerToData>
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
-                  Positioned(
-                    bottom: computerOffset.dy,
-                    left: computerOffset.dx,
-                    child: Image.asset(
-                      "assets/images/computer.png",
-                      height: computerHeight,
+                  Padding(
+                    padding: EdgeInsets.only(top: screenH * 0.07),
+                    child: Center(
+                      child: Image.asset(
+                        "assets/images/computer.png",
+                        height: computerHeight,
+                      ),
                     ),
                   ),
                   for (int i = 0; i < _dataImages.length; i++)

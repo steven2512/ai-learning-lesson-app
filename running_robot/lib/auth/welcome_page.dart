@@ -1,26 +1,23 @@
-// lib/ui/welcome_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart'; // ✅ Added for CupertinoPageRoute
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // LessonText
-import 'package:running_robot/z_pages/assets/lessonAssets/start_button.dart'; // PillCta
+import 'package:running_robot/auth/start_button.dart'; // PillCta
 import 'login_page.dart';
 import 'signup_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
-  // ✅ NEW: Pure right-to-left slide (both pages move), platform-consistent.
-  // Uses CupertinoPageRoute which animates incoming from right and outgoing to left.
+  // ✅ NEW: Pure right-to-left slide
   Route _slideRightToLeft(Widget page) {
     return CupertinoPageRoute(builder: (_) => page);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Brand purple (unique to your app)
     const Color kBrandPurple = Color(0xFF7F56D9);
-
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -61,11 +58,10 @@ class WelcomePage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 🔁 CHANGED: Use _slideRightToLeft instead of fade route.
                       PillCta(
-                        padding: EdgeInsetsGeometry.symmetric(
-                            horizontal: 80, vertical: 20),
-                        fontSize: 22,
+                        fontSize: 24,
+                        width: screenWidth / 1.5,
+                        height: 60,
                         label: 'Get Started',
                         color: kBrandPurple,
                         onTap: () => Navigator.of(context)

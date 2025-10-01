@@ -55,7 +55,7 @@ class SortGroup extends StatelessWidget {
             // Header
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Center(
                 child: LessonText.sentence([
                   LessonText.word("AI", aiPink,

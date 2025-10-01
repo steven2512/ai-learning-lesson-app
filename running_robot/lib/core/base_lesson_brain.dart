@@ -1,8 +1,11 @@
 // FILE: lib/core/base_lesson_brain.dart
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/core/lesson_manifest.dart';
 import 'package:running_robot/core/lesson_navigator.dart';
 import 'package:running_robot/core/lesson_steps.dart';
+import 'package:running_robot/core/lesson_locator.dart'; // 👈 NEW
+import 'package:running_robot/services/lesson_service.dart';
 
 import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
@@ -25,12 +28,35 @@ class SubLesson {
   });
 }
 
-/// 🔹 Abstract Base Lesson — only requires `id` + `subLessons`.
+/// 🔹 Abstract Base Lesson — now includes course + chapter context
 abstract class BaseLessonBrain extends StatefulWidget {
   final AppNavigate onNavigate;
+
   const BaseLessonBrain({super.key, required this.onNavigate});
 
   String get lessonId;
+
+  String get chapterId {
+    final chapter = chapterManifest.firstWhere(
+      (c) => c.lessons.any((l) => l.id == lessonId),
+    );
+    return chapter.id;
+  }
+
+  String get courseId {
+    final course = courseManifest.firstWhere(
+      (co) => co.chapters.any(
+        (ch) => ch.lessons.any((l) => l.id == lessonId),
+      ),
+    );
+    return course.id;
+  }
+
+  /// 🔹 Get global lesson index (1-based) from LessonLocator
+  int get globalLessonNumber {
+    final locator = LessonLocator.fromLessonId(lessonId);
+    return locator.globalIndex;
+  }
 }
 
 /// Shared state implementation for all lessons
@@ -40,15 +66,50 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   bool answered = false;
   late final List<SubLesson> subLessons;
 
-  /// Override this to declare sub-lessons
   List<SubLesson> buildSubLessons();
 
   @override
   void initState() {
     super.initState();
+    debugPrint("🔥 initState for ${widget.lessonId}");
     subLessons = buildSubLessons();
     LessonStepRegistry.register(widget.lessonId, subLessons.length);
+    handleLesson();
   }
+
+  // ─────────────────────────────
+  // 🔹 API Wrappers
+  // ─────────────────────────────
+
+  Future<void> handleLesson() async {
+    debugPrint("📘 handleLesson called for ${widget.lessonId}");
+    await LessonService.handleLesson(
+      courseId: widget.courseId,
+      chapterId: widget.chapterId,
+      lessonId: widget.lessonId,
+      globalLessonNumber: widget.globalLessonNumber,
+    );
+  }
+
+  Future<void> updateLesson(Map<String, dynamic> fields) async {
+    await LessonService.updateLesson(
+      courseId: widget.courseId,
+      chapterId: widget.chapterId,
+      lessonId: widget.lessonId,
+      fields: fields,
+    );
+  }
+
+  Future<void> completeLesson() async {
+    await LessonService.completeLesson(
+      courseId: widget.courseId,
+      chapterId: widget.chapterId,
+      lessonId: widget.lessonId,
+      globalLessonNumber: widget.globalLessonNumber,
+    );
+  }
+
+  // ─────────────────────────────
 
   void goNext() {
     if (currentIndex < subLessons.length - 1) {
@@ -56,12 +117,14 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
         currentIndex++;
         answered = false;
       });
+
+      updateLesson({'lastStepIndex': currentIndex});
     } else {
+      completeLesson();
       LessonNavigator.complete(widget.lessonId, widget.onNavigate);
     }
   }
 
-  /// 🔹 Helper: reset answered flag (e.g., Try Again → hide Continue)
   void resetAnswer() {
     setState(() => answered = false);
   }
@@ -74,7 +137,6 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // progress bar
           Positioned(
             top: 70,
             left: MediaQuery.of(context).size.width / 2 - 140,
@@ -83,8 +145,6 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               currentStage: currentIndex,
             ),
           ),
-
-          // back button
           Positioned(
             top: 69,
             left: 30,
@@ -95,8 +155,6 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               onPressed: (_) => widget.onNavigate(const RouteMainMenu(tab: 0)),
             ),
           ),
-
-          // main content
           Positioned.fill(
             top: sub.topOffset,
             bottom: 100,
@@ -107,8 +165,6 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               }
             }, resetAnswer),
           ),
-
-          // continue button
           if (sub.mechanic == LessonMechanic.manual ||
               (sub.mechanic == LessonMechanic.emit && answered))
             Positioned(

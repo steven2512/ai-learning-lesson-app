@@ -28,30 +28,29 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  flutter_svg: ^2.0.9
   flutter:
     sdk: flutter
+
+  # 🔥 Firebase
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.1.0
+  cloud_firestore: ^6.0.0
+
+  # 👥 Auth Providers
+  google_sign_in: ^7.2.0
+  flutter_facebook_auth: ^7.1.2
+  # 🎨 UI / other
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.9
   flame: ^1.30.1
   flame_forge2d: ^0.18.0
-  google_fonts: ^6.2.1
-  animations: ^2.0.11 # FIX: valid version; removed duplicate `dependencies:` key
-  firebase_core: ^3.3.0
-  firebase_auth: ^5.2.0
-  cloud_firestore: ^5.2.0
-  google_sign_in: ^6.2.1
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  animations: ^2.0.11
   cupertino_icons: ^1.0.8
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the

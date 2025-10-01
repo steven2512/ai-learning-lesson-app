@@ -1,10 +1,21 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ central LessonText here
 import 'package:running_robot/z_pages/assets/lessonAssets/mcq_box.dart';
 
-const double maxTextWidth = 350;
+/// ─────────────────────────────────────────────────────────
+/// 📏 Screen globals (so we don’t repeat everywhere)
+/// ─────────────────────────────────────────────────────────
+final double screenH = ScreenSize.height;
+final double screenW = ScreenSize.width;
+
+/// 🔹 Max width is now adaptive to screen
+/// Phones: ~85% of width
+/// Tablets: cap at 500dp
+final double maxTextWidth = screenW < 600 ? screenW * 0.85 : 500;
+
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 
 /// 🔧 Bounce globals
@@ -107,9 +118,9 @@ class DataTypeQuiz extends StatefulWidget {
       LessonText.sentence([
         LessonText.word("Image Examples:", Colors.black87,
             fontWeight: FontWeight.bold, fontSize: 20),
-        LessonText.word("Everyday photos,", Colors.orange,
+        LessonText.word("Paintings,", Colors.orange,
             italic: true, fontSize: correctTextSize),
-        LessonText.word("medical scans,", Color.fromARGB(255, 107, 0, 195),
+        LessonText.word("Medical scans,", Color.fromARGB(255, 107, 0, 195),
             italic: true, fontSize: correctTextSize),
         LessonText.word("satellite images", Colors.blue,
             italic: true, fontSize: correctTextSize),
@@ -234,9 +245,9 @@ class LessonStepOneState extends State<DataTypeQuiz> {
             // ✅ Display zone
             Container(
               width: double.infinity,
-              height: 250,
+              height: screenH * 0.25,
               margin: const EdgeInsets.only(bottom: 15),
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.black26, width: 1),
@@ -277,7 +288,7 @@ class LessonStepOneState extends State<DataTypeQuiz> {
               onAnswerTap: (index, _) => _handleAnswerTap(index),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             if (_triedWrong && !_answeredCorrect)
               _feedbackBoxText(
@@ -335,7 +346,7 @@ class LessonStepOneState extends State<DataTypeQuiz> {
   }
 }
 
-/// 🔥 Animated Bouncing Ball (no fading, infinite bounce)
+/// 🔥 Animated Bouncing Ball
 class BouncingBall extends StatefulWidget {
   const BouncingBall({super.key});
 
@@ -346,23 +357,27 @@ class BouncingBall extends StatefulWidget {
 class _BouncingBallState extends State<BouncingBall>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _bounce;
+  late Animation<double> _bounce;
 
-  static const double _centerY = 60;
-  static const double _floorY = 170;
-  static const double _ballSize = 80;
+  double _ballSize = 0;
+  double _centerY = 0;
+  double _floorY = 0;
 
   @override
   void initState() {
     super.initState();
-
     final totalDuration =
         Duration(milliseconds: 600 * bounceNo) + timeBeforeRepeatAnimation;
-
     _controller = AnimationController(vsync: this, duration: totalDuration)
       ..repeat();
+  }
 
-    final List<TweenSequenceItem<double>> sequence = [];
+  void _setupAnimation(double containerHeight) {
+    _ballSize = containerHeight * 0.32;
+    _centerY = containerHeight * 0.24;
+    _floorY = containerHeight * 1.07 - _ballSize;
+
+    final sequence = <TweenSequenceItem<double>>[];
     for (int i = 0; i < bounceNo; i++) {
       sequence.addAll([
         TweenSequenceItem(
@@ -388,38 +403,47 @@ class _BouncingBallState extends State<BouncingBall>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // 🔴 Recording icon
-        Positioned(
-          left: 10,
-          top: -10,
-          child: Image.asset(
-            "assets/images/record_icon.png",
-            width: 80,
-            height: 80,
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Always recalc based on parent height
+        _setupAnimation(constraints.maxHeight);
 
-        // 🏀 Ball bounce
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (_, __) {
-            return Positioned(
-              left: (maxTextWidth / 2) - _ballSize / 2,
-              top: _bounce.value,
+        return Stack(
+          children: [
+            // 🔴 Recording icon
+            Positioned(
+              left: 10,
+              top: -10,
               child: Image.asset(
-                "assets/images/basketball.png",
+                "assets/images/record_icon.png",
                 width: _ballSize,
                 height: _ballSize,
               ),
-            );
-          },
-        ),
-      ],
+            ),
+
+            // 🏀 Ball bounce
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) {
+                return Positioned(
+                  left: (maxTextWidth - _ballSize) / 2,
+                  top: _bounce.value,
+                  child: Image.asset(
+                    "assets/images/basketball.png",
+                    width: _ballSize,
+                    height: _ballSize,
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
+
+/// (WoodFramedPhoto + Painters remain unchanged…)
 
 /// ─────────────────────────────────────────────────────────
 ///  WOOD-FRAMED PHOTO (angular + sketchy border + scratches)
