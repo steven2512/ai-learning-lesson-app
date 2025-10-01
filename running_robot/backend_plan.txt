@@ -20,22 +20,23 @@ users/{userId}
 
 ```jsonc
 {
-  "name": "Alice Nguyen",          // set at signup
-  "email": "alice@gmail.com",      // from Google/Facebook/email auth
-  "photoUrl": "...",               // avatar (if available)
-  "birthday": "2005-07-15",        // optional
-  "joinedAt": "2025-09-20T08:12:00Z",
+  ✔️"uid"
+  ✔️"name": "Alice Nguyen",          // set at signup
+  ✔️"email": "alice@gmail.com",      // from Google/Facebook/email auth
+  ✔️"photoUrl": "...",               // avatar (if available)
+  ✔️"birthday": "2005-07-15",        // optional
+  ✔️"joinedAt": "2025-09-20T08:12:00Z",
   
   // Progress
-  "streak": 5,                     // 🔥 login/active days in a row
-  "currentLesson": "lesson5",      // resume point
-  "lessonsCompleted": 4,           // counter
-  "xp": 2300,                      // gamification points
+  ✔️"streak": 5,                     // 🔥 login/active days in a row
+  ✔️"currentLesson": "lesson5",      // resume point
+  ✔️"lessonsCompleted": 4,           // counter
+  ✔️"xp": 2300,                      // gamification points
   "badges": ["streak_5", "mcq_10"],// achievements (optional)
 
   // Meta
-  "lastLogin": "2025-09-29T02:44:00Z",
-  "isTester": true                 // for your alpha group
+  ✔️"lastLogin": "2025-09-29T02:44:00Z",
+  ✔️"lastDevice"      
 }
 ```
 

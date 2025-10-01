@@ -10,6 +10,7 @@ class UserProfile {
   final String? currentLesson;
   final int streak;
   final int xp;
+  final int lessonsCompleted; // ✅ NEW
   final DateTime? dob;
   final String? provider; // ✅ NEW
   final String? lastDevice; // ✅ NEW
@@ -24,6 +25,7 @@ class UserProfile {
     this.currentLesson,
     this.streak = 0,
     this.xp = 0,
+    this.lessonsCompleted = 0, // ✅ NEW default
     this.dob,
     this.provider,
     this.lastDevice,
@@ -40,6 +42,7 @@ class UserProfile {
       'currentLesson': currentLesson,
       'streak': streak,
       'xp': xp,
+      'lessonsCompleted': lessonsCompleted, // ✅ NEW
       'dob': dob != null ? Timestamp.fromDate(dob!) : null,
       'provider': provider,
       'lastDevice': lastDevice,
@@ -59,6 +62,7 @@ class UserProfile {
       currentLesson: map['currentLesson'],
       streak: map['streak'] ?? 0,
       xp: map['xp'] ?? 0,
+      lessonsCompleted: map['lessonsCompleted'] ?? 0, // ✅ NEW
       dob: map['dob'] != null
           ? (map['dob'] is Timestamp
               ? (map['dob'] as Timestamp).toDate()

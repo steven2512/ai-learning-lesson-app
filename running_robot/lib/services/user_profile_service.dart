@@ -1,3 +1,4 @@
+// FILE: lib/services/user_profile_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:running_robot/models/user_profile.dart';
@@ -34,6 +35,8 @@ class UserProfileService {
       joinedAt: existingJoinedAt,
       streak: data != null ? (data['streak'] ?? 0) : 0,
       xp: data != null ? (data['xp'] ?? 0) : 0,
+      lessonsCompleted:
+          data != null ? (data['lessonsCompleted'] ?? 0) : 0, // ✅ NEW
       dob: dob ??
           (data != null && data['dob'] != null
               ? (data['dob'] is Timestamp
