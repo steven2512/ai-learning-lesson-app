@@ -1,4 +1,4 @@
-// lib/my_app.dart
+// FILE: lib/my_app.dart
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:flame/game.dart';
@@ -6,9 +6,11 @@ import 'package:flame/game.dart';
 // Typed routes
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/lesson_manifest.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
 import 'package:running_robot/z_pages/root_nav.dart';
 
+// ✅ NEW: import your ScreenSize utility
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
@@ -79,6 +81,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Initialize ScreenSize once at root
+    ScreenSize.init(context);
+
     return MaterialApp(
       home: PageTransitionSwitcher(
         duration: const Duration(milliseconds: 600),

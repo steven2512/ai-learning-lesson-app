@@ -1,8 +1,9 @@
-/// FILE: lib/z_pages/assets/settings/settings_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 🔹 Added for logout
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart'; // 👈 Reuse header
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -15,61 +16,8 @@ class SettingsPage extends StatelessWidget {
         children: [
           const Positioned.fill(child: ColoredBox(color: Colors.white)),
 
-          // === Avatar (exact same position as Home) ===
-          Positioned(
-            left: 19,
-            top: 60,
-            child: ProfileAvatar(
-              size: 55,
-              image: const AssetImage("assets/images/default_avatar.png"),
-              imageScale: 1.2,
-              onPressed: () => print("Avatar tapped!"),
-              fillColor: const Color.fromARGB(255, 228, 228, 228),
-            ),
-          ),
-
-          // === Greeting + Name + Bell (exact same offset as Home) ===
-          Positioned(
-            left: 86,
-            right: 24,
-            top: 67,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Good afternoon!",
-                        style: GoogleFonts.lato(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.black87,
-                          height: 0.9,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                      Text(
-                        "Steven Duong",
-                        style: GoogleFonts.lato(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.only(top: 3, right: 8),
-                  child: const Bell(),
-                ),
-              ],
-            ),
-          ),
+          // === Reusable HeaderGreeting (avatar + name + bell) ===
+          const HeaderGreeting(),
 
           // === Settings list content (starts below header) ===
           Positioned.fill(
@@ -83,12 +31,13 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.language,
                       title: "Language",
-                      subtitle: "English (US)",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                     _SettingsTile(
                       icon: Icons.dark_mode_outlined,
                       title: "Dark Mode",
+                      subtitle: "(in development 🛠️)",
                       trailing: Switch(
                         value: false,
                         onChanged: (v) {}, // TODO: hook into theme
@@ -103,11 +52,13 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.person_outline,
                       title: "Profile",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                     _SettingsTile(
                       icon: Icons.lock_outline,
                       title: "Privacy",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                   ],
@@ -119,11 +70,32 @@ class SettingsPage extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.info_outline,
                       title: "About App",
-                      subtitle: "Version 1.0.0",
+                      subtitle: "(in development 🛠️)",
                       onTap: () {},
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+
+                // === Log Out Button (red text) ===
+                Center(
+                  child: TextButton(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      await FacebookAuth.instance.logOut();
+                      await GoogleSignIn.instance.signOut();
+                    },
+                    child: Text(
+                      "Log Out",
+                      style: GoogleFonts.lato(
+                        color: Colors.red,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

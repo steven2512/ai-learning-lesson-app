@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 0, 113, 206); // blue
@@ -95,7 +96,10 @@ class RecapBinary extends StatelessWidget {
                         Text(
                           "01001000",
                           style: GoogleFonts.robotoMono(
-                            fontSize: 18,
+                            fontSize:
+                                ScreenSize.category == ScreenCategory.large
+                                    ? 17
+                                    : 15,
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.w600,
                           ),
@@ -103,7 +107,10 @@ class RecapBinary extends StatelessWidget {
                         Text(
                           "01100101",
                           style: GoogleFonts.robotoMono(
-                            fontSize: 18,
+                            fontSize:
+                                ScreenSize.category == ScreenCategory.large
+                                    ? 17
+                                    : 15,
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.w600,
                           ),
@@ -118,7 +125,10 @@ class RecapBinary extends StatelessWidget {
                         Text(
                           "01101100",
                           style: GoogleFonts.robotoMono(
-                            fontSize: 18,
+                            fontSize:
+                                ScreenSize.category == ScreenCategory.large
+                                    ? 17
+                                    : 15,
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.w600,
                           ),
@@ -126,7 +136,10 @@ class RecapBinary extends StatelessWidget {
                         Text(
                           "01101100",
                           style: GoogleFonts.robotoMono(
-                            fontSize: 18,
+                            fontSize:
+                                ScreenSize.category == ScreenCategory.large
+                                    ? 17
+                                    : 15,
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.w600,
                           ),
@@ -134,7 +147,10 @@ class RecapBinary extends StatelessWidget {
                         Text(
                           "01101111",
                           style: GoogleFonts.robotoMono(
-                            fontSize: 18,
+                            fontSize:
+                                ScreenSize.category == ScreenCategory.large
+                                    ? 17
+                                    : 15,
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.w600,
                           ),

@@ -42,14 +42,6 @@ class Robot extends PositionComponent with CollisionCallbacks {
 
   // Legacy settle helpers (some kept/repurposed)
   final double pivotEarlyTouchPx = 6.0;
-  final double _yLockRate = 42.0;
-  final double _angleLockRate = 14.0;
-
-  final double _finalSnapEps = 0.0015;
-  final double _pivotFadeBias = 0.24;
-  final double _yEndRate = 18.0;
-  final double _angleEndRate = 10.0;
-  final double _biasStillEps = 0.07;
 
   Vector2 velocity = Vector2.zero();
 

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+import 'package:running_robot/core/widgets.dart'; // ✅ ScreenSize now comes from widgets.dart
 
 // legacy lesson steps
 import 'package:running_robot/z_pages/lessons/data-intro/data_intro.dart'; // StepZero + StepOne
@@ -22,43 +23,66 @@ class DataIntroBrain extends BaseLessonBrain {
 
 class _DataIntroBrainState extends BaseLessonBrainState<DataIntroBrain> {
   @override
-  List<SubLesson> buildSubLessons() => [
-        // Step 0 → Intro with conditional continue
-        SubLesson(
-          topOffset: 200,
-          mechanic: LessonMechanic.auto, // ✅ auto, not manual
-          build: (done, reset) => DataIntroLesson(
-            onFinished: () => done(), // fallback if needed
-            onRequestNext: () => goNext(), // skip Continue if triggered
-          ),
-        ),
+  void initState() {
+    super.initState();
+    // ✅ Consistent with lesson3: precache via Future.microtask
+    Future.microtask(() {
+      final ctx = context;
+      precacheImage(
+          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
+      precacheImage(const AssetImage("assets/images/computer.png"), ctx);
+      precacheImage(const AssetImage("assets/images/voice.png"), ctx);
+      precacheImage(const AssetImage("assets/images/notebook.png"), ctx);
+      precacheImage(const AssetImage("assets/images/tabular.png"), ctx);
+      precacheImage(const AssetImage("assets/images/recording.png"), ctx);
+      precacheImage(const AssetImage("assets/images/car.jpg"), ctx);
+      precacheImage(const AssetImage("assets/images/data_analyst.png"), ctx);
+      precacheImage(const AssetImage("assets/images/dialogue_box.png"), ctx);
+      precacheImage(const AssetImage("assets/images/record_icon.png"), ctx);
+      precacheImage(const AssetImage("assets/images/basketball.png"), ctx);
+    });
+  }
 
-        // Step 1 → Computer to Data
+  @override
+  List<SubLesson> buildSubLessons() {
+    final screenH = ScreenSize.height; // ✅ central height
+
+    return [
+      // Step 0 → Intro with conditional continue
+      SubLesson(
+        topOffset: screenH * 0.18,
+        mechanic: LessonMechanic.auto,
+        build: (done, reset) => DataIntroLesson(
+          onFinished: () => done(),
+          onRequestNext: () => goNext(),
+        ),
+      ),
+
+      // Step 1 → Computer to Data
+      SubLesson(
+        topOffset: screenH * 0.23,
+        mechanic: LessonMechanic.emit,
+        build: (done, reset) => ComputerToData(onCompleted: done),
+      ),
+
+      // Step 2 → Data Types
+      SubLesson(
+        topOffset: screenH * 0.10,
+        mechanic: LessonMechanic.manual,
+        build: (_, __) => const DataTypes(),
+      ),
+
+      // Steps 3+ → Dynamic quiz pages
+      for (int i = 0; i < DataTypeQuiz.quizCount; i++)
         SubLesson(
-          topOffset: 220,
+          topOffset: screenH * 0.15,
           mechanic: LessonMechanic.emit,
-          build: (done, reset) => ComputerToData(
-            onCompleted: done,
+          build: (done, reset) => DataTypeQuiz(
+            key: ValueKey('quiz-$i'),
+            quizIndex: i,
+            onQuizCompleted: (_) => done(),
           ),
         ),
-
-        // Step 2 → Data Types
-        SubLesson(
-          topOffset: 150,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const DataTypes(),
-        ),
-
-        // Steps 3+ → Dynamic quiz pages
-        for (int i = 0; i < DataTypeQuiz.quizCount; i++)
-          SubLesson(
-            topOffset: 160,
-            mechanic: LessonMechanic.emit,
-            build: (done, reset) => DataTypeQuiz(
-              key: ValueKey('quiz-$i'),
-              quizIndex: i,
-              onQuizCompleted: (_) => done(),
-            ),
-          ),
-      ];
+    ];
+  }
 }

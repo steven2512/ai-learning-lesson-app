@@ -1,0 +1,172 @@
+Got it ✅
+Here’s the **comprehensive overview** of what your user + analytics schema looks like, explained in detail but still concise.
+
+---
+
+# 🔹 Firestore Layout
+
+```
+users/{userId}
+  profile/         // 👤 Identity & progress
+  lessons/{id}/    // 📚 User’s activity per lesson
+    mechanics/{id} // 🎮 Stats per mechanic
+```
+
+---
+
+# 🔹 1. User Profile (core identity & progress)
+
+**Path**: `users/{userId}/profile`
+
+```jsonc
+{
+  ✔️"uid"
+  ✔️"name": "Alice Nguyen",          // set at signup
+  ✔️"email": "alice@gmail.com",      // from Google/Facebook/email auth
+  ✔️"photoUrl": "...",               // avatar (if available)
+  ✔️"birthday": "2005-07-15",        // optional
+  ✔️"joinedAt": "2025-09-20T08:12:00Z",
+  
+  // Progress
+  ✔️"streak": 5,                     // 🔥 login/active days in a row
+  ✔️"currentLesson": "lesson5",      // resume point
+  ✔️"lessonsCompleted": 4,           // counter
+  ✔️"xp": 2300,                      // gamification points
+  "badges": ["streak_5", "mcq_10"],// achievements (optional)
+
+  // Meta
+  ✔️"lastLogin": "2025-09-29T02:44:00Z",
+  ✔️"lastDevice"      
+}
+```
+
+👉 This is **uniform across all users**. Some fields may be `null`, but schema is consistent.
+
+---
+
+# 🔹 2. Lessons Collection
+
+**Path**: `users/{userId}/progress/{course_id}/{chapter_id}/{lessonId}`
+
+```jsonc
+{
+  "startedAt": "2025-09-29T11:32:00Z",
+  "lastActiveAt":
+  "completedAt": "2025-09-29T12:10:00Z" or null,
+
+  // Timing
+  "timeSpentMs": 2280000,                   // cumulative total across all attempts
+  "attempts": 2, //How many tries before user complete this lesson for the first time
+  "completedCount": 1,                      // times finished (replays that complete)
+
+  // Resume & integrity
+  "lastStepIndex": 7, 
+}
+```
+
+👉 This doc gives you a **bird’s-eye view** of progress in that lesson.
+👉 Mechanics are stored in its subcollection.
+
+---
+
+# 🔹 3. Mechanics Subcollection (per lesson)
+
+**Path**: `users/{userId}/lessons/{lessonId}/mechanics/{mechanicId}`
+
+### Base Fields (always present)
+
+```jsonc
+{
+  "type": "mcq" | "drag_drop" | "catch_game" | "map" | "fill_in",
+  "attempt": 1,                     // nth try for this mechanic
+  "startedAt": "2025-09-29T11:32:00Z",
+  "completedAt": "2025-09-29T11:44:00Z",
+  "timeSpent": 720000,              // ms, REQUIRED for all mechanics
+  "quitMidway": false,              // true if exited without finishing
+  "stats": { }                      // flexible block per type
+}
+```
+
+---
+
+### Examples
+
+#### a) Multiple Choice
+
+```jsonc
+{
+  "type": "mcq",
+  "attempt": 1,
+  "startedAt": "...",
+  "completedAt": "...",
+  "timeSpent": 30000,
+  "quitMidway": false,
+  "stats": {
+    "correct": 6,
+    "incorrect": 1
+  }
+}
+```
+
+#### b) Drag & Drop
+
+```jsonc
+{
+  "type": "drag_drop",
+  "attempt": 1,
+  "startedAt": "...",
+  "completedAt": "...",
+  "timeSpent": 45000,
+  "quitMidway": false,
+  "stats": {
+    "correct": 8,
+    "incorrect": 2
+  }
+}
+```
+
+#### c) Catch Game
+
+```jsonc
+{
+  "type": "catch_game",
+  "attempt": 2,
+  "startedAt": "...",
+  "completedAt": "...",
+  "timeSpent": 120000,
+  "quitMidway": false,
+  "stats": {
+    "score": 450,
+    "correct": 3,
+    "incorrect": 2,
+    "missed": 5,
+    "attempts": 2
+  }
+}
+```
+
+👉 Each mechanic is **independent**.
+👉 You can add/remove mechanics without affecting others.
+👉 Always has `timeSpent` → you can measure how long users interact with every activity.
+
+---
+
+# 🔹 Why This Scales
+
+* **Flat hierarchy** → avoids deep nesting (better for Firestore performance).
+* **Universal fields** → `type`, `timeSpent`, `quitMidway` → make analytics queries easy.
+* **Flexible `stats` block** → mechanics differ, but stored consistently.
+* **Independent docs** → a user can have 200 lessons × multiple mechanics each without breaking.
+* **Future-proof** → new game types only need new `type` + `stats`, no schema migration.
+
+---
+
+⚡ So with this:
+
+* User profile = identity + progress.
+* Lessons = summary of each lesson.
+* Mechanics = granular stats per game/activity.
+
+---
+
+Do you want me to now **draft sample queries** you’d use later (e.g., “find all drag_drop mechanics across all users”, “get average timeSpent per lesson”), so you can see how practical this design is in Firestore?

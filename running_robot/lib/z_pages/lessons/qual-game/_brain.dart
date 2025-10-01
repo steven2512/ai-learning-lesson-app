@@ -2,9 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
+import 'package:running_robot/core/widgets.dart';
 
 // ⬇️ Your game widget
 import 'package:running_robot/z_pages/lessons/qual-game/catch_qual_game.dart';
+
+double screenH = ScreenSize.height;
 
 class QualGameBrain extends BaseLessonBrain {
   const QualGameBrain({super.key, required AppNavigate onNavigate})
@@ -21,7 +24,7 @@ class _QualGameBrainState extends BaseLessonBrainState<QualGameBrain> {
   @override
   List<SubLesson> buildSubLessons() => [
         SubLesson(
-          topOffset: 50,
+          topOffset: screenH * 0.05,
           mechanic: LessonMechanic.emit,
           build: (done, reset) => CatchQualGame(
             onStepCompleted: done,
