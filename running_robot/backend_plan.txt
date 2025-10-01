@@ -46,16 +46,21 @@ users/{userId}
 
 # 🔹 2. Lessons Collection
 
-**Path**: `users/{userId}/lessons/{lessonId}`
+**Path**: `users/{userId}/progress/{course_id}/{chapter_id}/{lessonId}`
 
 ```jsonc
 {
-  "lessonId": "lesson5",
   "startedAt": "2025-09-29T11:32:00Z",
-  "completedAt": "2025-09-29T12:10:00Z",
-  "timeSpent": 2280000,    // total time across mechanics (ms)
-  "attempts": 2,           // how many retries
-  "status": "completed"    // "in_progress" | "completed" | "quit"
+  "lastActiveAt":
+  "completedAt": "2025-09-29T12:10:00Z" or null,
+
+  // Timing
+  "timeSpentMs": 2280000,                   // cumulative total across all attempts
+  "attempts": 2, //How many tries before user complete this lesson for the first time
+  "completedCount": 1,                      // times finished (replays that complete)
+
+  // Resume & integrity
+  "lastStepIndex": 7, 
 }
 ```
 
