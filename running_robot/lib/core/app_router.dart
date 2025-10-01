@@ -43,9 +43,9 @@ class RouteMainMenu extends AppRoute {
   const RouteMainMenu({this.tab = 0});
 }
 
-class RoutePause extends AppRoute {
-  const RoutePause();
-}
+// class RoutePause extends AppRoute {
+//   const RoutePause();
+// }
 
 /// Single navigation function children will receive and call.
 typedef AppNavigate = void Function(AppRoute route);
