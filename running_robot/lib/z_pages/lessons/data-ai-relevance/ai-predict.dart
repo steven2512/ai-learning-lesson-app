@@ -42,7 +42,7 @@ const int kStartDelayMs = 3000;
 const int kTurnMs = 700;
 const int kHoldMs = 1300;
 const int kRevealHoldMs = 1300;
-const int kThinkingMs = 1600;
+const int kThinkingMs = 800;
 const int kGuessHoldMs = 5200;
 
 // Slide geometry (no rotation)

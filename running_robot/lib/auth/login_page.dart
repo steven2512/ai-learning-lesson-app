@@ -9,6 +9,7 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:running_robot/services/user_profile_service.dart';
 import 'auth_gate.dart';
 import 'signup_page.dart';
+import 'package:flutter/services.dart'; // ★ CHANGED: for system UI styling
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -43,168 +44,188 @@ class LoginPage extends StatelessWidget {
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: true,
-          iconTheme: const IconThemeData(color: Colors.black87),
-        ),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
-            ),
+    // ★ CHANGED: go fully edge-to-edge and make system bars transparent
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    final overlay = const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // no top scrim
+      statusBarIconBrightness: Brightness.dark, // Android icons
+      statusBarBrightness: Brightness.light, // iOS text
+      systemNavigationBarColor: Colors.transparent, // clean bottom bar
+      systemNavigationBarIconBrightness: Brightness.dark,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // ★ CHANGED
+      value: overlay,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: Colors.transparent, // ★ CHANGED: avoid white flashes
+          extendBodyBehindAppBar: true, // ★ CHANGED: draw under status bar
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0, // ★ CHANGED: kill M3 tint
+            surfaceTintColor: Colors.transparent, // ★ CHANGED
+            automaticallyImplyLeading: true,
+            iconTheme: const IconThemeData(color: Colors.black87),
+            systemOverlayStyle: overlay, // ★ CHANGED: enforce per-page
           ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Text(
-                      "Sign in",
-                      style: GoogleFonts.lato(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Social buttons
-                  Row(
+          body: Stack(
+            // ★ CHANGED: stack gradient behind content
+            children: [
+              const _GradientBackground(), // ★ CHANGED: full-screen gradient
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async => await _signInWithGoogle(context),
-                          child: _socialButtonGoogle(),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async => await _signInWithFacebook(context),
-                          child: _socialButtonFacebook(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(thickness: .6)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      const SizedBox(height: 40),
+                      Center(
                         child: Text(
-                          'Or sign in with',
-                          style: GoogleFonts.lato(color: Colors.black54),
-                        ),
-                      ),
-                      const Expanded(child: Divider(thickness: .6)),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
-                  TextField(
-                    controller: emailController,
-                    decoration: _inputDecoration("Email"),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: _inputDecoration("Password"),
-                  ),
-                  const SizedBox(height: 24),
-
-                  PillCta(
-                    label: 'Log In',
-                    color: kBrandPurple,
-                    onTap: () async {
-                      await _signInWithEmail(
-                        context,
-                        emailController.text.trim(),
-                        passwordController.text.trim(),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Forgot password tapped')),
-                        );
-                      },
-                      child: Text(
-                        "Forgot Password?",
-                        style: GoogleFonts.lato(
-                          color: kBrandPurple,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don’t have an account?",
-                        style: GoogleFonts.lato(
-                          color: Colors.black54,
-                          fontSize: 16,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => const SignupPage(),
-                              transitionsBuilder: (_, animation, __, child) {
-                                const begin = Offset(1.0, 0.0);
-                                const end = Offset.zero;
-                                const curve = Curves.easeInOut;
-                                final tween = Tween(begin: begin, end: end)
-                                    .chain(CurveTween(curve: curve));
-                                return SlideTransition(
-                                  position: animation.drive(tween),
-                                  child: child,
-                                );
-                              },
-                              transitionDuration:
-                                  const Duration(milliseconds: 400),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "Sign Up",
+                          "Sign in",
                           style: GoogleFonts.lato(
-                            color: kBrandPurple,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
                           ),
                         ),
                       ),
+                      const SizedBox(height: 32),
+
+                      // Social buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () async =>
+                                  await _signInWithGoogle(context),
+                              child: _socialButtonGoogle(),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () async =>
+                                  await _signInWithFacebook(context),
+                              child: _socialButtonFacebook(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      Row(
+                        children: [
+                          const Expanded(child: Divider(thickness: .6)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'Or sign in with',
+                              style: GoogleFonts.lato(color: Colors.black54),
+                            ),
+                          ),
+                          const Expanded(child: Divider(thickness: .6)),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      TextField(
+                        controller: emailController,
+                        decoration: _inputDecoration("Email"),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: _inputDecoration("Password"),
+                      ),
+                      const SizedBox(height: 24),
+
+                      PillCta(
+                        label: 'Log In',
+                        color: kBrandPurple,
+                        onTap: () async {
+                          await _signInWithEmail(
+                            context,
+                            emailController.text.trim(),
+                            passwordController.text.trim(),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Forgot password tapped')),
+                            );
+                          },
+                          child: Text(
+                            "Forgot Password?",
+                            style: GoogleFonts.lato(
+                              color: kBrandPurple,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Don’t have an account?",
+                            style: GoogleFonts.lato(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) =>
+                                      const SignupPage(),
+                                  transitionsBuilder:
+                                      (_, animation, __, child) {
+                                    const begin = Offset(1.0, 0.0);
+                                    const end = Offset.zero;
+                                    const curve = Curves.easeInOut;
+                                    final tween = Tween(begin: begin, end: end)
+                                        .chain(CurveTween(curve: curve));
+                                    return SlideTransition(
+                                      position: animation.drive(tween),
+                                      child: child,
+                                    );
+                                  },
+                                  transitionDuration:
+                                      const Duration(milliseconds: 400),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "Sign Up",
+                              style: GoogleFonts.lato(
+                                color: kBrandPurple,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -329,5 +350,25 @@ class LoginPage extends StatelessWidget {
     if (Theme.of(context).platform == TargetPlatform.iOS) return "ios";
     if (Theme.of(context).platform == TargetPlatform.android) return "android";
     return "web";
+  }
+}
+
+// ★ CHANGED: dedicated background to ensure full-bleed gradient
+class _GradientBackground extends StatelessWidget {
+  const _GradientBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
+        ),
+      ),
+    );
   }
 }
