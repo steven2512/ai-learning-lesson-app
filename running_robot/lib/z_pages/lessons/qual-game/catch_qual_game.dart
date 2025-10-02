@@ -138,6 +138,9 @@ class _CatchQualGameState extends State<CatchQualGame>
   late final AnimationController _ticker;
   late final Timer _spawnTimer;
 
+  // tiny controller to animate the in-game finger hint
+  late final AnimationController _fingerCtrl;
+
   final List<_FallingWord> _active = [];
   final List<_FloatText> _fx = [];
 
@@ -172,6 +175,15 @@ class _CatchQualGameState extends State<CatchQualGame>
   bool _compactSlidUp = false; // small box slid upward
   bool _revealed = false; // expanded content revealed
 
+  // track when the game actually started (ms on the _ticker clock)
+  int _gameStartMs = 0;
+
+  // hide the finger once the player interacts
+  bool _hasInteracted = false;
+
+  // NEW: words/spawns only proceed after tapping/dragging ON the basket
+  bool _armedToFall = false;
+
   @override
   void initState() {
     super.initState();
@@ -180,13 +192,21 @@ class _CatchQualGameState extends State<CatchQualGame>
           ..addListener(_onTick)
           ..forward();
 
+    // finger guide animation
+    _fingerCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+
     _spawnTimer =
         Timer.periodic(const Duration(milliseconds: kSpawnTickMs), (_) {
-      if (!mounted || !_started) return;
-      final double t =
-          (_ticker.lastElapsedDuration?.inMilliseconds ?? 0) / 1000.0;
-      final double spawnRate = min(
-          kSpawnMaxPerSecond, kSpawnPerSecond * (1.0 + kSpawnGrowthPerSec * t));
+      if (!mounted || !_started || !_armedToFall) return; // ⬅ gate spawns
+      // growth time is since actual game start, not since widget init
+      final int nowMs = _ticker.lastElapsedDuration?.inMilliseconds ?? 0;
+      final double tSecs = max(0.0, (nowMs - _gameStartMs).toDouble() / 1000.0);
+
+      final double spawnRate = min(kSpawnMaxPerSecond,
+          kSpawnPerSecond * (1.0 + kSpawnGrowthPerSec * tSecs));
       _spawnAccumulator += spawnRate * (kSpawnTickMs / 1000.0);
       int n = _spawnAccumulator.floor();
       _spawnAccumulator -= n;
@@ -198,6 +218,7 @@ class _CatchQualGameState extends State<CatchQualGame>
   void dispose() {
     _spawnTimer.cancel();
     _ticker.dispose();
+    _fingerCtrl.dispose();
     super.dispose();
   }
 
@@ -209,15 +230,20 @@ class _CatchQualGameState extends State<CatchQualGame>
     if (_vw <= 0 || _vh <= 0) return;
 
     final now = _ticker.lastElapsedDuration ?? Duration.zero;
+    final int nowMs = now.inMilliseconds;
+
     final dtMs =
         (_lastTick == null) ? 16 : max(1, (now - _lastTick!).inMilliseconds);
     _lastTick = now;
 
     final double dt = dtMs / 1000.0;
-    final double t = now.inMilliseconds / 1000.0;
 
-    final double speedMultiplier =
-        min(kFallSpeedMaxMultiplier, 1.0 + kFallSpeedGrowthPerSec * t);
+    // only count time since Start Game
+    final double tSinceStartSecs =
+        max(0.0, (nowMs - _gameStartMs).toDouble() / 1000.0);
+
+    final double speedMultiplier = min(kFallSpeedMaxMultiplier,
+        1.0 + kFallSpeedGrowthPerSec * tSinceStartSecs);
     final double dy = (kFallSpeed * speedMultiplier) * dt;
 
     final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
@@ -233,73 +259,77 @@ class _CatchQualGameState extends State<CatchQualGame>
         _basketX = _basketTargetX;
       }
 
-      // update words
-      for (final w in _active) {
-        w.y += dy;
-        w.opacity = (((w.y - kSpawnStartY) / kFadeInDistance).clamp(0.0, 1.0));
-      }
-
-      // update FX
-      for (final f in _fx) {
-        f.ageMs += dtMs;
-        f.y -= 0.04 * dtMs;
-        f.opacity = (1.0 - f.ageMs / f.lifetimeMs).clamp(0.0, 1.0);
-      }
-      _fx.removeWhere((f) => f.ageMs >= f.lifetimeMs);
-
-      // collisions
-      final Rect basketRect =
-          Rect.fromLTWH(_basketX, basketTopY, kBasketWidth, kBasketHeight);
-
-      _active.removeWhere((w) {
-        final Rect wordRect =
-            Rect.fromLTWH(w.x, w.y, w.size.width, w.size.height);
-
-        // Caught
-        if (basketRect.overlaps(wordRect)) {
-          final bool isQual = _qualitativeWords.contains(w.text);
-          if (isQual) {
-            _score += kScoreCorrect;
-            _qualitativeCaught++;
-          } else {
-            _score += kScoreIncorrect;
-            _quantitativeCaught++;
-          }
-
-          _spawnFx(
-            text: isQual ? "+10 ✅" : "−10 ❌",
-            x: basketRect.center.dx,
-            y: basketRect.top - 10,
-            color: isQual ? Colors.green : Colors.red,
-          );
-
-          if (_score >= kPointsToWin) {
-            _endGame(true); // defer onStepCompleted until reveal finishes
-          } else if (_score <= kPointsToLose) {
-            _endGame(false);
-          }
-          return true;
+      // Only update falling words + collisions AFTER the basket interaction
+      if (_armedToFall) {
+        // update words
+        for (final w in _active) {
+          w.y += dy;
+          w.opacity =
+              (((w.y - kSpawnStartY) / kFadeInDistance).clamp(0.0, 1.0));
         }
 
-        // Missed (passed the basket level)
-        if (w.y + w.size.height >= basketTopY) {
-          if (_qualitativeWords.contains(w.text)) {
-            _score += kScoreMissPenalty;
-            _qualitativeMissed++;
+        // update FX
+        for (final f in _fx) {
+          f.ageMs += dtMs;
+          f.y -= 0.04 * dtMs;
+          f.opacity = (1.0 - f.ageMs / f.lifetimeMs).clamp(0.0, 1.0);
+        }
+        _fx.removeWhere((f) => f.ageMs >= f.lifetimeMs);
+
+        // collisions
+        final Rect basketRect =
+            Rect.fromLTWH(_basketX, basketTopY, kBasketWidth, kBasketHeight);
+
+        _active.removeWhere((w) {
+          final Rect wordRect =
+              Rect.fromLTWH(w.x, w.y, w.size.width, w.size.height);
+
+          // Caught
+          if (basketRect.overlaps(wordRect)) {
+            final bool isQual = _qualitativeWords.contains(w.text);
+            if (isQual) {
+              _score += kScoreCorrect;
+              _qualitativeCaught++;
+            } else {
+              _score += kScoreIncorrect;
+              _quantitativeCaught++;
+            }
+
             _spawnFx(
-              text: "Miss −10",
-              x: w.x + w.size.width / 2,
-              y: basketTopY - 10,
-              color: Colors.black87,
+              text: isQual ? "+10 ✅" : "−10 ❌",
+              x: basketRect.center.dx,
+              y: basketRect.top - 10,
+              color: isQual ? Colors.green : Colors.red,
             );
-          } else {
-            _quantitativeAvoided++;
+
+            if (_score >= kPointsToWin) {
+              _endGame(true); // defer onStepCompleted until reveal finishes
+            } else if (_score <= kPointsToLose) {
+              _endGame(false);
+            }
+            return true;
           }
-          if (_score <= kPointsToLose) _endGame(false);
-          return true;
-        }
-        return false;
-      });
+
+          // Missed (passed the basket level)
+          if (w.y + w.size.height >= basketTopY) {
+            if (_qualitativeWords.contains(w.text)) {
+              _score += kScoreMissPenalty;
+              _qualitativeMissed++;
+              _spawnFx(
+                text: "Miss −10",
+                x: w.x + w.size.width / 2,
+                y: basketTopY - 10,
+                color: Colors.black87,
+              );
+            } else {
+              _quantitativeAvoided++;
+            }
+            if (_score <= kPointsToLose) _endGame(false);
+            return true;
+          }
+          return false;
+        });
+      }
     });
   }
 
@@ -464,6 +494,14 @@ class _CatchQualGameState extends State<CatchQualGame>
     setState(() => _basketTargetX = centered);
   }
 
+  // helper: is pointer within the current basket rect?
+  bool _isPointerInsideBasket(Offset p, double basketTopY) {
+    return p.dx >= _basketX &&
+        p.dx <= _basketX + kBasketWidth &&
+        p.dy >= basketTopY &&
+        p.dy <= basketTopY + kBasketHeight;
+  }
+
   void _startGame() {
     widget.onReset?.call(); // 👈 hide Continue on Try Again
 
@@ -484,8 +522,17 @@ class _CatchQualGameState extends State<CatchQualGame>
       _compactSlidUp = false;
       _revealed = false;
       _glowNow = false;
+
+      // reset hint + fall gating + speed clock
+      _hasInteracted = false; // show finger until first input on basket
+      _armedToFall = false; // gate spawns/motion until basket is touched
+      _gameStartMs = _ticker.lastElapsedDuration?.inMilliseconds ?? 0;
+
       _started = true;
     });
+
+    // ensure finger anim is running when a new game starts
+    if (!_fingerCtrl.isAnimating) _fingerCtrl.repeat(reverse: true);
   }
 
   Widget _narrowBox({required Widget child, Color? color}) {
@@ -508,6 +555,20 @@ class _CatchQualGameState extends State<CatchQualGame>
         _vw = constraints.maxWidth;
         _vh = constraints.maxHeight;
         final double basketTopY = _vh - kBasketBottomMargin - kBasketHeight;
+
+        // finger hint travels in the same horizontal lane as the basket
+        final double fingerWidth = 106;
+        final double minXBasket = 0.0;
+        final double maxXBasket = max(0.0, _vw - kBasketWidth);
+        final double fingerLeft = minXBasket +
+            _fingerCtrl.value * (maxXBasket - minXBasket) +
+            (kBasketWidth - fingerWidth) / 2;
+
+        // place the finger just BELOW the basket, clamped to screen
+        final double fingerTop = min(
+          basketTopY + kBasketHeight + 6,
+          _vh - fingerWidth - 2,
+        );
 
         return Stack(
           children: [
@@ -612,20 +673,60 @@ class _CatchQualGameState extends State<CatchQualGame>
             if (_started && !_showEndBox)
               Positioned.fill(
                 child: Listener(
-                  behavior: HitTestBehavior
-                      .translucent, // allow pass-through when not handled
+                  behavior: HitTestBehavior.translucent,
                   onPointerDown: (e) {
                     if (e.localPosition.dy > kTopSafeInsetForClose) {
+                      // only arm falling & hide finger if tapping ON the basket
+                      if (_isPointerInsideBasket(e.localPosition, basketTopY)) {
+                        if (!_hasInteracted) {
+                          setState(() {
+                            _hasInteracted = true;
+                            _armedToFall = true;
+                          });
+                          _fingerCtrl.stop();
+                        }
+                      }
                       _moveBasketToTap(e.localPosition.dx);
                     }
-                    // else: do nothing, let tap fall through
                   },
                   onPointerMove: (e) {
                     if (e.localPosition.dy > kTopSafeInsetForClose) {
+                      // only arm falling & hide finger if dragging ON the basket
+                      if (_isPointerInsideBasket(e.localPosition, basketTopY)) {
+                        if (!_hasInteracted) {
+                          setState(() {
+                            _hasInteracted = true;
+                            _armedToFall = true;
+                          });
+                          _fingerCtrl.stop();
+                        }
+                      }
                       _moveBasketByDrag(e.delta.dx);
                     }
-                    // else: ignore drag in top safe zone
                   },
+                ),
+              ),
+
+            // In-game finger hint — appears AFTER Start until first input on basket
+            if (_started && !_showEndBox && !_hasInteracted)
+              Positioned(
+                left: fingerLeft,
+                top: fingerTop,
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: Opacity(
+                    opacity: 0.9,
+                    child: Image.asset(
+                      'assets/images/finger.png',
+                      width: fingerWidth,
+                      height: fingerWidth,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.pan_tool_alt,
+                        size: fingerWidth,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
                 ),
               ),
 
@@ -645,7 +746,7 @@ class _CatchQualGameState extends State<CatchQualGame>
                         _narrowBox(
                           color: const Color(0xFFFFF3E0),
                           child: Text(
-                            "🎮 Catch the Qualitative!",
+                            "🎮 Catch Qualitative WORDS!",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.lato(
                               fontSize: 22,
@@ -734,8 +835,7 @@ class _CatchQualGameState extends State<CatchQualGame>
                                   duration: Duration(
                                       milliseconds: kRevealDownDurationMs),
                                   curve: Curves.easeOutCubic,
-                                  alignment: Alignment
-                                      .topCenter, // expand downward only
+                                  alignment: Alignment.topCenter,
                                   child: _buildEndCard(revealed: _revealed),
                                 ),
                               ),
