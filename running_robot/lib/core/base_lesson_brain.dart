@@ -5,12 +5,16 @@ import 'package:running_robot/core/lesson_manifest.dart';
 import 'package:running_robot/core/lesson_navigator.dart';
 import 'package:running_robot/core/lesson_steps.dart';
 import 'package:running_robot/core/lesson_locator.dart'; // 👈 NEW
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/services/lesson_service.dart';
 
 import 'package:running_robot/z_pages/assets/lessonAssets/continueButton.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/icon_button.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/progress_bar.dart'
     as flutter_ui_bar;
+
+final double screenH = ScreenSize.height;
+final double screenW = ScreenSize.width;
 
 /// Mechanics each sublesson can declare
 enum LessonMechanic { manual, emit, auto }
@@ -137,17 +141,19 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Positioned(
-            top: 70,
-            left: MediaQuery.of(context).size.width / 2 - 140,
-            child: flutter_ui_bar.LessonProgressBar(
-              totalStages: subLessons.length,
-              currentStage: currentIndex,
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 70),
+              child: flutter_ui_bar.LessonProgressBar(
+                totalStages: subLessons.length,
+                currentStage: currentIndex,
+              ),
             ),
           ),
           Positioned(
             top: 69,
-            left: 30,
+            left: screenH * 0.035,
             child: IconButtonWidget<void>(
               iconPath: 'assets/images/x_icon.png',
               tint: Colors.black87,

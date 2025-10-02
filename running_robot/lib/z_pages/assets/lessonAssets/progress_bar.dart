@@ -1,4 +1,6 @@
+// FILE: lib/z_pages/assets/lessonAssets/progress_bar.dart
 import 'package:flutter/material.dart';
+import 'package:running_robot/core/widgets.dart';
 
 class LessonProgressBar extends StatefulWidget {
   final int totalStages;
@@ -21,8 +23,7 @@ class _LessonProgressBarState extends State<LessonProgressBar>
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  // ───────── VISUAL TUNING (same as Flame version) ─────────
-  static const double _width = 279;
+  // ───────── VISUAL TUNING ─────────
   static const double _height = 22;
   static const double _radius = _height / 2;
 
@@ -66,12 +67,15 @@ class _LessonProgressBarState extends State<LessonProgressBar>
 
   void _setupAnimation() {
     _animation = Tween<double>(begin: _from, end: _to).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic))
-      ..addListener(() => setState(() {}));
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    )..addListener(() => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
+    final double screenW = ScreenSize.width; // ✅ get screen width dynamically
+    final double width = screenW * 0.7;
+
     final progress = _animation.value;
     final isInitialLook = widget.currentStage == 0 && progress <= 0.0001;
 
@@ -79,7 +83,7 @@ class _LessonProgressBarState extends State<LessonProgressBar>
     final fillAlpha = isInitialLook ? _fillAlphaInitial : _fillAlphaActive;
 
     return SizedBox(
-      width: _width,
+      width: width,
       height: _height,
       child: CustomPaint(
         painter: _ProgressPainter(
@@ -119,7 +123,9 @@ class _ProgressPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(
-        rect, const Radius.circular(_LessonProgressBarState._radius));
+      rect,
+      const Radius.circular(_LessonProgressBarState._radius),
+    );
 
     // Track (background)
     final trackPaint = Paint()
@@ -186,8 +192,9 @@ class _ProgressPainter extends CustomPainter {
           ],
         ).createShader(glossRect);
       canvas.drawRRect(
-          RRect.fromRectAndRadius(glossRect, Radius.circular(dynR)),
-          glossPaint);
+        RRect.fromRectAndRadius(glossRect, Radius.circular(dynR)),
+        glossPaint,
+      );
 
       // Inner edge
       final innerEdge = Paint()
