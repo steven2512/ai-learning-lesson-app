@@ -47,7 +47,7 @@ class _BinaryIntroBrainState extends BaseLessonBrainState<BinaryIntroBrain> {
   @override
   List<SubLesson> buildSubLessons() => [
         SubLesson(
-          topOffset: screenH * 0.20,
+          topOffset: screenH * 0.18,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const HumanSeePhoto(),
         ),

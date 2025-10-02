@@ -155,8 +155,8 @@ class HelloInUnicode extends StatelessWidget {
                       "01001000 01100101",
                       style: GoogleFonts.robotoMono(
                         fontSize: ScreenSize.category == ScreenCategory.large
-                            ? 18
-                            : 16,
+                            ? 17
+                            : 15,
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -166,8 +166,8 @@ class HelloInUnicode extends StatelessWidget {
                       "01101100 01101100 01101111",
                       style: GoogleFonts.robotoMono(
                         fontSize: ScreenSize.category == ScreenCategory.large
-                            ? 18
-                            : 16,
+                            ? 17
+                            : 15,
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),

@@ -86,7 +86,7 @@ class _QualQuizState extends State<QualQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
-            style: ScreenSize.category == ScreenCategory.large ? 0 : 1,
+            style: 1,
             correctAnswer: 3, // ✅ D is qualitative
             answers: const [
               "Height",

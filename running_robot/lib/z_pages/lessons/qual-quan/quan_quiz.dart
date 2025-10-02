@@ -86,7 +86,7 @@ class _QuanQuizState extends State<QuanQuiz> {
 
           // 🟦 MCQ Box
           MCQBox(
-            style: ScreenSize.category == ScreenCategory.large ? 0 : 1,
+            style: 1,
             correctAnswer: 2, // Phone number ❌
             answers: [
               "Age",

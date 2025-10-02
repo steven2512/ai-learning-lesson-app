@@ -80,7 +80,7 @@ class SortGroupQuiz extends StatelessWidget {
       givenByBasket: givenByBasket,
       basketTitlePrefix: 'Group', // → “Group 1”, “Group 2”
       title: title,
-      endCardBodyText: 'Nice! You filled the missing spots!',
+      endCardBodyText: 'AI is excellent at grouping tasks like these!',
       onCompleted: onCompleted,
       onRestartRequested: onRestartRequested, // ✅ reset hook
     );

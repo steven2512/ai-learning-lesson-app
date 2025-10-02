@@ -477,7 +477,7 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
                       );
                     }),
 
-                    const SizedBox(height: 70),
+                    const SizedBox(height: 50),
 
                     _buildBasketsRow(),
 

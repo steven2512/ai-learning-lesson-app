@@ -9,8 +9,8 @@ const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptGreen = Color.fromARGB(255, 0, 163, 54);
 const double lesson3FontSize = 20;
 
-class QuanExample extends StatelessWidget {
-  const QuanExample({super.key});
+class QuanMeasure extends StatelessWidget {
+  const QuanMeasure({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,27 +19,37 @@ class QuanExample extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========== Examples Box ==========
+          // ========== Math Box ==========
           LessonText.box(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 LessonText.sentence([
-                  LessonText.word("Examples of", Colors.black, fontSize: 20),
-                  LessonText.word(
-                    "Quantitative Data",
-                    fontWeight: FontWeight.w900,
-                    const Color.fromARGB(255, 255, 123, 0),
-                    fontSize: 20,
-                  ),
+                  LessonText.word("You", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("can", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("measure", keyConceptGreen,
+                      fontSize: lesson3FontSize,
+                      fontWeight: FontWeight.w900,
+                      italic: true),
+                  LessonText.word("and", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("calculate", keyConceptGreen,
+                      fontSize: lesson3FontSize,
+                      fontWeight: FontWeight.w900,
+                      italic: true),
+                  LessonText.word("with", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("quantitative data",
+                      const Color.fromARGB(221, 255, 115, 0),
+                      fontWeight: FontWeight.w900, fontSize: lesson3FontSize),
                 ]),
-                const SizedBox(height: 15),
-                const _ChipWrap(items: [
-                  "Height",
-                  "Distance",
-                  "Salary",
-                  "Population Size",
-                  "IQ Score"
+                const SizedBox(height: 10),
+                const _ActionRow(actions: [
+                  _Action(icon: Icons.straighten, label: "Measure"),
+                  _Action.custom(label: "Math"), // Custom box for + - × ÷
+                  _Action(icon: Icons.compare_arrows, label: "Compare"),
                 ]),
               ],
             ),

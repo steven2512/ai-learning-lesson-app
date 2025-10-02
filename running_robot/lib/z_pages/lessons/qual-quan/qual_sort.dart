@@ -9,8 +9,8 @@ const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12);
 const Color keyConceptPurple = Color.fromARGB(255, 130, 59, 207);
 const double lesson3FontSize = 20;
 
-class QualExample extends StatelessWidget {
-  const QualExample({super.key});
+class QualSort extends StatelessWidget {
+  const QualSort({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,28 +20,45 @@ class QualExample extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ========== Group / Sort Box ==========
-
-          // ========== Examples Box (same as quantitative) ==========
           LessonText.box(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 LessonText.sentence([
-                  LessonText.word("Examples of", Colors.black, fontSize: 20),
-                  LessonText.word(
-                    "Qualitative Data",
-                    keyConceptPurple,
-                    fontSize: 20,
-                  ),
+                  LessonText.word("You", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("can", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("group", keyConceptPurple,
+                      fontSize: lesson3FontSize, italic: true),
+                  LessonText.word("or", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("sort", keyConceptPurple,
+                      fontSize: lesson3FontSize, italic: true),
+                  LessonText.word("it,", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("but", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("you", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("can’t", Colors.red,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("do", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("normal", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("math", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("on", Colors.black87,
+                      fontSize: lesson3FontSize),
+                  LessonText.word("it.", Colors.black87,
+                      fontSize: lesson3FontSize),
                 ]),
-                const SizedBox(height: 15),
-                const _ChipWrap(items: [
-                  "Eye Color",
-                  "Fruit Type",
-                  "Favorite Subject",
-                  "Country",
-                  "Mood",
-                  "Music Genre",
+                const SizedBox(height: 10),
+                const _ActionRow(actions: [
+                  _Action(icon: Icons.category, label: "Group"),
+                  _Action(icon: Icons.sort, label: "Sort"),
+                  _Action.custom(label: "No Math"), // 🚫 math
                 ]),
               ],
             ),

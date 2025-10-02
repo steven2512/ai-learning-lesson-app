@@ -14,7 +14,7 @@ const Color titleInk = Colors.black87;
 const Color brandBlue = Color(0xFF1E88E5);
 
 /// Loop + phase timing
-const Duration loopDelay = Duration(seconds: 2);
+const Duration loopDelay = Duration(microseconds: 2000);
 const int kExtraMsPerLeg = 2000; // slower clustering & toBoxes
 const int kExtraMsAfterDrop = 2000; // hold after landing
 const double fadeOutSeconds = 0.8; // content fade-out duration
@@ -52,7 +52,15 @@ class SortGroup extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+            Center(
+              child: LessonText.word(
+                "Example 2",
+                Colors.red,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: 20),
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -64,10 +72,6 @@ class SortGroup extends StatelessWidget {
                   LessonText.word("group", brandBlue,
                       fontSize: headerFontSize, fontWeight: FontWeight.w900),
                   LessonText.word("things", brandBlue,
-                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                  LessonText.word("without", brandBlue,
-                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                  LessonText.word("labels", brandBlue,
                       fontSize: headerFontSize, fontWeight: FontWeight.w900),
                 ]),
               ),
