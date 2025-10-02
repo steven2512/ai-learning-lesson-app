@@ -19,7 +19,7 @@ const Color priceBadgeBorder = Colors.black;
 const Color brandBlue = Color(0xFF1E88E5);
 
 /// Layout
-const double headerFontSize = 20;
+const double headerFontSize = 22;
 const double sceneHeight = 360;
 
 /// Pill metrics (exact sizing → perfect centering, no clipping)
@@ -36,7 +36,7 @@ const double _kOvershoot = 6.0; // slide slightly past edge
 
 /// Motion knobs
 const bool kLoop = true;
-const int kStartDelayMs = 2000;
+const int kStartDelayMs = 3000;
 
 // ≈2s/card: 700ms transition + 1300ms hold
 const int kTurnMs = 700;
@@ -54,7 +54,7 @@ const double kFadeInDelay = 0.20;
 const double kFadeOutFinish = 0.68;
 
 // Price reveal (Unknown→Real)
-const int kPriceRevealMs = 520;
+const int kPriceRevealMs = 320;
 
 // Gentle pop scale for final price
 const double kPopStart = 0.94;
@@ -136,14 +136,13 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
     t += kThinkingMs;
 
     // Reveal final price
-// Reveal final price
     _chain(Duration(milliseconds: t), () {
       _setPhase(_Phase.guessed);
       _revealCtrl.forward(from: 0.0);
       _guessPopCtrl.forward(from: 0.0);
     });
 
-// 🔹 Trigger continue button ~2s after guessed
+    // 🔹 Trigger continue button ~2s after guessed
     _chain(Duration(milliseconds: t + 2000), () {
       widget.onCompleted?.call();
     });
@@ -212,6 +211,16 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ✅ NEW: Example box above header
+            Center(
+              child: LessonText.word(
+                "Example 1",
+                Colors.red,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: 20),
             // HEADER (TOP, CENTERED)
             LessonText.box(
               margin: const EdgeInsets.only(bottom: 10),
@@ -221,12 +230,24 @@ class _AIPredictState extends State<AIPredict> with TickerProviderStateMixin {
                   LessonText.word("AI", aiPink,
                       fontSize: headerFontSize, fontWeight: FontWeight.w900),
                   LessonText.word("can", titleInk, fontSize: headerFontSize),
-                  LessonText.word("predict", brandBlue,
-                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                  LessonText.word("unknown", brandBlue,
-                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
-                  LessonText.word("values", brandBlue,
-                      fontSize: headerFontSize, fontWeight: FontWeight.w900),
+                  LessonText.word(
+                    "predict",
+                    brandBlue,
+                    fontSize: headerFontSize,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  LessonText.word(
+                    "new",
+                    brandBlue,
+                    fontSize: headerFontSize,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  LessonText.word(
+                    "values",
+                    brandBlue,
+                    fontSize: headerFontSize,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ]),
               ),
             ),

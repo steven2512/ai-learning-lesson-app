@@ -79,7 +79,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
 
         // Prediction explained
         SubLesson(
-          topOffset: screenH * 0.23,
+          topOffset: screenH * 0.14,
           mechanic: LessonMechanic.emit,
           build: (done, __) => AIPredict(onCompleted: done),
         ),
@@ -93,7 +93,7 @@ class _DataAIRelevanceState extends BaseLessonBrainState<DataAiRelevance> {
 
         // Classification explained
         SubLesson(
-          topOffset: screenH * 0.2,
+          topOffset: screenH * 0.14,
           mechanic: LessonMechanic.emit,
           build: (done, __) => SortGroup(onCompleted: done),
         ),

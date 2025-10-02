@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 import 'package:running_robot/core/widgets.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/qual_sort.dart';
+import 'package:running_robot/z_pages/lessons/qual-quan/quan_measure.dart';
 
 // lesson steps
 import 'package:running_robot/z_pages/lessons/qual-quan/recap_data.dart';
@@ -75,7 +77,12 @@ class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
           build: (_, __) => const QuanIntro(),
         ),
         SubLesson(
-          topOffset: screenH * 0.23,
+          topOffset: screenH * 0.35,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QuanMeasure(),
+        ),
+        SubLesson(
+          topOffset: screenH * 0.35,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const QuanExample(),
         ),
@@ -93,7 +100,12 @@ class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
           build: (_, __) => const QualIntro(),
         ),
         SubLesson(
-          topOffset: screenH * 0.23,
+          topOffset: screenH * 0.35,
+          mechanic: LessonMechanic.manual,
+          build: (_, __) => const QualSort(),
+        ),
+        SubLesson(
+          topOffset: screenH * 0.35,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const QualExample(),
         ),

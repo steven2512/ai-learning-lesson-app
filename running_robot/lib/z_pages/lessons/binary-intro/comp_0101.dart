@@ -76,8 +76,7 @@ class _ComputerSeeZeroOneState extends State<ComputerSeeZeroOne> {
               child: LessonText.sentence([
                 LessonText.word("But", Colors.black87, fontSize: 20),
                 LessonText.word("to", Colors.black87, fontSize: 20),
-                LessonText.word("a", Colors.black87, fontSize: 20),
-                LessonText.word("computer,", mainConceptColor, fontSize: 20),
+                LessonText.word("computers,", mainConceptColor, fontSize: 20),
                 LessonText.word("they", Colors.black87, fontSize: 20),
                 LessonText.word("don't", Colors.black87, fontSize: 20),
                 LessonText.word("directly", Colors.black87, fontSize: 20),
@@ -103,7 +102,7 @@ class _ComputerSeeZeroOneState extends State<ComputerSeeZeroOne> {
                 LessonText.word("they", Colors.black87, fontSize: 21),
                 LessonText.word("actually", Color.fromARGB(255, 0, 48, 223),
                     fontSize: 21),
-                LessonText.word("see 🌟", Color.fromARGB(255, 0, 48, 223),
+                LessonText.word("see 🤖", Color.fromARGB(255, 0, 48, 223),
                     fontSize: 21),
               ]),
             ),
