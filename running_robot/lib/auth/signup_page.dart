@@ -8,6 +8,7 @@ import 'package:running_robot/auth/sign_up_flow.dart';
 import 'package:running_robot/auth/start_button.dart';
 import 'package:running_robot/services/user_profile_service.dart';
 import 'auth_gate.dart';
+import 'package:flutter/services.dart'; // ★ CHANGED: for system UI styling
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -30,9 +31,9 @@ class _SignupPageState extends State<SignupPage> {
   }) async {
     await UserProfileService.createOrUpdateUserProfile(
       user,
-      provider: provider, // ✅ track signup method
-      lastDevice: _detectPlatform(context), // ✅ iOS/Android/Web
-      appVersion: "1.0.0+1", // ✅ replace with package_info_plus
+      provider: provider,
+      lastDevice: _detectPlatform(context),
+      appVersion: "1.0.0+1",
     );
 
     Navigator.of(context).pushAndRemoveUntil(
@@ -97,171 +98,196 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ★ CHANGED: go fully edge-to-edge & make status bar transparent
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    final overlay = const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // no top scrim
+      statusBarIconBrightness: Brightness.dark, // Android icon color
+      statusBarBrightness: Brightness.light, // iOS status bar text
+      systemNavigationBarColor: Colors.transparent, // keep nav bar clean
+      systemNavigationBarIconBrightness: Brightness.dark,
+    );
+
     const Color kBrandPurple = Color(0xFF7F56D9);
-    final screenWidth = MediaQuery.of(context).size.width;
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: true,
-          iconTheme: const IconThemeData(color: Colors.black87),
-        ),
-        extendBodyBehindAppBar: true,
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
-            ),
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // ★ CHANGED
+      value: overlay,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: Colors.transparent, // ★ CHANGED: avoid flashes
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0, // ★ CHANGED: kill M3 tint
+            surfaceTintColor:
+                Colors.transparent, // ★ CHANGED: kill surface tint
+            automaticallyImplyLeading: true,
+            iconTheme: const IconThemeData(color: Colors.black87),
+            systemOverlayStyle: overlay, // ★ CHANGED: ensure per-page
           ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 70),
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          "Sign Up",
-                          style: GoogleFonts.lato(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black87,
-                          ),
+          extendBodyBehindAppBar: true, // ★ CHANGED: gradient behind status bar
+
+          body: Stack(
+            children: [
+              // Background gradient fills whole screen
+              const _GradientBackground(), // ★ CHANGED: extracted for clarity
+
+              // Foreground content
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 70),
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              "Sign Up",
+                              style: GoogleFonts.lato(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Start learning AI today✨",
+                              style: GoogleFonts.lato(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Start learning AI today✨",
-                          style: GoogleFonts.lato(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Google
+                      GestureDetector(
+                        onTap: () => _signUpWithGoogle(context),
+                        child: _socialButton(
+                          icon: Image.asset(
+                            'assets/images/google_icon.png',
+                            height: 32,
+                          ),
+                          text: "Continue with Google",
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Facebook
+                      GestureDetector(
+                        onTap: () => _signUpWithFacebook(context),
+                        child: _socialButton(
+                          icon: const Icon(
+                            Icons.facebook,
+                            color: Color(0xFF1877F2),
+                            size: 34,
+                          ),
+                          text: "Continue with Facebook",
+                        ),
+                      ),
+                      const SizedBox(height: 38),
+
+                      Row(
+                        children: [
+                          const Expanded(child: Divider(thickness: .6)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'or continue with',
+                              style: GoogleFonts.lato(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Expanded(child: Divider(thickness: .6)),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      TextField(
+                        controller: _emailController,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value.isEmpty || _isValidEmail(value)) {
+                              _emailError = null;
+                            } else {
+                              _emailError = "Invalid email format";
+                            }
+                          });
+                        },
+                        decoration: _inputDecoration("Enter your email"),
+                      ),
+                      const SizedBox(height: 20),
+
+                      PillCta(
+                        label: "Continue",
+                        color: kBrandPurple,
+                        expand: true,
+                        fontSize: 20,
+                        onTap: () {
+                          final email = _emailController.text.trim();
+                          if (email.isEmpty || !_isValidEmail(email)) {
+                            setState(() {
+                              _emailError = "Invalid email format";
+                            });
+                            return;
+                          }
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) =>
+                                  SignupFlow(initialEmail: email),
+                              transitionsBuilder: (_, animation, __, child) {
+                                const begin = Offset(1.0, 0.0);
+                                const end = Offset.zero;
+                                const curve = Curves.easeInOut;
+                                var tween = Tween(begin: begin, end: end)
+                                    .chain(CurveTween(curve: curve));
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+
+                      if (_emailError != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.shade300,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Text(
+                            _emailError!,
+                            style: GoogleFonts.lato(
+                              color: Colors.red.shade700,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Google
-                  GestureDetector(
-                    onTap: () => _signUpWithGoogle(context),
-                    child: _socialButton(
-                      icon: Image.asset('assets/images/google_icon.png',
-                          height: 32),
-                      text: "Continue with Google",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Facebook
-                  GestureDetector(
-                    onTap: () => _signUpWithFacebook(context),
-                    child: _socialButton(
-                      icon: const Icon(Icons.facebook,
-                          color: Color(0xFF1877F2), size: 34),
-                      text: "Continue with Facebook",
-                    ),
-                  ),
-                  const SizedBox(height: 38),
-
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(thickness: .6)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'or continue with',
-                          style: GoogleFonts.lato(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const Expanded(child: Divider(thickness: .6)),
                     ],
                   ),
-                  const SizedBox(height: 28),
-
-                  TextField(
-                    controller: _emailController,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value.isEmpty || _isValidEmail(value)) {
-                          _emailError = null;
-                        } else {
-                          _emailError = "Invalid email format";
-                        }
-                      });
-                    },
-                    decoration: _inputDecoration("Enter your email"),
-                  ),
-                  const SizedBox(height: 20),
-
-                  PillCta(
-                    label: "Continue",
-                    color: kBrandPurple,
-                    expand: true,
-                    fontSize: 20,
-                    onTap: () {
-                      final email = _emailController.text.trim();
-                      if (email.isEmpty || !_isValidEmail(email)) {
-                        setState(() {
-                          _emailError = "Invalid email format";
-                        });
-                        return;
-                      }
-                      Navigator.of(context).push(
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) =>
-                              SignupFlow(initialEmail: email),
-                          transitionsBuilder: (_, animation, __, child) {
-                            const begin = Offset(1.0, 0.0);
-                            const end = Offset.zero;
-                            const curve = Curves.easeInOut;
-                            var tween = Tween(begin: begin, end: end)
-                                .chain(CurveTween(curve: curve));
-                            return SlideTransition(
-                              position: animation.drive(tween),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-
-                  if (_emailError != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.red.shade300,
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Text(
-                        _emailError!,
-                        style: GoogleFonts.lato(
-                          color: Colors.red.shade700,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -274,11 +300,11 @@ class _SignupPageState extends State<SignupPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 6,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -317,10 +343,29 @@ class _SignupPageState extends State<SignupPage> {
         ),
       );
 
-  // ✅ Detect platform for lastDevice
   String _detectPlatform(BuildContext context) {
     if (Theme.of(context).platform == TargetPlatform.iOS) return "ios";
     if (Theme.of(context).platform == TargetPlatform.android) return "android";
     return "web";
+  }
+}
+
+// ★ CHANGED: dedicated background widget to ensure full-bleed gradient
+class _GradientBackground extends StatelessWidget {
+  const _GradientBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF3E9FF), Color(0xFFFFFFFF)],
+        ),
+      ),
+    );
   }
 }

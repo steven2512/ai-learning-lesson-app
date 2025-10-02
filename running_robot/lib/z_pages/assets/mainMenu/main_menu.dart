@@ -82,14 +82,14 @@ class _MainMenuPageState extends State<MainMenuPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             WeeklyStreak(
-              streakCount: 8,
+              streakCount: 1,
               states: const [
-                StreakDayState.done,
-                StreakDayState.done,
+                StreakDayState.missed,
+                StreakDayState.missed,
+                StreakDayState.missed,
+                StreakDayState.missed,
                 StreakDayState.missed,
                 StreakDayState.todayPending,
-                StreakDayState.missed,
-                StreakDayState.missed,
                 StreakDayState.missed,
               ],
               startOnMonday: true,
@@ -116,9 +116,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
               height: boxHeight1,
               child: BoxWithProgress(
                 title: "Introduction to Artificial Intelligence",
-                buttonText: "Continue Lesson",
+                buttonText: "Start Lesson",
                 buttonIcon: Icons.arrow_forward_rounded,
-                onPressed: () => widget.onNavigate(const RouteLesson(3)),
+                onPressed: () => widget.onNavigate(const RouteLesson(1)),
                 imageAsset: "assets/images/chat_bot_1.png",
                 imageAspectRatio: 0.92,
                 decoration: BoxDecoration(
@@ -133,7 +133,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   ],
                 ),
                 textColor: onDarkText,
-                percent: 66,
+                percent: 0,
                 maxTextWidth: 200,
               ),
             ),
@@ -159,7 +159,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             SizedBox(
               height: boxHeight2,
               child: SimpleBox(
-                title: "Mini Games",
+                title: "Mini Games (Coming Soon)",
                 description: "Shapren your AI knowledge",
                 buttonText: "Start Challenge",
                 buttonIcon: Icons.arrow_forward_rounded,
