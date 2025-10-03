@@ -33,7 +33,7 @@ class LessonNavigator {
         progressBar: endBar,
         chapterProgress: idx + 1,
         totalChapterLessons: _allLessons.length,
-        topText: "Lesson ${idx + 1} complete! 🎉",
+        topText: "Lesson ${idx + 1} completed!",
         repeatLesson: RouteLesson(idx + 1),
         nextLesson: next,
       ),
