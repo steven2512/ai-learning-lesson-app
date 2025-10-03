@@ -13,6 +13,17 @@ const double noteTextSize = 20;
 class HelloInUnicode extends StatelessWidget {
   const HelloInUnicode({super.key});
 
+  /// ✅ Precache RobotoMono font metrics so it doesn’t flicker on first load
+  static void _precacheFonts(BuildContext context) {
+    TextPainter(
+      text: TextSpan(
+        text: "01101100", // any sample text
+        style: GoogleFonts.robotoMono(fontSize: 15),
+      ),
+      textDirection: TextDirection.ltr,
+    ).layout();
+  }
+
   void _showUnicodeOverlay(BuildContext context) {
     showDialog(
       context: context,
@@ -110,6 +121,9 @@ class HelloInUnicode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Ensure fonts are loaded before rendering
+    _precacheFonts(context);
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -133,7 +147,7 @@ class HelloInUnicode extends StatelessWidget {
               ]),
             ),
 
-            // ✅ Binary string box
+            // ✅ Binary string box (stable + preloaded font)
             Container(
               margin: const EdgeInsets.only(bottom: 20),
               padding: const EdgeInsets.all(8),
@@ -141,38 +155,40 @@ class HelloInUnicode extends StatelessWidget {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Container(
+              child: SizedBox(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 37, 35, 35),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "01001000 01100101",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: ScreenSize.category == ScreenCategory.large
-                            ? 17
-                            : 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 37, 35, 35),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "01001000 01100101",
+                        style: GoogleFonts.robotoMono(
+                          fontSize: ScreenSize.category == ScreenCategory.large
+                              ? 17
+                              : 15,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "01101100 01101100 01101111",
-                      style: GoogleFonts.robotoMono(
-                        fontSize: ScreenSize.category == ScreenCategory.large
-                            ? 17
-                            : 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 8),
+                      Text(
+                        "01101100 01101100 01101111",
+                        style: GoogleFonts.robotoMono(
+                          fontSize: ScreenSize.category == ScreenCategory.large
+                              ? 17
+                              : 15,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

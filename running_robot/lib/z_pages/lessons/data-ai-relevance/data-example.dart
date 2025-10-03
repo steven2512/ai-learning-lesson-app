@@ -32,9 +32,7 @@ class DataExample extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.only(left: 15),
-              // 👇 Wrap DialogueBox in MascotDialogue (identical formula)
+            Center(
               child: MascotDialogue(
                 mascotAsset: 'assets/images/mascot_pointing_up.png',
                 mascotHeight: 256,
