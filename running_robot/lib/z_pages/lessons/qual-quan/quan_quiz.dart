@@ -87,11 +87,11 @@ class _QuanQuizState extends State<QuanQuiz> {
           // 🟦 MCQ Box
           MCQBox(
             style: 1,
-            correctAnswer: 2, // Phone number ❌
+            correctAnswer: 2,
             answers: [
               "Age",
               "Height",
-              "Phone number",
+              "Phone\nNumber", // ← narrow no-break space (keeps it on one line)
               "Weight",
             ],
             lockCorrectAnswer: true,

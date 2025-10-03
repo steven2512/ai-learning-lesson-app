@@ -57,7 +57,7 @@ final List<ChapterMeta> chapterManifest = [
     lessons: [
       LessonMeta(
         id: "data-intro",
-        title: "Data Intro",
+        title: "What is Data?",
         builder: (nav) => DataIntroBrain(onNavigate: nav),
       ),
       LessonMeta(
@@ -67,7 +67,7 @@ final List<ChapterMeta> chapterManifest = [
       ),
       LessonMeta(
         id: "binary-intro",
-        title: "Binary Intro",
+        title: "What is Binary?",
         builder: (nav) => BinaryIntroBrain(onNavigate: nav),
       ),
       LessonMeta(
@@ -77,7 +77,7 @@ final List<ChapterMeta> chapterManifest = [
       ),
       LessonMeta(
         id: "qual-game",
-        title: "Qualitative Game",
+        title: "Qualitative Mini-Game",
         builder: (nav) => QualGameBrain(onNavigate: nav),
       ),
     ],
