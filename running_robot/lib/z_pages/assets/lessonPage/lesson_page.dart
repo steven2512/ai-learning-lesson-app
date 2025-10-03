@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:running_robot/core/app_router.dart'
     show AppNavigate, RouteLesson;
 import 'package:running_robot/core/lesson_manifest.dart'; // 🔹 for semantic lessons
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
 
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
@@ -29,10 +30,10 @@ const double kTargetYFactor = 0.35;
 // ===== Blur/opacity settings =====
 const double kMaxBlur = 6.0;
 const double kMinOpacity = 0.0;
-
+final double screenH = ScreenSize.height;
 // ===== Light beam settings =====
 const double kBeamWidth = 100;
-const double kBeamHeight = 90;
+double kBeamHeight = screenH / 12;
 const Color kBeamColor = Colors.blueAccent;
 const double kBeamYOffset = 10;
 const double kBeamXOffset = -19.5;
