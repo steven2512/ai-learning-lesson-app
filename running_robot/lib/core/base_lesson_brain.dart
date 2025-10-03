@@ -70,6 +70,12 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   bool answered = false;
   late final List<SubLesson> subLessons;
 
+  // ✅ FIX: a nonce that forces a full remount of the current sublesson subtree
+  // when the mini-game asks to "Try Again". This resets any internal "completed"
+  // flags inside the game (e.g., DragDropGameBase), so `onCompleted` fires again
+  // and the Continue button reappears.
+  int _restartNonce = 0; // ← added
+
   List<SubLesson> buildSubLessons();
 
   @override
@@ -120,6 +126,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       setState(() {
         currentIndex++;
         answered = false;
+        _restartNonce = 0; // ✅ reset nonce when moving to a new step
       });
 
       updateLesson({'lastStepIndex': currentIndex});
@@ -130,12 +137,35 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   }
 
   void resetAnswer() {
-    setState(() => answered = false);
+    // ✅ when a mini-game’s “Try Again” is tapped, the child calls this.
+    // We both clear answered and bump the nonce to remount the sub-tree.
+    setState(() {
+      answered = false;
+      _restartNonce++; // 👈 force a fresh instance of the game
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final sub = subLessons[currentIndex];
+
+    // Build the current sub-lesson’s widget
+    final built = sub.build(() {
+      setState(() => answered = true);
+      if (sub.mechanic == LessonMechanic.auto) {
+        goNext();
+      }
+    }, resetAnswer);
+
+    // ✅ FIX: wrap with a KeyedSubtree keyed by (lessonId, index, nonce)
+    // so that when _restartNonce changes (on “Try Again”), Flutter discards
+    // the old game State and mounts a brand-new instance, allowing onCompleted
+    // to emit again → Continue button returns.
+    final keyedBuilt = KeyedSubtree(
+      key: ValueKey(
+          'lesson:${widget.lessonId}:step:$currentIndex:$_restartNonce'),
+      child: built,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -164,12 +194,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
           Positioned.fill(
             top: sub.topOffset,
             bottom: 100,
-            child: sub.build(() {
-              setState(() => answered = true);
-              if (sub.mechanic == LessonMechanic.auto) {
-                goNext();
-              }
-            }, resetAnswer),
+            child: keyedBuilt, // ✅ use the keyed subtree here
           ),
           if (sub.mechanic == LessonMechanic.manual ||
               (sub.mechanic == LessonMechanic.emit && answered))
