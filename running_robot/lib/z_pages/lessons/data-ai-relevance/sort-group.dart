@@ -14,7 +14,7 @@ const Color titleInk = Colors.black87;
 const Color brandBlue = Color(0xFF1E88E5);
 
 /// Loop + phase timing
-const Duration loopDelay = Duration(microseconds: 3000);
+const Duration loopDelay = Duration(milliseconds: 1500);
 const int kExtraMsPerLeg = 2000; // slower clustering & toBoxes
 const int kExtraMsAfterDrop = 2000; // hold after landing
 const double fadeOutSeconds = 0.8; // content fade-out duration
@@ -162,7 +162,7 @@ class _ClusterSceneState extends State<_ClusterScene>
 
     _seedOrder ??= () {
       const animals = ["🐶", "🐱", "🐼", "🦊"];
-      const faces = ["😀", "😢", "🤩"];
+      const faces = ["😀", "😢", "🤩", "😎"];
       final seeds = <_Seed>[
         for (final e in animals) _Seed(e, 0),
         for (final e in faces) _Seed(e, 1),

@@ -354,6 +354,10 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
     });
   }
 
+  /// 🔒 Gate interactivity until panel is fully revealed
+  bool get _isEndCardInteractive =>
+      _revealed && _compactSlidUp && _endBoxOpacity >= 0.99;
+
   // ── Lifecycle ───────────────────────────────────────────────────
   @override
   void initState() {
@@ -503,66 +507,77 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
             Positioned.fill(
               child: Stack(
                 children: [
-                  const IgnorePointer(
-                    ignoring: true,
+                  // Scrim blocks taps to underlying content
+                  const AbsorbPointer(
+                    absorbing: true,
                     child: ColoredBox(color: Color(0xF0FFFFFF)),
                   ),
-                  AnimatedOpacity(
-                    opacity: _endBoxOpacity,
-                    duration: const Duration(milliseconds: _kFadeInTimeMs),
-                    child: LayoutBuilder(builder: (context, cts) {
-                      final double startTop =
-                          centerY + cts.maxHeight * _kSlideUpFromBottomFrac;
 
-                      const double fallbackRevealedHeight = 120;
-                      final double revealedH =
-                          _revealedEndCardHeight ?? fallbackRevealedHeight;
-                      final double endTopComputed =
-                          max(16.0, centerY - revealedH / 2);
+                  // End-card stack ignores taps until fully interactive
+                  IgnorePointer(
+                    ignoring: !_isEndCardInteractive,
+                    child: AnimatedOpacity(
+                      opacity: _endBoxOpacity,
+                      duration: const Duration(milliseconds: _kFadeInTimeMs),
+                      child: LayoutBuilder(builder: (context, cts) {
+                        final double centerY = cts.maxHeight * 0.5;
+                        final double startTop =
+                            centerY + cts.maxHeight * _kSlideUpFromBottomFrac;
 
-                      return Stack(
-                        children: [
-                          // Hidden measurement for centering (uses fixed width)
-                          Opacity(
-                            opacity: 0,
-                            child: Center(
-                              child: SizedBox(
-                                width: _kNarrowMaxWidth,
-                                child: _MeasureSize(
-                                  onChange: (size) {
-                                    if (!mounted) return;
-                                    final h = size.height;
-                                    if (h > 0 && _revealedEndCardHeight != h) {
-                                      setState(
-                                          () => _revealedEndCardHeight = h);
-                                    }
-                                  },
-                                  child: _buildEndCard(revealed: true),
+                        const double fallbackRevealedHeight = 120;
+                        final double revealedH =
+                            _revealedEndCardHeight ?? fallbackRevealedHeight;
+                        final double endTopComputed =
+                            max(16.0, centerY - revealedH / 2);
+
+                        return Stack(
+                          children: [
+                            // Hidden measurement is NEVER hit-testable
+                            IgnorePointer(
+                              ignoring: true,
+                              child: Opacity(
+                                opacity: 0,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: _kNarrowMaxWidth,
+                                    child: _MeasureSize(
+                                      onChange: (size) {
+                                        if (!mounted) return;
+                                        final h = size.height;
+                                        if (h > 0 &&
+                                            _revealedEndCardHeight != h) {
+                                          setState(
+                                              () => _revealedEndCardHeight = h);
+                                        }
+                                      },
+                                      child: _buildEndCard(revealed: true),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          AnimatedPositioned(
-                            duration: const Duration(
-                                milliseconds: _kSlideUpDurationMs),
-                            curve: Curves.easeInOutCubic,
-                            left: 0,
-                            right: 0,
-                            top: _compactSlidUp ? endTopComputed : startTop,
-                            child: Center(
-                              child: AnimatedSize(
-                                duration: const Duration(
-                                    milliseconds: _kRevealDownDurationMs),
-                                curve: Curves.easeOutCubic,
-                                alignment: Alignment.topCenter,
-                                child: _buildEndCard(revealed: _revealed),
+                            AnimatedPositioned(
+                              duration: const Duration(
+                                  milliseconds: _kSlideUpDurationMs),
+                              curve: Curves.easeInOutCubic,
+                              left: 0,
+                              right: 0,
+                              top: _compactSlidUp ? endTopComputed : startTop,
+                              child: Center(
+                                child: AnimatedSize(
+                                  duration: const Duration(
+                                      milliseconds: _kRevealDownDurationMs),
+                                  curve: Curves.easeOutCubic,
+                                  alignment: Alignment.topCenter,
+                                  child: _buildEndCard(revealed: _revealed),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    }),
+                          ],
+                        );
+                      }),
+                    ),
                   ),
                 ],
               ),
@@ -735,7 +750,7 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _handleTryAgain,
+                  onPressed: _isEndCardInteractive ? _handleTryAgain : null,
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(
                     _tryAgainLabel(),
