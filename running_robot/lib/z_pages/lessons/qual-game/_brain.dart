@@ -26,9 +26,17 @@ class _QualGameBrainState extends BaseLessonBrainState<QualGameBrain> {
         SubLesson(
           topOffset: screenH * 0.05,
           mechanic: LessonMechanic.emit,
-          build: (done, reset) => CatchQualGame(
+          build: (done, _remountingReset /* not used here */) => CatchQualGame(
             onStepCompleted: done,
-            onReset: reset, // 👈 now connected
+            // 👇 Use a NON-remounting reset so Start Game won't dispose itself mid-callback.
+            onReset: () {
+              // just hide the Continue button; do NOT bump _restartNonce
+              if (mounted) {
+                setState(() {
+                  answered = false;
+                });
+              }
+            },
           ),
         ),
       ];

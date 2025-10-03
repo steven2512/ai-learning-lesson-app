@@ -14,7 +14,7 @@ import 'package:running_robot/game/texts/text_box.dart';
 /// Renders a pre-built (final) LessonProgressBar passed via constructor.
 class EndLessonPage extends FlameGame {
   // ---- Callbacks ----
-  final VoidCallback onRepeat; // kept, not used here but part of API
+  final VoidCallback onRepeat; // kept for API parity
   final VoidCallback onNext;
   final VoidCallback onMainMenu;
 
@@ -24,7 +24,8 @@ class EndLessonPage extends FlameGame {
   final int chapterProgress; // e.g. 3
   final int totalChapterLessons; // e.g. 10   => shows "3/10"
   final String topText; // headline
-  final String? illustrationPath; // optional asset
+  final String?
+      illustrationPath; // optional extra asset (kept for compatibility)
   final LessonProgressBar progressBar; // 🔹 final task bar to display
 
   // ---- Internals ----
@@ -41,7 +42,7 @@ class EndLessonPage extends FlameGame {
     required this.chapterProgress,
     required this.totalChapterLessons,
     required this.topText,
-    required this.progressBar, // 🔹 passed-in bar
+    required this.progressBar,
     this.illustrationPath,
   });
 
@@ -90,31 +91,69 @@ class EndLessonPage extends FlameGame {
       maxWidth: 300,
     )..switchPhase(EventText.showText);
 
-    // -------- Illustration (optional) --------
-    if (illustrationPath != null && illustrationPath!.isNotEmpty) {
-      final sprite = await Sprite.load(illustrationPath!);
+    // -------- Progress bar (NO animation; use prebuilt) --------
+    progressBar.position = Vector2(size.x / 2, 70);
+    add(progressBar);
+
+    // ---- Layout knobs for robot & spacing ----
+    const double gapUnderTitle = 24.0; // space between title and robot
+    const double gapBelowRobot = 15.0; // space between robot and boxes
+    const double robotSideMargin = 32.0; // keeps robot away from screen edges
+
+    // -------- Blue robot illustration (bigger, centered) --------
+    // We size the robot generously while fitting within both width & height caps.
+    // Then we anchor the boxes relative to the robot’s bottom + a clean gap.
+    double robotW = 0, robotH = 0;
+    double robotCenterY = 0;
+
+    try {
+      final robot = await Sprite.load('blue_robot.png');
+      final Vector2 src = robot.srcSize;
+      final double aspect = (src.y == 0) ? 1.0 : (src.x / src.y);
+
+      // Generous max sizes to make it feel big:
+      final double maxRobotW =
+          (size.x - 2 * robotSideMargin).clamp(260.0, 9999.0);
+      final double maxRobotH = (size.y * 0.33).clamp(180.0, 360.0);
+
+      // Fit within both constraints while preserving aspect ratio.
+      if (maxRobotW / aspect <= maxRobotH) {
+        robotW = maxRobotW;
+        robotH = robotW / aspect;
+      } else {
+        robotH = maxRobotH;
+        robotW = robotH * aspect;
+      }
+
+      // Place the robot below the title with a consistent gap.
+      final double topTextY = textBox.position.y; // 200
+      final double robotTop = topTextY + gapUnderTitle;
+      robotCenterY = robotTop + robotH / 2;
+
       add(
         SpriteComponent(
-          sprite: sprite,
-          size: Vector2.all(400),
-          position: Vector2(size.x / 2, 360),
+          sprite: robot,
+          size: Vector2(robotW, robotH),
+          position: Vector2(size.x / 2, robotCenterY),
           anchor: Anchor.center,
         ),
       );
+    } catch (_) {
+      // If the asset can't be loaded, fall back to old layout numbers
+      // so nothing crashes.
+      final double topTextY = textBox.position.y;
+      robotH = 0;
+      robotCenterY = topTextY; // boxes will compute below
     }
 
-    // -------- Progress bar (NO animation; use prebuilt) --------
-    // We just position and add the passed-in bar.
-    progressBar.position = Vector2(size.x / 2, 70);
-    // If your bar supports anchor, uncomment the next line:
-    // progressBar.anchor = Anchor.center;
-    add(progressBar);
-
-    // -------- Three FancyBoxes (layout fixed) --------
+    // -------- Three FancyBoxes (row positioned under the robot) --------
     final Vector2 boxSize = Vector2(110, 96);
     const double preferredGap = 18.0;
     const double sideMargin = 24.0;
-    final double y = size.y / 2 + 110;
+
+    // Center line for the row of boxes:
+    final double boxesY =
+        (robotCenterY + robotH / 2) + gapBelowRobot + (boxSize.y / 2);
 
     double gap = preferredGap;
     final double maxRowWidth = size.x - 2 * sideMargin;
@@ -129,7 +168,7 @@ class EndLessonPage extends FlameGame {
 
     // LEFT: TOTAL XP
     final xpBox = FancyBox(
-      position: Vector2(firstCenterX, y),
+      position: Vector2(firstCenterX, boxesY),
       anchor: Anchor.center,
       boxSize: boxSize,
       titleText: 'Total XP',
@@ -147,7 +186,7 @@ class EndLessonPage extends FlameGame {
 
     // MIDDLE: CHAPTER PROGRESS (X / Y)
     final progressBox = FancyBox(
-      position: Vector2(secondCenterX, y),
+      position: Vector2(secondCenterX, boxesY),
       anchor: Anchor.center,
       boxSize: boxSize,
       titleText: 'Progress',
@@ -174,7 +213,7 @@ class EndLessonPage extends FlameGame {
 
     // RIGHT: DAILY STREAK
     final streakBox = FancyBox(
-      position: Vector2(thirdCenterX, y),
+      position: Vector2(thirdCenterX, boxesY),
       anchor: Anchor.center,
       boxSize: boxSize,
       titleText: 'Streak',
@@ -198,7 +237,24 @@ class EndLessonPage extends FlameGame {
       letterSpacing: 0.2,
     )..switchPhase(EventHorizontalObstacle.startMoving);
 
-    // Draw order
+    // -------- Optional extra illustration (kept for compatibility) --------
+    if (illustrationPath != null && illustrationPath!.isNotEmpty) {
+      try {
+        final sprite = await Sprite.load(illustrationPath!);
+        add(
+          SpriteComponent(
+            sprite: sprite,
+            size: Vector2.all(400),
+            position: Vector2(size.x / 2, boxesY - 140),
+            anchor: Anchor.center,
+          ),
+        );
+      } catch (_) {/* ignore */}
+    }
+
+    // -------- Draw order --------
+    // Robot is added earlier; boxes are added after it (so if overlap happens,
+    // boxes render on top). Text and bar remain independent.
     add(nextLessonButton);
     add(returnButton);
     addAll([xpBox, progressBox, streakBox]);

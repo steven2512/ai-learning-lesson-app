@@ -149,7 +149,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   Widget build(BuildContext context) {
     final sub = subLessons[currentIndex];
 
-    // Build the current sub-lesson’s widget
+    // Build current sub-lesson
     final built = sub.build(() {
       setState(() => answered = true);
       if (sub.mechanic == LessonMechanic.auto) {
@@ -157,10 +157,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       }
     }, resetAnswer);
 
-    // ✅ FIX: wrap with a KeyedSubtree keyed by (lessonId, index, nonce)
-    // so that when _restartNonce changes (on “Try Again”), Flutter discards
-    // the old game State and mounts a brand-new instance, allowing onCompleted
-    // to emit again → Continue button returns.
+    // Force remount on Try Again
     final keyedBuilt = KeyedSubtree(
       key: ValueKey(
           'lesson:${widget.lessonId}:step:$currentIndex:$_restartNonce'),
@@ -170,7 +167,16 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
+        clipBehavior: Clip.none,
         children: [
+          // 1) Sub-lesson content UNDER everything else
+          Positioned.fill(
+            top: sub.topOffset,
+            bottom: 100,
+            child: keyedBuilt,
+          ),
+
+          // 2) Progress bar above content
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -181,6 +187,18 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               ),
             ),
           ),
+
+          // 3) Continue button above content (if applicable)
+          if (sub.mechanic == LessonMechanic.manual ||
+              (sub.mechanic == LessonMechanic.emit && answered))
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: ContinueButton(onPressed: goNext),
+            ),
+
+          // 4) X button LAST so it paints on top and receives taps first
           Positioned(
             top: 69,
             left: screenH * 0.035,
@@ -191,19 +209,6 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               onPressed: (_) => widget.onNavigate(const RouteMainMenu(tab: 0)),
             ),
           ),
-          Positioned.fill(
-            top: sub.topOffset,
-            bottom: 100,
-            child: keyedBuilt, // ✅ use the keyed subtree here
-          ),
-          if (sub.mechanic == LessonMechanic.manual ||
-              (sub.mechanic == LessonMechanic.emit && answered))
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: ContinueButton(onPressed: goNext),
-            ),
         ],
       ),
     );
