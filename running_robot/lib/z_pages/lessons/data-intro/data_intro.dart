@@ -34,9 +34,7 @@ class DataIntroLesson extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.only(left: 20),
-              // 👇 Example use: wrap your existing DialogueBox with MascotDialogue
+            Center(
               child: MascotDialogue(
                 mascotAsset: 'assets/images/mascot_pointing_up.png', // your PNG
                 mascotHeight: 256,
