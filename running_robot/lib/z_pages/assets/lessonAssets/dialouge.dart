@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/auth/start_button.dart';
 
 /// Instant-switch DialogueBox:
 /// - Supports a single Widget or List<Widget> as `content` (use your LessonText widgets).
@@ -103,17 +105,24 @@ class _DialogueBoxState extends State<DialogueBox> {
             child: Builder(
               builder: (_) {
                 if (!isLastPage) {
-                  return ElevatedButton.icon(
-                    onPressed: _next,
-                    icon: const Icon(Icons.chevron_right),
-                    label: const Text("Next"),
+                  return PillCta(
+                    label: 'Next',
+                    color: const Color.fromARGB(255, 18, 148, 35),
+                    onTap: _next,
+                    width: 120,
+                    height: 40,
+                    fontSize: 15,
                   );
                 } else if (widget.finishButton &&
                     widget.finishCallback != null) {
-                  return ElevatedButton.icon(
-                    onPressed: widget.finishCallback,
-                    icon: const Icon(Icons.check),
-                    label: const Text("Finish"),
+                  // ✅ SAME STYLE AS NEXT BUTTON
+                  return PillCta(
+                    label: 'Finish',
+                    color: const Color.fromARGB(255, 18, 148, 35),
+                    onTap: widget.finishCallback!,
+                    width: 120,
+                    height: 40,
+                    fontSize: 15,
                   );
                 } else {
                   return const SizedBox.shrink();
