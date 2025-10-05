@@ -1,130 +1,84 @@
-Perfect — thanks for catching that. So instead of cramming both into one slide, we split them cleanly:
+Slide 1:
+Dialouge: As you know, AI needs Data to do meaningful things for humans.
 
-Here’s the **revised storyboard (12 slides total now)**:
+Naturally, not everything about that Data will be useful for the AI.
 
----
+So we have to choose smartly to help the AI!
 
-### **Slide 1 – Dialogue**
+Finish
 
-📦 **DialogueBox**
+Slide 2:
+What is a Feature?
+-> A feature is an attribute of the data that helps AI make a decision or prediction
 
-* “Now you know what data is 🔥”
-* “But why do we care about data?”
-* “How is Data related to AI?”
+Some kind of animation
 
----
+Slide 3:
+- A feature must be measurable
+ + Measurable: something either numeric (quantitative) or categorical (qualitative) (recap Lesson 4)
 
-### **Slide 2 – Analogy (Student/Homework)**
+Slide 4:
+Good feature should be useful for the AI!
 
-📦 **Box 1**
+Good Features example
+Goal: Predict new House's Price 
+Features: House's location, Area Size, Number of Bedrooms, etc
 
-* *“Think of AI as the student and data as the homework”*
+Slide 5:
+Bad Features example
+Goal: Predict new House's Price 
+Features: Wall color, Seller's Name, etc
 
-  * AI = pink
-  * Data/Homework = orange
+Slide 6: MCQ
 
-📦 **Box 2**
 
-* Placeholder image (student/homework → robot/data).
+Goal: AI trying to predict a user's rating on this new Movie (based on previous movies)
 
----
+Picture show new movie -> ? 1-10
 
-### **Slide 3 – Ask Yourself**
+Question: Choose 3 Features about a Movie that are more useful (than others) for the AI? 
 
-📦 **Box**
 
-* Header: *“Ask Yourself”* (big, orange).
+- Movie Genre
+- Ticket Price
+- Main actors
+- Director
+- Filming Locations
 
----
+Slide 7:
 
-### **Slide 4 – Without Homework…**
+Scenario:
+Sarah is making an AI to guess how fast someone can run.
 
-📦 **Box**
+She picks these features:
 
-* Text: *“Without the homework, can the student really practice and improve?”*
+Total hours they train per week
 
-  * “homework” = orange
-  * “student” = pink
-  * “practice / improve” = green
+Their Shoe brand
 
-📦 **Box**
+Their age
 
-* Placeholder image.
+Sarah says, “I'm sure these are best possible features for the AI. I don't even need to test to know this”
 
----
+Question:
+Is Sarah right?
 
-### **Slide 5 – Data = Examples**
+Choices:
 
-📦 **Box**
+✅ Yes, Sarah is right
 
-* “Data is basically the examples that AI learns from.”
-* “With data, AI can do powerful and useful things for humans.”
+❌ No, Sarah is wrong
 
----
+🤔 We don't know yet
 
-### **Slide 6 – Prediction**
+Correct answer: 🤔 We don't know yet
 
-📦 **Box**
+We can’t know which features work best until the AI is tested with real data.
 
-* “AI predicts future values from patterns in data.”
-* Example: *“AI can guess what TV show you’ll binge next (based on your past shows watched).”*
+Sarah might be right or wrong, so correct answer is "We don't know yet"
 
----
 
-### **Slide 7 – Prediction Exercise**
 
-📦 **Exercise** (emit)
 
-* Sequence: *1 → 3 → 5 → ?*
-* Correct answer: **7**.
 
----
 
-### **Slide 8 – Classification**
-
-📦 **Box**
-
-* “AI can also sort and label things into categories.”
-* Example: *“AI can look at pictures and tell which are cats, dogs, or birds.”*
-
----
-
-### **Slide 9 – Classification Exercise**
-
-📦 **Exercise** (emit)
-
-* Drag-and-drop: match images (cat/dog/bird) into bins.
-
----
-
-### **Slide 10 – Generation**
-
-📦 **Box**
-
-* “AI can create new text, images, audio, or designs.”
-* Example: *“AI drawing a Japanese Samurai in Van Gogh’s style.”*
-
----
-
-### **Slide 11 – Generation Exercise**
-
-📦 **Exercise** (emit)
-
-* Reverse-engineer:
-
-  * Show generated image.
-  * User spins wheel (animal × style).
-  * Must pick correct combo to continue.
-
----
-
-### **Slide 12 – Wrap-up Dialogue**
-
-📦 **DialogueBox**
-
-* “Those are just some prime examples.”
-* “In reality, AI can do even more than that with data!”
-
----
-
-Would you like me to now **generate all the Dart widget class stubs** (like `AskYourselfHomework`, `WithoutHomeworkImprove`, etc.) so they match this 12-slide flow? That way you can drop them directly into a new `DataAIRelevanceBrain`.

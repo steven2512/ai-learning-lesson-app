@@ -158,6 +158,9 @@ flutter:
     - assets/images/house4.png
     - assets/images/mascot_pointing_up.png
     - assets/images/google_icon.png
+    - assets/images/car_model.png
+    - assets/images/house_factors.png
+    - assets/images/bad_example.png
 
 
 
