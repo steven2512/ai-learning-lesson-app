@@ -8,6 +8,7 @@ import 'package:running_robot/z_pages/lessons/features-intro/data_useful_ai.dart
 import 'package:running_robot/z_pages/lessons/features-intro/features_intro.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/features_measurable.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/good_features.dart';
+import 'package:running_robot/z_pages/lessons/features-intro/movies_mcq.dart';
 
 final screenH = ScreenSize.height;
 final screenW = ScreenSize.width;
@@ -66,12 +67,14 @@ class _FeatureIntroBrainState extends BaseLessonBrainState<FeaturesIntroBrain> {
           topOffset: screenH * 0.25,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const BadFeaturesExample(),
-        )
+        ),
         // ),
-        // SubLesson(
-        //   topOffset: screenH * 0.27,
-        //   mechanic: LessonMechanic.manual,
-        //   build: (_, __) => HelloInUnicode(),
+        SubLesson(
+            topOffset: screenH * 0.15,
+            mechanic: LessonMechanic.emit,
+            build: (done, reset) => MovieFeaturesQuiz(
+                  onStepCompleted: () => done(),
+                )),
         // ),
         // SubLesson(
         //   topOffset: screenH * 0.1,

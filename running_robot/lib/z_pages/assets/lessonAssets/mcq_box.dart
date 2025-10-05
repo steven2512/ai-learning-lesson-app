@@ -1,12 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/auth/start_button.dart';
 
 /// MCQBox: holds optional question + answers
+/// LEGACY: single-answer flow is unchanged.
+/// NEW: set [multipleOption: true] and provide [correctAnswers] + [onSubmitAnswers]
+///      to enable multi-select with a Submit button.
+/// - In multiple mode, per-tile taps toggle selection only (no legacy callback).
+/// - Pressing Submit triggers [onSubmitAnswers(selectedIndices, allCorrect)].
+/// - After a perfect submit in multiple mode, interaction is frozen (like single).
 class MCQBox extends StatelessWidget {
   final dynamic question; // ✅ String OR Widget
   final List<dynamic> answers; // ✅ List<String> OR List<Widget>
+
+  // LEGACY single-answer
   final int correctAnswer;
+
+  // NEW: multiple-answer list (required iff multipleOption == true)
+  final List<int>? correctAnswers; // NEW
+
+  // LEGACY per-tile callback (single mode only)
   final void Function(int index, bool isCorrect)? onAnswerTap;
+
+  // NEW: submit callback (multiple mode only)
+  final void Function(List<int> indices, bool allCorrect)?
+      onSubmitAnswers; // NEW
 
   // Box styling
   final double width;
@@ -32,17 +50,24 @@ class MCQBox extends StatelessWidget {
 
   // Flags
   final bool defaultAnimation;
-  final bool lockCorrectAnswer;
+  final bool
+      lockCorrectAnswer; // kept for legacy; multi now freezes on perfect regardless
 
-  // NEW: style selector — 0 = legacy vertical, 1 = 2×2 grid
-  final int style; // NEW
+  // 0 = legacy vertical, 1 = 2×N grid (even number allowed)
+  final int style;
+
+  // NEW: multi-select toggle
+  final bool multipleOption; // NEW
+  final String submitLabel; // NEW: button text
 
   const MCQBox({
     super.key,
     this.question,
     required this.answers,
-    required this.correctAnswer,
+    required this.correctAnswer, // required to preserve legacy signature
+    this.correctAnswers, // NEW
     this.onAnswerTap,
+    this.onSubmitAnswers, // NEW
     this.width = double.infinity,
     this.height = 300,
     this.padding = const [16, 12, 8, 16, 16, 16],
@@ -61,11 +86,29 @@ class MCQBox extends StatelessWidget {
     this.answerAlignment,
     this.defaultAnimation = true,
     this.lockCorrectAnswer = false,
-    this.style = 0, // NEW: default legacy
+    this.style = 0,
+    this.multipleOption = false, // NEW: default OFF → legacy untouched
+    this.submitLabel = "Submit", // NEW
   });
 
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      if (multipleOption) {
+        assert(
+          correctAnswers != null && correctAnswers!.isNotEmpty,
+          'When multipleOption is true, correctAnswers must be a non-empty list.',
+        );
+      }
+      if (style == 1) {
+        assert(
+          answers.length.isEven,
+          'style: 1 requires an even number of answers (2, 4, 6, etc).',
+        );
+      }
+      return true;
+    }());
+
     // Normalize question
     Widget? questionWidget;
     if (question is String) {
@@ -102,6 +145,14 @@ class MCQBox extends StatelessWidget {
       throw ArgumentError("Answer must be String or Widget");
     }).toList();
 
+    assert(
+      !multipleOption
+          ? (correctAnswer >= 0 && correctAnswer < normalizedAnswers.length)
+          : correctAnswers!
+              .every((i) => i >= 0 && i < normalizedAnswers.length),
+      'Correct answer index/indices out of range.',
+    );
+
     return Container(
       width: width,
       padding: EdgeInsets.only(
@@ -125,16 +176,24 @@ class MCQBox extends StatelessWidget {
           ],
           MCQAnswers(
             answers: normalizedAnswers,
+            // LEGACY
             correctAnswer: correctAnswer,
             onAnswerTap: onAnswerTap,
+
+            // NEW
+            multipleOption: multipleOption,
+            correctAnswers: correctAnswers,
+            onSubmitAnswers: onSubmitAnswers,
+            submitLabel: submitLabel,
+
             gapBetween: padding[2],
             borderRadius: borderRadius,
             answerFill: answerFill,
             defaultAnimation: defaultAnimation,
             lockCorrectAnswer: lockCorrectAnswer,
-            style: style, // NEW: pass through
-            width: double.infinity, // keep filling the container
-            height: 50, // same default height per-tile (grid uses this too)
+            style: style,
+            width: double.infinity,
+            height: 50,
           ),
         ],
       ),
@@ -145,8 +204,17 @@ class MCQBox extends StatelessWidget {
 /// MCQAnswers: renders list of answers with optional default animation
 class MCQAnswers extends StatefulWidget {
   final List<Widget> answers;
+
+  // LEGACY single-answer
   final int correctAnswer;
   final void Function(int index, bool isCorrect)? onAnswerTap;
+
+  // NEW multiple-answer
+  final bool multipleOption; // NEW
+  final List<int>? correctAnswers; // NEW
+  final void Function(List<int> indices, bool allCorrect)?
+      onSubmitAnswers; // NEW
+  final String submitLabel; // NEW
 
   final double width;
   final double height; // per-tile height
@@ -157,14 +225,20 @@ class MCQAnswers extends StatefulWidget {
   final bool defaultAnimation;
   final bool lockCorrectAnswer;
 
-  // NEW: style selector — 0 = legacy vertical, 1 = 2×2 grid
-  final int style; // NEW
+  // 0 = vertical, 1 = 2×N grid
+  final int style;
 
   const MCQAnswers({
     super.key,
     required this.answers,
     required this.correctAnswer,
     this.onAnswerTap,
+
+    // NEW
+    this.multipleOption = false,
+    this.correctAnswers,
+    this.onSubmitAnswers,
+    this.submitLabel = "Submit",
     this.width = double.infinity,
     this.height = 50,
     this.gapBetween = 8,
@@ -172,22 +246,87 @@ class MCQAnswers extends StatefulWidget {
     this.answerFill = const Color(0xFFE0E0E0),
     this.defaultAnimation = true,
     this.lockCorrectAnswer = false,
-    this.style = 0, // NEW
-  }) : assert(
-          style == 0 || answers.length == 4,
-          'style: 1 requires exactly 4 answers (top-left, top-right, bottom-left, bottom-right).',
-        ); // NEW
+    this.style = 0,
+  });
 
   @override
   State<MCQAnswers> createState() => _MCQAnswersState();
 }
 
 class _MCQAnswersState extends State<MCQAnswers> {
+  // LEGACY single-select
   int? selectedIndex;
   bool correctLocked = false;
 
-  void _handleTap(int index) {
-    // ✅ If already locked on correct answer → ignore further taps
+  // NEW: multiple-select state
+  final Set<int> _selected = <int>{}; // ⚠️ multiple mode
+  bool _submitted = false; // ⚠️ multiple mode
+  bool _lockedAfterPerfect = false; // ⚠️ multi: freeze after perfect
+  bool _lastAllCorrect = false; // remember last submit result
+
+  bool get _isInteractionLocked {
+    if (!widget.multipleOption) {
+      return (widget.lockCorrectAnswer && correctLocked);
+    }
+    // Freeze after perfect submit OR after an incorrect submit until "Try Again"
+    return _lockedAfterPerfect || (_submitted && !_lastAllCorrect);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    assert(() {
+      if (widget.style == 1) {
+        assert(
+          widget.answers.length.isEven,
+          'style: 1 requires an even number of answers (2, 4, 6, etc).',
+        );
+      }
+      return true;
+    }());
+
+    final body = _answersBody();
+
+    if (!widget.multipleOption) {
+      return body;
+    }
+
+    // MULTIPLE: answers + Submit/Try Again button
+    final bool showTryAgain = (_submitted && !_lastAllCorrect);
+    final String btnLabel = showTryAgain ? "Try Again" : widget.submitLabel;
+    final Color ctaColor = showTryAgain
+        ? const Color(0xFFEF4444) // red for Try Again
+        : const Color(0xFF22C55E); // appealing green for Submit
+
+    // Enable: when selecting before first submit, or when in Try Again mode
+    final bool enableButton =
+        showTryAgain ? true : (_selected.isNotEmpty && !_isInteractionLocked);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        body,
+        const SizedBox(height: 15), // gap between answers and button
+        IgnorePointer(
+          ignoring: !enableButton,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 180),
+            opacity: enableButton ? 1.0 : 0.5,
+            child: PillCta(
+              label: btnLabel,
+              onTap: showTryAgain ? _resetForRetry : _submitMulti,
+              color: ctaColor,
+              expand: true,
+              height: 44,
+              fontSize: 18,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleTapSingle(int index) {
     if (widget.lockCorrectAnswer && correctLocked) return;
 
     final isCorrect = index == widget.correctAnswer;
@@ -197,77 +336,196 @@ class _MCQAnswersState extends State<MCQAnswers> {
         correctLocked = true;
       }
     });
-
     widget.onAnswerTap?.call(index, isCorrect);
   }
 
-  Widget _buildTile(int index, {double? fixedWidth}) {
+  void _toggleMulti(int index) {
+    if (_isInteractionLocked) return; // 🔒 block toggles when frozen
+    setState(() {
+      _submitted = false; // resets colors & button to "Submit"
+      if (_selected.contains(index)) {
+        _selected.remove(index);
+      } else {
+        _selected.add(index);
+      }
+    });
+  }
+
+  void _submitMulti() {
+    if (_isInteractionLocked) return; // 🔒 block taps when frozen
+
+    final correctSet = widget.correctAnswers!.toSet();
+    final allCorrect = _selected.length == correctSet.length &&
+        _selected.difference(correctSet).isEmpty;
+
+    setState(() {
+      _submitted = true;
+      _lastAllCorrect = allCorrect;
+      if (allCorrect) {
+        _lockedAfterPerfect = true; // 🔒 freeze after perfect submit
+      }
+    });
+
+    widget.onSubmitAnswers?.call(_selected.toList()..sort(), allCorrect);
+  }
+
+  void _resetForRetry() {
+    // Called when pressing "Try Again": unlock, clear selection & visuals
+    setState(() {
+      _selected.clear();
+      _submitted = false;
+      _lastAllCorrect = false;
+      // _lockedAfterPerfect remains false (it is only set on perfect submit)
+    });
+  }
+
+  Widget _tileContainer({
+    required bool selected,
+    required bool correctForThisIndex,
+    required bool showCorrectnessNow,
+    required double width,
+    required double height,
+    required Widget child,
+  }) {
+    // Determine colors per mode/state while preserving legacy visuals.
+    Color bg;
+    Color border;
+    bool showCheckIcon = false;
+
+    if (!widget.multipleOption) {
+      // LEGACY (unchanged)
+      final isSelected = selected;
+      final isCorrect = correctForThisIndex;
+      bg = isSelected
+          ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
+          : widget.answerFill;
+      border =
+          isSelected ? (isCorrect ? Colors.green : Colors.red) : Colors.black26;
+      showCheckIcon = isSelected && isCorrect;
+    } else {
+      // MULTIPLE:
+      // - Before submit: inner background is ALWAYS WHITE; selected shows blue border.
+      // - After submit: correct selected = green; wrong selected = red; unselected = neutral.
+      if (!showCorrectnessNow) {
+        bg = Colors.white; // keep inner white before submit
+        border = selected ? Colors.blue : Colors.black26;
+        showCheckIcon = false;
+      } else {
+        if (selected && correctForThisIndex) {
+          bg = Colors.green.shade200;
+          border = Colors.green;
+          showCheckIcon = true;
+        } else if (selected && !correctForThisIndex) {
+          bg = Colors.red.shade200;
+          border = Colors.red;
+          showCheckIcon = false;
+        } else {
+          // Not selected after submit
+          bg = widget.answerFill;
+          border = Colors.black26;
+          showCheckIcon = false;
+        }
+      }
+    }
+
+    final box = Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        color: bg,
+        border: Border.all(
+          color: border,
+          width: (widget.multipleOption && !showCorrectnessNow && selected)
+              ? 2
+              : (selected ? 2 : 1),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: child),
+          if (showCheckIcon)
+            const Icon(Icons.check_circle, color: Colors.green, size: 22),
+        ],
+      ),
+    );
+
+    if (widget.defaultAnimation) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          color: bg,
+          border: Border.all(
+            color: border,
+            width: (widget.multipleOption && !showCorrectnessNow && selected)
+                ? 2
+                : (selected ? 2 : 1),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: child),
+            if (showCheckIcon)
+              const Icon(Icons.check_circle, color: Colors.green, size: 22),
+          ],
+        ),
+      );
+    }
+    return box;
+  }
+
+  Widget _buildTileSingle(int index, {double? fixedWidth}) {
     final isSelected = index == selectedIndex;
     final isCorrect = index == widget.correctAnswer;
 
-    final tile = (widget.defaultAnimation)
-        ? AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            width: fixedWidth ?? widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              color: isSelected
-                  ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
-                  : widget.answerFill,
-              border: Border.all(
-                color: isSelected
-                    ? (isCorrect ? Colors.green : Colors.red)
-                    : Colors.black26,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: widget.answers[index]),
-                if (isSelected && isCorrect)
-                  const Icon(Icons.check_circle, color: Colors.green, size: 22),
-              ],
-            ),
-          )
-        : Container(
-            width: fixedWidth ?? widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              color: isSelected
-                  ? (isCorrect ? Colors.green.shade200 : Colors.red.shade200)
-                  : widget.answerFill,
-              border: Border.all(
-                color: isSelected
-                    ? (isCorrect ? Colors.green : Colors.red)
-                    : Colors.black26,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: widget.answers[index]),
-                if (isSelected && isCorrect)
-                  const Icon(Icons.check_circle, color: Colors.green, size: 22),
-              ],
-            ),
-          );
-
     return GestureDetector(
-      onTap: () => _handleTap(index),
-      child: tile,
+      onTap: () => _handleTapSingle(index),
+      child: _tileContainer(
+        selected: isSelected,
+        correctForThisIndex: isCorrect,
+        showCorrectnessNow: true, // legacy shows correctness immediately
+        width: fixedWidth ?? widget.width,
+        height: widget.height,
+        child: widget.answers[index],
+      ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // CHANGED: branch on style
+  Widget _buildTileMulti(int index, {double? fixedWidth}) {
+    final correctSet = widget.correctAnswers!.toSet();
+    final selected = _selected.contains(index);
+    final correctForThisIndex = correctSet.contains(index);
+
+    return GestureDetector(
+      onTap: () => _toggleMulti(index),
+      child: _tileContainer(
+        selected: selected,
+        correctForThisIndex: correctForThisIndex,
+        showCorrectnessNow: _submitted,
+        width: fixedWidth ?? widget.width,
+        height: widget.height,
+        child: widget.answers[index],
+      ),
+    );
+  }
+
+  Widget _answersBody() {
+    final builder = (int i, {double? fixedWidth}) {
+      if (widget.multipleOption) {
+        return _buildTileMulti(i, fixedWidth: fixedWidth);
+      } else {
+        return _buildTileSingle(i, fixedWidth: fixedWidth);
+      }
+    };
+
     if (widget.style == 0) {
       // Legacy vertical list
       return Column(
@@ -278,45 +536,30 @@ class _MCQAnswersState extends State<MCQAnswers> {
               bottom:
                   index == widget.answers.length - 1 ? 0 : widget.gapBetween,
             ),
-            child: _buildTile(index),
+            child: builder(index),
           );
         }),
       );
     }
 
-    // NEW: style == 1 → 2×2 grid (TL, TR, BL, BR)
-    // Requires exactly 4 answers (enforced by assert in constructor).
+    // style == 1 → 2×N grid
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Compute tile width = (availableWidth - horizontalGap) / 2
         final available =
             (widget.width.isFinite ? widget.width : constraints.maxWidth);
         final double horizontalGap = widget.gapBetween;
-        final double tileWidth =
-            (available - horizontalGap) / 2.0; // for 2 columns
+        final double tileWidth = (available - horizontalGap) / 2.0;
 
         return Wrap(
-          spacing: widget.gapBetween, // horizontal gap between columns
-          runSpacing: widget.gapBetween, // vertical gap between rows
-          children: [
-            // Order: 0=TL, 1=TR, 2=BL, 3=BR
-            SizedBox(
-                width: tileWidth,
-                height: widget.height,
-                child: _buildTile(0, fixedWidth: tileWidth)),
-            SizedBox(
-                width: tileWidth,
-                height: widget.height,
-                child: _buildTile(1, fixedWidth: tileWidth)),
-            SizedBox(
-                width: tileWidth,
-                height: widget.height,
-                child: _buildTile(2, fixedWidth: tileWidth)),
-            SizedBox(
-                width: tileWidth,
-                height: widget.height,
-                child: _buildTile(3, fixedWidth: tileWidth)),
-          ],
+          spacing: widget.gapBetween,
+          runSpacing: widget.gapBetween,
+          children: List.generate(widget.answers.length, (i) {
+            return SizedBox(
+              width: tileWidth,
+              height: widget.height,
+              child: builder(i, fixedWidth: tileWidth),
+            );
+          }),
         );
       },
     );
