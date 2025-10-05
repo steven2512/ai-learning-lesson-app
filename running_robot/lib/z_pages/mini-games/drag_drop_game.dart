@@ -616,9 +616,16 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
     if (widget.basketTitleBuilder != null) {
       return widget.basketTitleBuilder!(spec);
     }
-    final prefix = widget.basketTitlePrefix ?? "Basket";
+    final prefix = widget.basketTitlePrefix;
+
+// If prefix is null → show displayName only (e.g. “Box”)
+// If prefix is set → show both unless they are identical
+    final display = (prefix == null || prefix == spec.displayName)
+        ? spec.displayName
+        : "$prefix ${spec.displayName}";
+
     return Text(
-      "$prefix ${spec.displayName}",
+      display,
       style: GoogleFonts.lato(
         fontSize: 18,
         fontWeight: FontWeight.bold,
@@ -738,8 +745,8 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
             const SizedBox(height: 6),
             body,
             if (revealed) ...[
-              const SizedBox(height: 14),
-              _statRow("⏱️", _labelTime(), timeValue, Colors.indigo),
+              // const SizedBox(height: 14),
+              // _statRow("⏱️", _labelTime(), timeValue, Colors.indigo),
               _statRow(
                   "✅", _labelCorrectAttempts(), "$_correctCount", Colors.green),
               _statRow(
@@ -1041,17 +1048,8 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
   }
 
   Color _basketTitleColor(BasketSpec spec) {
-    final idx = widget.baskets.indexWhere((b) => b.key == spec.key);
-    switch (idx) {
-      case 0:
-        return Colors.blue;
-      case 1:
-        return Colors.red;
-      case 2:
-        return Colors.teal;
-      default:
-        return Colors.deepPurple;
-    }
+    // 🟦 Both baskets now use the same neutral color
+    return Colors.blue;
   }
 }
 

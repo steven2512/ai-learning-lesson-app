@@ -61,8 +61,8 @@ class BinaryDragDropGame extends StatelessWidget {
 
     return PairMatch(
       baskets: const [
-        BasketSpec(key: "0", displayName: "0"),
-        BasketSpec(key: "1", displayName: "1"),
+        BasketSpec(key: "0", displayName: "Box"),
+        BasketSpec(key: "1", displayName: "Box"),
       ],
       tokens: tokens,
       title: LessonText.sentence(
@@ -95,7 +95,6 @@ class BinaryDragDropGame extends StatelessWidget {
       labelLongestStreak: "Longest Streak",
       labelIncorrectAttempts: "Incorrect Attempts",
       tryAgainLabel: "Try Again",
-      basketTitlePrefix: "Basket",
       onCompleted: onCompleted,
       onRestartRequested: onRestartRequested,
       timeValueBuilder: (sec) => "${sec.toStringAsFixed(1)} s",

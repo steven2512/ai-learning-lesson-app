@@ -5,6 +5,7 @@ import 'package:running_robot/z_pages/lessons/data-ai-relevance/_brain.dart';
 // brains
 import 'package:running_robot/z_pages/lessons/data-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/binary-intro/_brain.dart';
+import 'package:running_robot/z_pages/lessons/features-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/_brain.dart';
 import 'package:running_robot/z_pages/lessons/qual-game/_brain.dart';
 
@@ -79,6 +80,11 @@ final List<ChapterMeta> chapterManifest = [
         id: "qual-game",
         title: "Qualitative Mini-Game",
         builder: (nav) => QualGameBrain(onNavigate: nav),
+      ),
+      LessonMeta(
+        id: "features-intro",
+        title: "What is a Feature?",
+        builder: (nav) => FeaturesIntroBrain(onNavigate: nav),
       ),
     ],
   ),
