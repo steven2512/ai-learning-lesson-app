@@ -1,6 +1,6 @@
 // FILE: lib/z_pages/lessons/features-intro/feature_yet_mcq.dart
 // ✅ LessonStep — “Pick the Best Goal” (Student Study App)
-// ✔ Grid-style feature capsules with clear color contrast
+// ✔ Feature pills now have solid colors + white font
 // ✔ Text no longer bolded inside capsules
 // ✔ Uses style 0 (classic vertical)
 
@@ -77,12 +77,11 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    _featurePill("Study hours", const Color(0xFF1976D2),
-                        const Color(0xFFE9F4FF)), // blue
-                    _featurePill("Sleep hours", const Color(0xFF178C48),
-                        const Color(0xFFEFFAF1)), // green
+                    _featurePill(
+                        "Study hours", const Color(0xFF1976D2)), // blue
+                    _featurePill(
+                        "Sleep hours", const Color(0xFF178C48)), // green
                     _featurePill("Quiz scores", const Color(0xFFE65100),
-                        const Color(0xFFFFF7EC),
                         fullWidth: true), // orange
                   ],
                 ),
@@ -112,7 +111,7 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
             ),
           ),
 
-          // 🟩 MCQ Box (harder options)
+          // 🟩 MCQ Box
           MCQBox(
             question: false,
             lockCorrectAnswer: true,
@@ -159,22 +158,20 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
     );
   }
 
-  // 🔹 Capsule Builder Helper
-  Widget _featurePill(String label, Color textColor, Color bgColor,
-      {bool fullWidth = false}) {
+  // 🔹 Capsule Builder Helper (solid color + white text)
+  Widget _featurePill(String label, Color fillColor, {bool fullWidth = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       constraints:
           fullWidth ? const BoxConstraints(minWidth: double.infinity) : null,
       decoration: BoxDecoration(
-        color: bgColor,
+        color: fillColor, // solid fill
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: textColor.withOpacity(0.5), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: textColor.withOpacity(0.08),
-            blurRadius: 3,
-            offset: const Offset(0, 2),
+            color: fillColor.withOpacity(0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -182,9 +179,9 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
         child: Text(
           label,
           style: GoogleFonts.lato(
-            color: textColor,
+            color: Colors.white, // white font
             fontSize: lessonFontSize,
-            fontWeight: FontWeight.w600, // no longer bolded, just medium
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

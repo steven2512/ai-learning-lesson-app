@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 import 'package:running_robot/core/widgets.dart';
-import 'package:running_robot/z_pages/lessons/features-intro/bad_features.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/data_useful_ai.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/features_intro.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/features_measurable.dart';
@@ -26,18 +25,28 @@ class FeaturesIntroBrain extends BaseLessonBrain {
 }
 
 class _FeatureIntroBrainState extends BaseLessonBrainState<FeaturesIntroBrain> {
-  // 🔹 NEW: Precache lesson-specific images when lesson starts
+  // 🔹 NEW: Precache all lesson-specific images when lesson starts
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
-      // final ctx = context;
-      // precacheImage(const AssetImage("assets/images/monitor.png"), ctx);
-      // precacheImage(const AssetImage("assets/images/cameraman.png"), ctx);
-      // precacheImage(const AssetImage("assets/images/dialogue_box.png"), ctx);
-      // precacheImage(const AssetImage("assets/images/music_listening.png"), ctx);
-      // // 👆 covers all Image.asset calls used inside HumanSeePhoto, HumanHearMusic,
-      // // ComputerSeeZeroOne, and dialogue overlays.
+      final ctx = context;
+
+      // 🧠 DataUsefulAI
+      precacheImage(
+          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
+
+      // 🏎️ FeatureDefinition
+      precacheImage(const AssetImage("assets/images/car_model.png"), ctx);
+
+      // 📏 FeatureMeasurable — (no image)
+
+      // 🏠 Good & Bad Features
+      precacheImage(const AssetImage("assets/images/house_factors.png"), ctx);
+      precacheImage(const AssetImage("assets/images/bad_example.png"), ctx);
+
+      // 🎬 MovieFeaturesQuiz
+      precacheImage(const AssetImage("assets/images/movie_rating.png"), ctx);
     });
   }
   // 🔹 END NEW
@@ -61,14 +70,14 @@ class _FeatureIntroBrainState extends BaseLessonBrainState<FeaturesIntroBrain> {
         ),
         SubLesson(
           topOffset: screenH * 0.25,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const GoodFeaturesExample(),
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) =>
+              GoodFeaturesExample(onStepCompleted: () => done()),
         ),
-        SubLesson(
-          topOffset: screenH * 0.25,
-          mechanic: LessonMechanic.manual,
-          build: (_, __) => const BadFeaturesExample(),
-        ),
+        // SubLesson(
+        //   topOffset: screenH * 0.34,
+        //   mechanic: LessonMechanic.manual,
+        //   build: (_, __) => const BadFeaturesExample(),
         // ),
         SubLesson(
             topOffset: screenH * 0.12,
