@@ -77,8 +77,8 @@ class _MovieFeaturesQuizState extends State<MovieFeaturesQuiz> {
             margin: const EdgeInsets.only(bottom: 10),
             child: Center(
               child: Image.asset(
-                "assets/images/movie_placeholder.png",
-                height: screenH * 0.22,
+                "assets/images/movie_rating.png",
+                height: screenH * 0.15,
                 fit: BoxFit.contain,
               ),
             ),

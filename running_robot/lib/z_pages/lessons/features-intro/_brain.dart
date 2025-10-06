@@ -7,6 +7,7 @@ import 'package:running_robot/z_pages/lessons/features-intro/bad_features.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/data_useful_ai.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/features_intro.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/features_measurable.dart';
+import 'package:running_robot/z_pages/lessons/features-intro/features_yet_mcq.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/good_features.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/movies_mcq.dart';
 
@@ -70,19 +71,16 @@ class _FeatureIntroBrainState extends BaseLessonBrainState<FeaturesIntroBrain> {
         ),
         // ),
         SubLesson(
-            topOffset: screenH * 0.15,
+            topOffset: screenH * 0.12,
             mechanic: LessonMechanic.emit,
             build: (done, reset) => MovieFeaturesQuiz(
                   onStepCompleted: () => done(),
                 )),
-        // ),
-        // SubLesson(
-        //   topOffset: screenH * 0.1,
-        //   mechanic: LessonMechanic.emit,
-        //   build: (done, reset) => BinaryDragDropGame(
-        //     onCompleted: done,
-        //     onRestartRequested: reset, // ✅ uses the parent resetAnswer
-        //   ),
-        // ),
+        SubLesson(
+            topOffset: screenH * 0.12,
+            mechanic: LessonMechanic.emit,
+            build: (done, reset) => FeatureYetMCQ(
+                  onStepCompleted: () => done(),
+                )),
       ];
 }
