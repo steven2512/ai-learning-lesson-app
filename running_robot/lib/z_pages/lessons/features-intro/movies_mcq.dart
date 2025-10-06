@@ -77,8 +77,8 @@ class _MovieFeaturesQuizState extends State<MovieFeaturesQuiz> {
             margin: const EdgeInsets.only(bottom: 10),
             child: Center(
               child: Image.asset(
-                "assets/images/movie_rating.png",
-                height: screenH * 0.15,
+                "assets/images/new_movie_rating_transparent.png",
+                height: screenH * 0.2,
                 fit: BoxFit.contain,
               ),
             ),
@@ -88,11 +88,11 @@ class _MovieFeaturesQuizState extends State<MovieFeaturesQuiz> {
           MCQBox(
             multipleOption: true, // NEW: multi-select on
             answers: const [
-              "Genre",
+              "Movie Genre",
               "Ticket Price",
               "Main Actors",
               "Director",
-              "Filming Location",
+              "Total Cameras",
               "Total Actors"
             ],
             correctAnswers: const [0, 2, 3], // NEW: multi-correct
