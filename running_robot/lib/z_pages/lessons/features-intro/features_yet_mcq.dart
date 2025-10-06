@@ -1,7 +1,7 @@
 // FILE: lib/z_pages/lessons/features-intro/feature_yet_mcq.dart
 // ✅ LessonStep — “Pick the Best Goal” (Student Study App)
-// ✔ Harder MCQ with subtle distractors
-// ✔ Distinct colors for features and goal
+// ✔ Grid-style feature capsules with clear color contrast
+// ✔ Text no longer bolded inside capsules
 // ✔ Uses style 0 (classic vertical)
 
 import 'package:flutter/material.dart';
@@ -50,9 +50,10 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🟧 Question Box
+          // 🟧 Main Question Box
           LessonText.box(
             margin: const EdgeInsets.only(bottom: 18),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -68,27 +69,27 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
                   LessonText.word("features:", mainConceptColor,
                       fontSize: lessonFontSize, fontWeight: FontWeight.w900),
                 ]),
-                const SizedBox(height: 8),
-                LessonText.sentence([
-                  LessonText.word("study", const Color(0xFF2196F3), // blue
-                      fontSize: lessonFontSize,
-                      fontWeight: FontWeight.w900),
-                  LessonText.word("hours,", const Color(0xFF2196F3),
-                      fontSize: lessonFontSize),
-                  LessonText.word("sleep", const Color(0xFF22C55E), // green
-                      fontSize: lessonFontSize,
-                      fontWeight: FontWeight.w900),
-                  LessonText.word("hours,", const Color(0xFF22C55E),
-                      fontSize: lessonFontSize),
-                  LessonText.word("and", Colors.black87,
-                      fontSize: lessonFontSize),
-                  LessonText.word("quiz", const Color(0xFFFF9800), // orange
-                      fontSize: lessonFontSize,
-                      fontWeight: FontWeight.w900),
-                  LessonText.word("scores", const Color(0xFFFF9800),
-                      fontSize: lessonFontSize),
-                ]),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+
+                // 🟦 Feature Capsules Grid
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _featurePill("Study hours", const Color(0xFF1976D2),
+                        const Color(0xFFE9F4FF)), // blue
+                    _featurePill("Sleep hours", const Color(0xFF178C48),
+                        const Color(0xFFEFFAF1)), // green
+                    _featurePill("Quiz scores", const Color(0xFFE65100),
+                        const Color(0xFFFFF7EC),
+                        fullWidth: true), // orange
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // 🟪 Final question
                 LessonText.sentence([
                   LessonText.word("Which", Colors.black87,
                       fontSize: lessonFontSize),
@@ -154,6 +155,38 @@ class _FeatureYetMCQState extends State<FeatureYetMCQ> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  // 🔹 Capsule Builder Helper
+  Widget _featurePill(String label, Color textColor, Color bgColor,
+      {bool fullWidth = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      constraints:
+          fullWidth ? const BoxConstraints(minWidth: double.infinity) : null,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: textColor.withOpacity(0.5), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: textColor.withOpacity(0.08),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: GoogleFonts.lato(
+            color: textColor,
+            fontSize: lessonFontSize,
+            fontWeight: FontWeight.w600, // no longer bolded, just medium
+          ),
+        ),
       ),
     );
   }
