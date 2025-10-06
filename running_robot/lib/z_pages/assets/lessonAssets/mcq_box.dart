@@ -72,7 +72,7 @@ class MCQBox extends StatelessWidget {
     this.height = 300,
     this.padding = const [16, 12, 8, 16, 16, 16],
     this.colorFill = Colors.white,
-    this.answerFill = const Color(0xFFE0E0E0),
+    this.answerFill = const Color.fromARGB(255, 255, 255, 255),
     this.borderRadius = 16,
     this.letterSpacing = 0.2,
     this.alignment = WrapAlignment.start,
@@ -297,9 +297,16 @@ class _MCQAnswersState extends State<MCQAnswers> {
         ? const Color(0xFFEF4444) // red for Try Again
         : const Color(0xFF22C55E); // appealing green for Submit
 
+    // ---------- TWEAK: require at least N selections before enabling Submit ----------
+    final int requiredSelections = widget.correctAnswers?.length ?? 0; // TWEAK
+    final bool hasEnoughSelections =
+        _selected.length >= requiredSelections; // TWEAK
+
     // Enable: when selecting before first submit, or when in Try Again mode
-    final bool enableButton =
-        showTryAgain ? true : (_selected.isNotEmpty && !_isInteractionLocked);
+    final bool enableButton = showTryAgain
+        ? true
+        : (hasEnoughSelections && !_isInteractionLocked); // TWEAK
+    // -------------------------------------------------------------------------------
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -327,15 +334,19 @@ class _MCQAnswersState extends State<MCQAnswers> {
   }
 
   void _handleTapSingle(int index) {
+    // If already frozen after correct -> ignore all taps
     if (widget.lockCorrectAnswer && correctLocked) return;
 
     final isCorrect = index == widget.correctAnswer;
     setState(() {
       selectedIndex = index;
+      // ✅ Freeze future taps if correct answer selected
       if (widget.lockCorrectAnswer && isCorrect) {
         correctLocked = true;
       }
     });
+
+    // ✅ Trigger the callback once; further taps are ignored due to freeze
     widget.onAnswerTap?.call(index, isCorrect);
   }
 
@@ -355,6 +366,14 @@ class _MCQAnswersState extends State<MCQAnswers> {
     if (_isInteractionLocked) return; // 🔒 block taps when frozen
 
     final correctSet = widget.correctAnswers!.toSet();
+
+    // ---------- SAFETY: don't submit unless we have enough selections ----------
+    if (_selected.length < correctSet.length) {
+      // Optional: you can add a small shake/feedback here if desired.
+      return;
+    }
+    // --------------------------------------------------------------------------
+
     final allCorrect = _selected.length == correctSet.length &&
         _selected.difference(correctSet).isEmpty;
 
