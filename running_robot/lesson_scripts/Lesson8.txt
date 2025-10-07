@@ -1,0 +1,37 @@
+Slide 1:
+LessonText.box
+“Without a goal, life is motion without meaning.” — Rick Warren
+
+Slide 2:
+Robot Dialouge
+
+"Now you understand Data Samples and Features"
+
+"But Data Sample and its Features don't mean anything without a Goal to aim at!"
+
+"That goal usually is some decisions or predictions humans need AI to make!"
+
+Slide 3:
+What is a Label?
+A label is the correct answer or goal we want the AI to guess!
+
+Slide 4:
+"There are 2 kinds of labels" Image Slider
+
+"True Label: the correct answer from your existing data sample"
+
+"E.g: Data Sample 175: A House. 
+Features: house area: 200m2, location: Queens, New York, and age: 22
+
+True Label: $1,000,000 (verified by authorities)"
+
+Next Slider
+"Predicted label: what the AI thinks is the correct answer for this data sample"
+
+"E.g: Data Sample 210: A House.
+
+Features: house area: 150m2, location: Brooklyn, New York, age: 20
+
+Predicted label: ?? (Predicted label, AI need to guess this)
+
+
