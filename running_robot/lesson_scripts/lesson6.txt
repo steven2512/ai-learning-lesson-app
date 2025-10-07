@@ -1,0 +1,39 @@
+🧩 Lesson 6 — What is a Data Sample?
+Slide 1 — Quote
+“We learn from example and direct experience; the rest is just noise” — Malcolm Gladwell
+
+
+Slide 2 — Dialogue Box
+
+🤖 Robot:
+
+“We’ve seen what data is and why it matters!”
+
+“But AI doesn’t learn from all data at once…”
+
+“It learns step by step — from each data sample!”
+f
+Slide 3 — Definition (LessonText.box)
+
+📘 What is a Data Sample?
+
+A data sample is one small example of data that helps AI learn.
+
+Image
+
+Slide 4:
+- A Data Sample is always singular, meaning 1 example only.
+
+Some fancy Animation
+
+Slide 5: A simple MCQ quiz
+Which of these is a Data Sample
+Then have singular multiple etc
+
+Slide 6:
+- What is a Dataset?
+- A Dataset is a collection of many Data Samples
+
+Slide 7: Drag and drop game to Data Sample and Dataset, reuse the other game but now stack of piles of words instead of emoijs
+
+

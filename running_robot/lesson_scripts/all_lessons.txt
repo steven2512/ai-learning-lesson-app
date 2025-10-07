@@ -1,0 +1,28 @@
+Can you script for me Lesson 6: talkes about data sample
+
+For reference
+
+Lesson 1: is What is Data and basically I use very simple language Data is informatino we feed to a computer, then 4 MCQ about common data types like image video audio, etc
+
+Lesson 2: Data AI relevance
+
+Why do we care about Data, then I said Data is examples AI learn from without data AI wouldn't learn and wouldn't be helpful. THne 2 I hint 2 AI usage which is supervised learning and unsupservised but I didn't state those 2 words but just said AI can predict things and AI can sort things. However, beyond these 2 there are way more complex uses, but those 2 are classics so we will learn these later
+
+Lesson 3: What is binary
+AI/ Computers don't see images videos the way we do, they see binary, then explain binary
+
+
+Lesson 4: Qualitative and Quantitative Data
+Pretty self explanatory 1 is numeric other is categoricaal
+
+Lesson 5: Qualitative Game where you catch things from the air kind like tetris but like you move the basket not the words
+
+Lesson 6: now data sample 
+
+
+Lesson 7: Features
+
+
+Lesson 8: Label
+
+
