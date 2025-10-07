@@ -163,6 +163,11 @@ flutter:
     - assets/images/bad_example.png
     - assets/images/movie_rating.png
     - assets/images/new_movie_rating_transparent.png
+    - assets/images/data_sample.png
+    - assets/images/always_singular.png
+    - assets/images/data_sample_mcq.png
+    - assets/images/data_set.png
+
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

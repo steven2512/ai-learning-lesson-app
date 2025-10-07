@@ -52,12 +52,12 @@ class _QualQuanBrainState extends BaseLessonBrainState<QualQuanBrain> {
   @override
   List<SubLesson> buildSubLessons() => [
         SubLesson(
-          topOffset: screenH * 0.19,
+          topOffset: screenH * 0.2,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const RecapData(),
         ),
         SubLesson(
-          topOffset: screenH * 0.3,
+          topOffset: screenH * 0.27,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const RecapBinary(),
         ),
