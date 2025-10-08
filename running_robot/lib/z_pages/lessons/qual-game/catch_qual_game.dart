@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/widgets.dart';
 // LessonText helpers (your file)
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+import 'package:running_robot/z_pages/mini-games/stat_board.dart';
 
 final double screenH = ScreenSize.height;
 
@@ -45,8 +46,8 @@ const double kFadeInDistance = 160;
 const double kMinVerticalGap = 100; // vertical spacing
 
 // Scoring
-const int kPointsToWin = 100;
-const int kPointsToLose = -100;
+const int kPointsToWin = 10;
+const int kPointsToLose = -10;
 const int kScoreCorrect = 10;
 const int kScoreIncorrect = -10;
 const int kScoreMissPenalty = -10;
@@ -798,55 +799,7 @@ class _CatchQualGameState extends State<CatchQualGame>
               ),
 
             // End Game Overlay (compact → slide up to fixed Y → reveal downward)
-            if (_showEndBox)
-              Positioned.fill(
-                child: Stack(
-                  children: [
-                    // soft scrim
-                    const IgnorePointer(
-                      ignoring: true,
-                      child: ColoredBox(color: Color(0xF0FFFFFF)),
-                    ),
-
-                    // Overlay content below safe zone
-                    Positioned.fill(
-                      top: kTopSafeInsetForClose,
-                      child: AnimatedOpacity(
-                        opacity: _endBoxOpacity,
-                        duration: Duration(milliseconds: kFadeInTimeMs),
-                        child: Stack(
-                          children: [
-                            AnimatedPositioned(
-                              duration:
-                                  Duration(milliseconds: kSlideUpDurationMs),
-                              curve: Curves.easeInOutCubic,
-                              top: _compactSlidUp
-                                  ? (_didWin
-                                      ? finalYPositionAfterSlideUpSuccess
-                                      : finalYPositionAfterSlideUpFail)
-                                  : (_didWin
-                                          ? finalYPositionAfterSlideUpSuccess
-                                          : finalYPositionAfterSlideUpFail) +
-                                      kSlideUpFromBottomPx,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: AnimatedSize(
-                                  duration: Duration(
-                                      milliseconds: kRevealDownDurationMs),
-                                  curve: Curves.easeOutCubic,
-                                  alignment: Alignment.topCenter,
-                                  child: _buildEndCard(revealed: _revealed),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            if (_showEndBox) _buildEndCard(revealed: _revealed),
           ],
         );
       },
@@ -855,196 +808,32 @@ class _CatchQualGameState extends State<CatchQualGame>
 
   // Unified builder for the end card (win stats OR lose advice)
   Widget _buildEndCard({Key? key, required bool revealed}) {
-    return _narrowBox(
-      child: Padding(
-        key: key,
-        padding: EdgeInsets.symmetric(
-          horizontal: max(kStatsLeftGutter, kStatsRightGutter),
-          vertical: 8,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              _didWin ? "🎉 Congratulations! You win!" : "💥 Game Over",
+    // keep revealed param for compatibility (StatsBoard handles animation itself)
+    return StatsBoard(
+      key: key,
+      visible: true,
+      didWin: _didWin,
+      stats: [
+        StatItem("🎯 Qualitative caught", "$_qualitativeCaught", Colors.green),
+        StatItem("❌ Quantitative caught", "$_quantitativeCaught", Colors.red),
+        StatItem(
+            "🛡 Quantitative avoided", "$_quantitativeAvoided", Colors.blue),
+        StatItem("📉 Qualitative missed", "$_qualitativeMissed", Colors.orange),
+        StatItem("Final Score", "$_score", Colors.black87),
+      ],
+      onRestart: _startGame,
+      onCompleted: widget.onStepCompleted,
+      body: _didWin
+          ? null
+          : Text(
+              "💡 Ask yourself: can you measure it? \nIf yes → Quantitative \nIf not → Qualitative.",
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
-                fontSize: kEndTitleFont,
-                fontWeight: FontWeight.w900,
-                color: _didWin ? Colors.green.shade900 : Colors.red.shade900,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
-            LessonText.sentence(
-              [
-                LessonText.word("Final", Colors.black87,
-                    fontWeight: FontWeight.w700, fontSize: kEndScoreFont),
-                LessonText.word("Score:", Colors.black87,
-                    fontWeight: FontWeight.w700, fontSize: kEndScoreFont),
-                LessonText.word("$_score", Colors.black87,
-                    fontWeight: FontWeight.w900, fontSize: kEndScoreFont),
-              ],
-              alignment: WrapAlignment.center,
-            ),
-
-            // Revealed content only after slide completes
-            if (revealed) ...[
-              const SizedBox(height: 14),
-              if (_didWin) ...[
-                _statRow(
-                    "🎯 Qualitative caught", _qualitativeCaught, Colors.green),
-                _statRow(
-                    "❌ Quantitative caught", _quantitativeCaught, Colors.red),
-                _statRow("🛡️ Quantitative avoided", _quantitativeAvoided,
-                    Colors.blue),
-                _statRow(
-                    "📉 Qualitative missed", _qualitativeMissed, Colors.orange),
-                const SizedBox(height: 14),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _startGame,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Try Again"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 4, 160, 124),
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                const SizedBox(height: 6),
-                LessonText.sentence(
-                  [
-                    LessonText.word("💡", Colors.amber.shade800,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("Ask yourself:", Colors.black87,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                  ],
-                  alignment: WrapAlignment.center,
-                ),
-                const SizedBox(height: 6),
-                LessonText.sentence(
-                  [
-                    LessonText.word("Can", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("you", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("measure", Colors.indigo,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                    LessonText.word("this", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("word?", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("Can", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("you", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("do", Colors.indigo,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                    LessonText.word("math", Colors.indigo,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                    LessonText.word("with", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("it?", Colors.black87,
-                        fontSize: kEndBodyFont),
-                  ],
-                  alignment: WrapAlignment.center,
-                ),
-                const SizedBox(height: 6),
-                LessonText.sentence(
-                  [
-                    LessonText.word("If", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("yes", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("→", Colors.black45,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("Quantitative", Colors.red.shade700,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                  ],
-                  alignment: WrapAlignment.center,
-                ),
-                LessonText.sentence(
-                  [
-                    LessonText.word("If", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("not", Colors.black87,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("→", Colors.black45,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("Qualitative", Colors.green.shade700,
-                        fontWeight: FontWeight.w900, fontSize: kEndBodyFont),
-                  ],
-                  alignment: WrapAlignment.center,
-                ),
-                const SizedBox(height: 6),
-                LessonText.sentence(
-                  [
-                    LessonText.word("E.g.", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("You", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("can't", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("measure", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("colors,", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("but", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("you", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("can", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("measure", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("height", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("or", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                    LessonText.word("score.", Colors.blue.shade700,
-                        fontSize: kEndBodyFont),
-                  ],
-                  alignment: WrapAlignment.center,
-                ),
-                const SizedBox(height: 14),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _startGame,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Try Again"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade300,
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ],
-        ),
-      ),
     );
   }
 
