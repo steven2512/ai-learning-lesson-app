@@ -3,7 +3,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
+
+final double screenH = ScreenSize.height;
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12); // 🔸 orange
 
@@ -38,6 +41,7 @@ class DataSampleCharacteristic extends StatelessWidget {
             child: Image.asset(
               "assets/images/always_singular.png",
               fit: BoxFit.contain,
+              height: screenH * 0.35,
             ),
           ),
         ],

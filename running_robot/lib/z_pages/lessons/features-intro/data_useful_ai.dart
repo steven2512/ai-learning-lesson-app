@@ -1,4 +1,6 @@
 // FILE: lib/z_pages/lessons/features-intro/data_useful_ai.dart
+// ✅ Simplified to 2 dialogues: about Data Sample → Features.
+
 import 'package:flutter/material.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/dialouge.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // ✅ LessonText API
@@ -8,8 +10,7 @@ const Color dataOrange = Color(0xFFFF6D00); // 🔸 Bright Orange
 const Color aiPink = Color(0xFFE91E63); // 🔹 Accent for AI text
 const double dialogueSize = 24; // consistent with previous lessons
 
-/// ✅ Slide 1 — "Not all data is useful"
-/// Uses same layout/flow as DataAiIntro so parent brain auto callback works seamlessly.
+/// ✅ Slide — "Data Sample → Features"
 class DataUsefulAI extends StatelessWidget {
   final VoidCallback onFinished;
   const DataUsefulAI({super.key, required this.onFinished});
@@ -36,112 +37,59 @@ class DataUsefulAI extends StatelessWidget {
                   width: 320,
                   content: [
                     // ──────────────────────────────
-                    // Page 1
+                    // Dialogue 1
                     // ──────────────────────────────
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         LessonText.sentence([
-                          LessonText.word("As", Colors.black87,
+                          LessonText.word("Last", Colors.black87,
                               fontSize: dialogueSize),
-                          LessonText.word("you", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("know,", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("AI", aiPink,
-                              fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("needs", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("data", dataOrange,
-                              fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("to", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("do", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("meaningful", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("things", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("for", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("humans.", Colors.black87,
-                              fontSize: dialogueSize),
-                        ]),
-                      ],
-                    ),
-
-                    // ──────────────────────────────
-                    // Page 2
-                    // ──────────────────────────────
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LessonText.sentence([
-                          LessonText.word("However,", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("not", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("everything", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("about", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("that", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("data", dataOrange,
-                              fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("will", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("be", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("useful", aiPink,
-                              fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("for", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("the", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("AI.", aiPink,
-                              fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                        ]),
-                      ],
-                    ),
-
-                    // ──────────────────────────────
-                    // Page 3
-                    // ──────────────────────────────
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LessonText.sentence([
-                          LessonText.word("So", Colors.black87,
+                          LessonText.word("lesson,", Colors.black87,
                               fontSize: dialogueSize),
                           LessonText.word("we", Colors.black87,
                               fontSize: dialogueSize),
-                          LessonText.word("have", Colors.black87,
+                          LessonText.word("learnt", dataOrange,
+                              fontSize: dialogueSize,
+                              fontWeight: FontWeight.w800),
+                          LessonText.word("about", Colors.black87,
                               fontSize: dialogueSize),
-                          LessonText.word("to", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("choose", aiPink,
+                          LessonText.word("Data", aiPink,
+                              fontSize: dialogueSize,
+                              fontWeight: FontWeight.w800),
+                          LessonText.word("Sample.", aiPink,
                               fontSize: dialogueSize,
                               fontWeight: FontWeight.w900),
-                          LessonText.word("smartly", aiPink,
+                        ]),
+                      ],
+                    ),
+
+                    // ──────────────────────────────
+                    // Dialogue 2
+                    // ──────────────────────────────
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LessonText.sentence([
+                          LessonText.word("Each", Colors.black87,
+                              fontSize: dialogueSize),
+                          LessonText.word("of", Colors.black87,
+                              fontSize: dialogueSize),
+                          LessonText.word("those", Colors.black87,
+                              fontSize: dialogueSize),
+                          LessonText.word("data samples", aiPink,
                               fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("to", Colors.black87,
+                              fontWeight: FontWeight.w800),
+                          LessonText.word("actually have", Colors.black87,
                               fontSize: dialogueSize),
-                          LessonText.word("help", Colors.black87,
+                          LessonText.word("things", Colors.black87,
                               fontSize: dialogueSize),
-                          LessonText.word("AI", aiPink,
+                          LessonText.word("called", Colors.black87,
+                              fontSize: dialogueSize),
+                          LessonText.word("Features.", dataOrange,
                               fontSize: dialogueSize,
-                              fontWeight: FontWeight.w900),
-                          LessonText.word("learn", Colors.black87,
-                              fontSize: dialogueSize),
-                          LessonText.word("better!", Colors.black87,
-                              fontSize: dialogueSize),
+                              fontWeight: FontWeight.w900,
+                              italic: true),
                         ]),
                       ],
                     ),

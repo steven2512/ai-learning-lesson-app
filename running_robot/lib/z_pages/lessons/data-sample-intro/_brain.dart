@@ -10,6 +10,7 @@ import 'package:running_robot/z_pages/lessons/data-sample-intro/data_sample_dial
 import 'package:running_robot/z_pages/lessons/data-sample-intro/data_sample_def.dart';
 import 'package:running_robot/z_pages/lessons/data-sample-intro/data_sample_char.dart';
 import 'package:running_robot/z_pages/lessons/data-sample-intro/data_sample_mcq.dart';
+import 'package:running_robot/z_pages/lessons/data-sample-intro/data_sample_set_game.dart';
 import 'package:running_robot/z_pages/lessons/data-sample-intro/data_set_def.dart';
 
 final double screenW = ScreenSize.width;
@@ -84,6 +85,12 @@ class _DataSampleIntroBrainState
           topOffset: screenH * 0.22,
           mechanic: LessonMechanic.manual,
           build: (_, __) => const DataSetDefinition(),
+        ),
+
+        SubLesson(
+          topOffset: screenH * 0.15,
+          mechanic: LessonMechanic.emit,
+          build: (done, __) => DataSampleSetGame(onStepCompleted: done),
         ),
       ];
 }

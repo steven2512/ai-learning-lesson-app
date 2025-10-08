@@ -3,11 +3,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
 const Color mainConceptColor = Color.fromARGB(255, 255, 109, 12); // 🔸 orange
 const Color keyConceptPurple = Color.fromARGB(255, 130, 59, 207);
 const double lesson3FontSize = 20;
+final double screenH = ScreenSize.height;
 
 class DataSampleDefinition extends StatelessWidget {
   const DataSampleDefinition({super.key});
@@ -76,6 +78,7 @@ class DataSampleDefinition extends StatelessWidget {
           Center(
             child: Image.asset(
               "assets/images/data_sample.png",
+              height: screenH * 0.3,
               fit: BoxFit.contain,
             ),
           ),
