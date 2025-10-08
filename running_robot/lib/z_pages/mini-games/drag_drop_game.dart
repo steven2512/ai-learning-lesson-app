@@ -1,7 +1,9 @@
+// FILE: drag_drop_game.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/z_pages/mini-games/stat_board.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Shared types (public)
@@ -43,12 +45,6 @@ const Duration _dInlineFeedbackFade = Duration(milliseconds: 220);
 const Duration _dErrorFlash = Duration(milliseconds: 350);
 const Duration _dErrorAutoHide = Duration(milliseconds: 900);
 const Duration _dContentFadeOut = Duration(milliseconds: 450);
-
-const int _kFadeInTimeMs = 450;
-const int _kSlideUpDurationMs = 650;
-const int _kRevealDownDurationMs = 600;
-const double _kSlideUpFromBottomFrac = 0.001;
-const Duration _dContinueAfterReveal = Duration(milliseconds: 150);
 
 const double _kTileWidthGuess = 68;
 const double _kRowExtent = 76;
@@ -136,11 +132,6 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
   // Overlay choreography
   bool _completed = false;
   double _contentOpacity = 1.0;
-  bool _showEndBox = false;
-  double _endBoxOpacity = 0.0;
-  bool _compactSlidUp = false;
-  bool _revealed = false;
-  double? _revealedEndCardHeight;
 
   // Feedback state
   late final Map<String, AnimationController> _shakeCtrls;
@@ -330,33 +321,9 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
       if (!mounted) return;
       setState(() {
         _completed = true;
-        _showEndBox = true;
-      });
-
-      Future.delayed(const Duration(milliseconds: 30), () {
-        if (!mounted) return;
-        setState(() => _endBoxOpacity = 1.0);
-      });
-
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (!mounted) return;
-        setState(() => _compactSlidUp = true);
-
-        Future.delayed(const Duration(milliseconds: _kSlideUpDurationMs), () {
-          if (!mounted) return;
-          setState(() => _revealed = true);
-
-          Future.delayed(_dContinueAfterReveal, () {
-            if (mounted) widget.onCompleted();
-          });
-        });
       });
     });
   }
-
-  /// 🔒 Gate interactivity until panel is fully revealed
-  bool get _isEndCardInteractive =>
-      _revealed && _compactSlidUp && _endBoxOpacity >= 0.99;
 
   // ── Lifecycle ───────────────────────────────────────────────────
   @override
@@ -419,8 +386,6 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
     final poolCards = _pool.where((t) => !_staged.values.contains(t)).toList();
 
     return LayoutBuilder(builder: (context, constraints) {
-      final double centerY = constraints.maxHeight * 0.5;
-
       return Stack(
         children: [
           // Scene
@@ -502,86 +467,39 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
             ),
           ),
 
-          // End overlay (fixed width measured before reveal)
-          if (_showEndBox)
-            Positioned.fill(
-              child: Stack(
-                children: [
-                  // Scrim blocks taps to underlying content
-                  const AbsorbPointer(
-                    absorbing: true,
-                    child: ColoredBox(color: Color(0xF0FFFFFF)),
-                  ),
-
-                  // End-card stack ignores taps until fully interactive
-                  IgnorePointer(
-                    ignoring: !_isEndCardInteractive,
-                    child: AnimatedOpacity(
-                      opacity: _endBoxOpacity,
-                      duration: const Duration(milliseconds: _kFadeInTimeMs),
-                      child: LayoutBuilder(builder: (context, cts) {
-                        final double centerY = cts.maxHeight * 0.5;
-                        final double startTop =
-                            centerY + cts.maxHeight * _kSlideUpFromBottomFrac;
-
-                        const double fallbackRevealedHeight = 120;
-                        final double revealedH =
-                            _revealedEndCardHeight ?? fallbackRevealedHeight;
-                        final double endTopComputed =
-                            max(16.0, centerY - revealedH / 2);
-
-                        return Stack(
-                          children: [
-                            // Hidden measurement is NEVER hit-testable
-                            IgnorePointer(
-                              ignoring: true,
-                              child: Opacity(
-                                opacity: 0,
-                                child: Center(
-                                  child: SizedBox(
-                                    width: _kNarrowMaxWidth,
-                                    child: _MeasureSize(
-                                      onChange: (size) {
-                                        if (!mounted) return;
-                                        final h = size.height;
-                                        if (h > 0 &&
-                                            _revealedEndCardHeight != h) {
-                                          setState(
-                                              () => _revealedEndCardHeight = h);
-                                        }
-                                      },
-                                      child: _buildEndCard(revealed: true),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            AnimatedPositioned(
-                              duration: const Duration(
-                                  milliseconds: _kSlideUpDurationMs),
-                              curve: Curves.easeInOutCubic,
-                              left: 0,
-                              right: 0,
-                              top: _compactSlidUp ? endTopComputed : startTop,
-                              child: Center(
-                                child: AnimatedSize(
-                                  duration: const Duration(
-                                      milliseconds: _kRevealDownDurationMs),
-                                  curve: Curves.easeOutCubic,
-                                  alignment: Alignment.topCenter,
-                                  child: _buildEndCard(revealed: _revealed),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // End overlay using StatsBoard
+          StatsBoard(
+            visible: _completed,
+            didWin: true,
+            winColor: Colors.black87,
+            stats: [
+              StatItem("✅ ${_labelCorrectAttempts()}", "$_correctCount",
+                  Colors.green),
+              StatItem(
+                  "🔥 ${_labelLongestStreak()}", "$_bestStreak", Colors.orange),
+              StatItem("❌ ${_labelIncorrectAttempts()}", "$_incorrectAttempts",
+                  Colors.red),
+            ],
+            body: widget.endCardBody ??
+                (widget.endCardBodyText != null
+                    ? Text(
+                        widget.endCardBodyText!,
+                        style: GoogleFonts.lato(
+                            fontSize: 18, color: Colors.black87),
+                        textAlign: TextAlign.center,
+                      )
+                    : _sentence([
+                        _word("You", Colors.black87, size: 18),
+                        _word("chose", Colors.black87, size: 18),
+                        _word("all", Colors.black87, size: 18),
+                        _word("correct", kKeyGreenLocked, size: 18, bold: true),
+                        _word("binary", kMainConceptColorLocked,
+                            size: 18, bold: true),
+                        _word("pairs!", Colors.black87, size: 18),
+                      ])),
+            onRestart: _handleTryAgain,
+            onCompleted: widget.onCompleted,
+          ),
         ],
       );
     });
@@ -702,138 +620,6 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
   Widget _sentence(List<InlineSpan> spans) =>
       RichText(text: TextSpan(children: spans));
 
-  Widget _buildEndCard({required bool revealed}) {
-    // Header hard-locked
-    final header = Text(
-      "Great work 🎉",
-      style: GoogleFonts.lato(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        color: Colors.black87,
-      ),
-      textAlign: TextAlign.center,
-    );
-
-    // Body (customizable)
-    final body = widget.endCardBody ??
-        (widget.endCardBodyText != null
-            ? Text(
-                widget.endCardBodyText!,
-                style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
-                textAlign: TextAlign.center,
-              )
-            : _sentence([
-                _word("You", Colors.black87, size: 18),
-                _word("chose", Colors.black87, size: 18),
-                _word("all", Colors.black87, size: 18),
-                _word("correct", kKeyGreenLocked, size: 18, bold: true),
-                _word("binary", kMainConceptColorLocked, size: 18, bold: true),
-                _word("pairs!", Colors.black87, size: 18),
-              ]));
-
-    final timeValue = widget.timeValueBuilder != null
-        ? widget.timeValueBuilder!(_secondsTaken())
-        : "${_secondsTaken().toStringAsFixed(1)} s";
-
-    return SizedBox(
-      width: _kNarrowMaxWidth, // fixed: compact == revealed width
-      child: _hardCardGreen(
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            header,
-            const SizedBox(height: 6),
-            body,
-            if (revealed) ...[
-              // const SizedBox(height: 14),
-              // _statRow("⏱️", _labelTime(), timeValue, Colors.indigo),
-              _statRow(
-                  "✅", _labelCorrectAttempts(), "$_correctCount", Colors.green),
-              _statRow(
-                  "🔥", _labelLongestStreak(), "$_bestStreak", Colors.orange),
-              _statRow("❌", _labelIncorrectAttempts(), "$_incorrectAttempts",
-                  Colors.red),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isEndCardInteractive ? _handleTryAgain : null,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(
-                    _tryAgainLabel(),
-                    style: GoogleFonts.lato(
-                        fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    backgroundColor: kKeyGreenLocked,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side:
-                          BorderSide(color: Colors.green.shade700, width: 1.2),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statRow(String icon, String label, String value, Color color) {
-    const double kIconSlotWidth = 26;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      child: Padding(
-        padding: EdgeInsets.only(
-            left: _kStatsWordsCenterPull, right: _kStatsValueCenterPull),
-        child: Row(
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: kIconSlotWidth,
-                    child: Text(icon,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 18)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lato(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: color)),
-                ],
-              ),
-            ),
-            Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.5)),
-              ),
-              child: Text(value,
-                  style: GoogleFonts.lato(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Try Again
   void _handleTryAgain() {
     widget.onRestartRequested?.call();
@@ -859,11 +645,6 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
       _flashGreen.clear();
 
       // overlay & scene
-      _showEndBox = false;
-      _endBoxOpacity = 0.0;
-      _compactSlidUp = false;
-      _revealed = false;
-      _revealedEndCardHeight = null;
       _contentOpacity = 1.0;
       _completed = false;
 
@@ -1050,37 +831,5 @@ abstract class DragDropGameBaseState<T extends DragDropGameBase>
   Color _basketTitleColor(BasketSpec spec) {
     // 🟦 Both baskets now use the same neutral color
     return Colors.blue;
-  }
-}
-
-/// Helper to measure end-card height for perfect centering (fixed width)
-class _MeasureSize extends SingleChildRenderObjectWidget {
-  final ValueChanged<Size> onChange;
-  const _MeasureSize({required this.onChange, required Widget child, Key? key})
-      : super(key: key, child: child);
-
-  @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderMeasureSize(onChange);
-
-  @override
-  void updateRenderObject(
-      BuildContext context, covariant _RenderMeasureSize renderObject) {
-    renderObject.onChange = onChange;
-  }
-}
-
-class _RenderMeasureSize extends RenderProxyBox {
-  _RenderMeasureSize(this.onChange);
-  ValueChanged<Size> onChange;
-  Size? _oldSize;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    final newSize = child?.size ?? Size.zero;
-    if (_oldSize == newSize) return;
-    _oldSize = newSize;
-    WidgetsBinding.instance.addPostFrameCallback((_) => onChange(newSize));
   }
 }

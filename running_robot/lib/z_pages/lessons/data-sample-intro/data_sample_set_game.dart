@@ -3,10 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/z_pages/mini-games/match_game.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart';
 
-class DataSampleSetGame extends StatelessWidget {
+class DataSampleSetGame extends StatefulWidget {
   final VoidCallback? onStepCompleted;
-  const DataSampleSetGame({super.key, this.onStepCompleted});
+  final VoidCallback? onReset;
 
+  const DataSampleSetGame({super.key, this.onStepCompleted, this.onReset});
+
+  @override
+  State<DataSampleSetGame> createState() => _DataSampleSetGameState();
+}
+
+class _DataSampleSetGameState extends State<DataSampleSetGame> {
   @override
   Widget build(BuildContext context) {
     final screenH = MediaQuery.of(context).size.height;
@@ -18,7 +25,6 @@ class DataSampleSetGame extends StatelessWidget {
           final double w = constraints.maxWidth.clamp(320.0, 860.0);
           final double h = (screenH * 0.5).clamp(320.0, 560.0);
 
-          // LEFT column (images)
           final groupA = <Widget>[
             Image.asset("assets/images/house1.png",
                 fit: BoxFit.contain,
@@ -34,53 +40,21 @@ class DataSampleSetGame extends StatelessWidget {
                     const Icon(Icons.image_not_supported, size: 40)),
           ];
 
-          // RIGHT column (datasets) — deliberately mixed order
           final groupB = const <Widget>[
             Text("Dataset of cars"),
             Text("Dataset of animals"),
             Text("Dataset of houses"),
           ];
 
-          // Correct pairs — matches based on shuffled right side
-          final correctPairs = <int, int>{
-            0: 2, // house1 → houses
-            1: 1, // cat1 → animals
-            2: 0, // car → cars
-          };
+          final correctPairs = <int, int>{0: 2, 1: 1, 2: 0};
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🟧 Lesson header
-              LessonText.box(
-                margin: const EdgeInsets.only(bottom: 18),
-                padding: const EdgeInsets.all(14),
-                child: LessonText.sentence([
-                  LessonText.word("Match", Colors.black87, fontSize: 22),
-                  LessonText.word(
-                    "Data Samples",
-                    const Color(0xFFE91E63), // pink
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  LessonText.word("with", Colors.black87, fontSize: 22),
-                  LessonText.word("their", Colors.black87, fontSize: 22),
-                  LessonText.word(
-                    "Dataset",
-                    const Color(0xFFFF6D00), // orange
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ]),
-              ),
-
-              // 🎮 Matching game
-              // 🎮 Matching game
               Center(
                 child: GestureDetector(
-                  // Prevent vertical drags inside game from bubbling to the ScrollView
-                  onVerticalDragDown: (_) {}, // absorb drag
-                  onVerticalDragUpdate: (_) {}, // absorb drag
+                  onVerticalDragDown: (_) {},
+                  onVerticalDragUpdate: (_) {},
                   behavior: HitTestBehavior.opaque,
                   child: MatchingGame(
                     width: w,
@@ -90,11 +64,26 @@ class DataSampleSetGame extends StatelessWidget {
                     correctPairs: correctPairs,
                     enforceOneToOne: false,
                     onChanged: (_) {},
-                    onCompleted: onStepCompleted,
+                    onCompleted: widget.onStepCompleted,
+                    onReset: widget.onReset, // 🔗 bubble up
+
+                    titleBuilder: (ctx) => LessonText.box(
+                      margin: EdgeInsets.zero,
+                      padding: const EdgeInsets.all(14),
+                      child: LessonText.sentence([
+                        LessonText.word("Match", Colors.black87, fontSize: 22),
+                        LessonText.word("Data Samples", const Color(0xFFE91E63),
+                            fontSize: 22, fontWeight: FontWeight.w900),
+                        LessonText.word("with", Colors.black87, fontSize: 22),
+                        LessonText.word("their", Colors.black87, fontSize: 22),
+                        LessonText.word("Dataset", const Color(0xFFFF6D00),
+                            fontSize: 22, fontWeight: FontWeight.w900),
+                      ]),
+                    ),
+                    titleMargin: const EdgeInsets.only(bottom: 18),
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
             ],
           );
