@@ -2,12 +2,12 @@
 // ✅ ImageSlider — smooth left/right sliding image carousel wrapped in LessonText.box
 // - Constructor takes: imagePaths (assets), width, height
 // - Optional: paddings (List<double>) to control LessonText.box padding
-// - Optional tags per image:
-//     • imageTag (bool), imageTags (List<String>), imageTagTop (bool)
+// - Optional tags per image (String or Widget supported):
+//     • imageTag (bool), imageTags (List<String | Widget>), imageTagTop (bool)
 //     • tagReserveSpace (bool, default: true)
 //     • tagBox (bool, default: true)
 //     • tagFill (Color?), tagTextColor (Color?)
-//     • tagFontSize (double, default: 22) ← NEW
+//     • tagFontSize (double, default: 22)
 // - Arrows: Left/Right
 // - onFinished fires first time last image reached
 
@@ -21,13 +21,16 @@ class ImageSlider extends StatefulWidget {
   final double height;
   final List<double>? paddings;
   final bool imageTag;
-  final List<String>? imageTags;
+
+  /// Can be either List<String> or List<Widget>
+  final List<dynamic>? imageTags;
+
   final bool imageTagTop;
   final bool tagReserveSpace;
   final bool tagBox;
   final Color? tagFill;
   final Color? tagTextColor;
-  final double tagFontSize; // ✅ NEW
+  final double tagFontSize;
   final VoidCallback? onFinished;
   final Duration animationDuration;
   final Curve animationCurve;
@@ -45,7 +48,7 @@ class ImageSlider extends StatefulWidget {
     this.tagBox = true,
     this.tagFill,
     this.tagTextColor,
-    this.tagFontSize = 22, // ✅ Default
+    this.tagFontSize = 22,
     this.onFinished,
     this.animationDuration = const Duration(milliseconds: 350),
     this.animationCurve = Curves.easeInOutCubic,
@@ -110,11 +113,21 @@ class _ImageSliderState extends State<ImageSlider> {
     }
   }
 
-  String? _tagTextFor(int i) {
+  /// Handles both String and Widget tags safely.
+  dynamic _tagFor(int i) {
     if (widget.imageTags == null) return null;
     if (i < 0 || i >= widget.imageTags!.length) return null;
-    final t = widget.imageTags![i].trim();
-    return t.isEmpty ? null : t;
+    final tag = widget.imageTags![i];
+
+    // Legacy string
+    if (tag is String) {
+      final t = tag.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    // Widget tag
+    if (tag is Widget) return tag;
+    return null;
   }
 
   @override
@@ -146,7 +159,7 @@ class _ImageSliderState extends State<ImageSlider> {
                     }
                   },
                   itemBuilder: (_, i) {
-                    final tagText = _tagTextFor(i);
+                    final tag = _tagFor(i);
                     final boxed = widget.tagBox;
                     final fill = widget.tagFill ?? Colors.black54;
                     final textColor = widget.tagTextColor ??
@@ -157,14 +170,8 @@ class _ImageSliderState extends State<ImageSlider> {
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (widget.imageTagTop && tagText != null)
-                            _TagLabel(
-                              text: tagText,
-                              boxed: boxed,
-                              fill: fill,
-                              textColor: textColor,
-                              fontSize: widget.tagFontSize, // ✅
-                            ),
+                          if (widget.imageTagTop && tag != null)
+                            _buildTagWidget(tag, boxed, fill, textColor),
                           Expanded(
                             child: AnimatedSwitcher(
                               duration: widget.animationDuration,
@@ -177,14 +184,8 @@ class _ImageSliderState extends State<ImageSlider> {
                               ),
                             ),
                           ),
-                          if (!widget.imageTagTop && tagText != null)
-                            _TagLabel(
-                              text: tagText,
-                              boxed: boxed,
-                              fill: fill,
-                              textColor: textColor,
-                              fontSize: widget.tagFontSize, // ✅
-                            ),
+                          if (!widget.imageTagTop && tag != null)
+                            _buildTagWidget(tag, boxed, fill, textColor),
                         ],
                       );
                     }
@@ -203,14 +204,12 @@ class _ImageSliderState extends State<ImageSlider> {
                             fit: BoxFit.contain,
                           ),
                         ),
-                        if (widget.imageTag)
-                          _TagOverlay(
-                            text: tagText,
-                            top: widget.imageTagTop,
-                            boxed: boxed,
-                            fill: fill,
-                            textColor: textColor,
-                            fontSize: widget.tagFontSize, // ✅
+                        if (widget.imageTag && tag != null)
+                          Align(
+                            alignment: widget.imageTagTop
+                                ? Alignment.topCenter
+                                : Alignment.bottomCenter,
+                            child: _buildTagWidget(tag, boxed, fill, textColor),
                           ),
                       ],
                     );
@@ -234,6 +233,30 @@ class _ImageSliderState extends State<ImageSlider> {
         ),
       ),
     );
+  }
+
+  /// Builds a tag (either legacy text or widget).
+  Widget _buildTagWidget(dynamic tag, bool boxed, Color fill, Color textColor) {
+    if (tag is Widget) {
+      // Custom widget mode (LessonText.word/sentence/box)
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+        child: tag,
+      );
+    }
+
+    if (tag is String) {
+      // Legacy text mode
+      return _TagLabel(
+        text: tag,
+        boxed: boxed,
+        fill: fill,
+        textColor: textColor,
+        fontSize: widget.tagFontSize,
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 
@@ -270,7 +293,7 @@ class _TagLabel extends StatelessWidget {
   final bool boxed;
   final Color fill;
   final Color textColor;
-  final double fontSize; // ✅
+  final double fontSize;
 
   const _TagLabel({
     required this.text,
@@ -286,7 +309,7 @@ class _TagLabel extends StatelessWidget {
       text,
       textAlign: TextAlign.center,
       style: GoogleFonts.lato(
-        fontSize: fontSize, // ✅
+        fontSize: fontSize,
         fontWeight: FontWeight.w700,
         color: textColor,
         letterSpacing: 0.2,
@@ -312,63 +335,6 @@ class _TagLabel extends StatelessWidget {
         ),
         child: textWidget,
       ),
-    );
-  }
-}
-
-class _TagOverlay extends StatelessWidget {
-  final String? text;
-  final bool top;
-  final bool boxed;
-  final Color fill;
-  final Color textColor;
-  final double fontSize; // ✅
-
-  const _TagOverlay({
-    required this.text,
-    required this.top,
-    required this.boxed,
-    required this.fill,
-    required this.textColor,
-    required this.fontSize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (text == null || text!.trim().isEmpty) return const SizedBox.shrink();
-
-    final textWidget = Text(
-      text!,
-      textAlign: TextAlign.center,
-      style: GoogleFonts.lato(
-        fontSize: fontSize, // ✅
-        fontWeight: FontWeight.w700,
-        color: textColor,
-        letterSpacing: 0.2,
-      ),
-    );
-
-    Widget child;
-    if (boxed) {
-      child = Container(
-        margin: const EdgeInsets.all(10),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: textWidget,
-      );
-    } else {
-      child = Container(
-        margin: const EdgeInsets.all(10),
-        child: textWidget,
-      );
-    }
-
-    return Align(
-      alignment: top ? Alignment.topCenter : Alignment.bottomCenter,
-      child: child,
     );
   }
 }
