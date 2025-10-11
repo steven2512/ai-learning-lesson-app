@@ -7,6 +7,7 @@ import 'package:running_robot/z_pages/lessons/data-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/binary-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/data-sample-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/features-intro/_brain.dart';
+import 'package:running_robot/z_pages/lessons/label-intro/_brain.dart';
 import 'package:running_robot/z_pages/lessons/qual-quan/_brain.dart';
 import 'package:running_robot/z_pages/lessons/qual-game/_brain.dart';
 
@@ -91,6 +92,11 @@ final List<ChapterMeta> chapterManifest = [
         id: "features-intro",
         title: "What is a Feature?",
         builder: (nav) => FeaturesIntroBrain(onNavigate: nav),
+      ),
+      LessonMeta(
+        id: "label-intro",
+        title: "What is a Label?",
+        builder: (nav) => LabelIntroBrain(onNavigate: nav),
       ),
     ],
   ),
