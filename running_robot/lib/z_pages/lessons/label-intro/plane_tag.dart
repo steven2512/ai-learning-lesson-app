@@ -3,7 +3,7 @@
 // • Neutral dark pill for every tag; colored "(Feature)/(Label)" pops; value text uses same accent color.
 // • Static "Data Sample" text (orange, no pill) at top-left with a small gap below.
 // • Line attaches to both plane + tag; optional visual clamping.
-// • Timing kept as-is.
+// • Timing kept as-is, with the NEW intro/exit sequence requested.
 // • Left→Right slide-in/out (short travel) from just left of the final position.
 // • ClipRect keeps tags “behind the scene”; header stays on top.
 // • onCompleted fires once right before the first repeat.
@@ -37,12 +37,18 @@ class PlaneAnimGlobals {
   // Tags (two lines)
   static double tagHeight = 84;
 
-  // ---- Timing (ms) ---- (unchanged)
-  static int leadInMs = 1200;
+  // ---- Timing (ms) ----
+  // Intro / exit sequence you asked for
+  static int delayBeforePlaneMs = 2000; // wait 2s, then plane fades in
+  static int planeFadeInMs = 1000; // plane fade-in duration
+  static int delayBeforeFirstTagMs =
+      2000; // wait 2s after plane is in, then first tag
+  static int extraLabelHoldMs = 2000; // keep last (Label) tag 2s longer
+
+  // Per-tag timings (unchanged)
   static int fadeInMs = 1000;
   static int holdMs = 1500;
   static int fadeOutMs = 1000;
-  static int secondsBeforeFirstLoop = 3;
 
   // Content
   static String modelValue = 'Learjet 75';
@@ -50,8 +56,8 @@ class PlaneAnimGlobals {
   static String kmValue = '2,200,000';
   static String priceText = 'Price: \$7,500,000';
 
-  // Visual tweak: lift price tag slightly to align with others (negative = up)
-  static double priceYOffsetPx = -6.0;
+  // Keep aligned to avoid vertical jump
+  static double priceYOffsetPx = 0.0;
 
   // Left→Right entry distance (short travel)
   static double entryOffsetPx = 80.0;
@@ -123,36 +129,62 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
     with TickerProviderStateMixin {
   late final AnimationController _c;
   bool _loopStarted = false;
-  late final int _totalMs;
+  late int _totalMs;
+
+  // Sticky active line target to avoid flicker at overlaps
+  int _activeLine = -1; // -1 none, 0 model, 1 years, 2 km, 3 price
+
+  // Cache plane image on first build
+  bool _didPrecache = false;
 
   @override
   void initState() {
     super.initState();
 
+    // Per-tag segment
     final per = PlaneAnimGlobals.fadeInMs +
         PlaneAnimGlobals.holdMs +
         PlaneAnimGlobals.fadeOutMs;
-    _totalMs = PlaneAnimGlobals.leadInMs + per * 4; // 4 tags + lead-in
+
+    // Full-cycle duration
+    final baseLead = PlaneAnimGlobals.delayBeforePlaneMs +
+        PlaneAnimGlobals.planeFadeInMs +
+        PlaneAnimGlobals.delayBeforeFirstTagMs;
+
+    final pricePer = PlaneAnimGlobals.fadeInMs +
+        PlaneAnimGlobals.holdMs +
+        PlaneAnimGlobals.extraLabelHoldMs +
+        PlaneAnimGlobals.fadeOutMs;
+
+    _totalMs = baseLead + (per * 3) + pricePer;
 
     _c = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: _totalMs),
     )
       ..addListener(() => setState(() {}))
-      ..addStatusListener((status) async {
-        if (status == AnimationStatus.completed && !_loopStarted) {
-          widget.onCompleted?.call(true);
-          _loopStarted = true;
-          final delay =
-              Duration(seconds: PlaneAnimGlobals.secondsBeforeFirstLoop);
-          if (delay.inMilliseconds > 0) {
-            await Future.delayed(delay);
-            if (!mounted) return;
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          if (!_loopStarted) {
+            widget.onCompleted?.call(true);
+            _loopStarted = true;
           }
-          _c.repeat();
+          _activeLine = -1; // reset for next cycle
+          _c.repeat(); // smooth loop, same timing
         }
       })
       ..forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didPrecache) return;
+    _didPrecache = true;
+
+    // Precache plane image to avoid first-frame decode jank
+    final img = AssetImage(widget.planeAsset);
+    precacheImage(img, context).catchError((_) {});
   }
 
   @override
@@ -183,6 +215,32 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
     return tp.width;
   }
 
+  // Measure the actual mixed-style first row: "<label>: <value>"
+  double _measureRichLineWidth({
+    required String label,
+    required String value,
+  }) {
+    final span = TextSpan(
+      style: GoogleFonts.lato(height: 1.0),
+      children: [
+        TextSpan(
+          text: '$label: ',
+          style: PlaneAnimGlobals.labelStyle.copyWith(color: Colors.white),
+        ),
+        TextSpan(
+          text: value,
+          style: PlaneAnimGlobals.valueStyle, // color doesn’t affect width
+        ),
+      ],
+    );
+    final tp = TextPainter(
+      text: span,
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return tp.width;
+  }
+
   // Width = max(line1, line2) + padding
   double _twoLineTagWidth({
     required String label,
@@ -190,8 +248,7 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
     required String suffix,
     required double maxAllowed,
   }) {
-    final line1 = '$label: $value';
-    final w1 = _measureTextWidth(line1, PlaneAnimGlobals.valueStyle);
+    final w1 = _measureRichLineWidth(label: label, value: value); // FIXED
     final w2 = _measureTextWidth(suffix, PlaneAnimGlobals.suffixStyle);
     final base = (w1 > w2 ? w1 : w2) + PlaneAnimGlobals.tagPadding.horizontal;
     return base.clamp(0, maxAllowed).toDouble();
@@ -203,6 +260,50 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
   @override
   Widget build(BuildContext context) {
     final t = _c.value; // 0..1
+
+    // --- Build absolute timeline (ms) ---
+    final per = PlaneAnimGlobals.fadeInMs +
+        PlaneAnimGlobals.holdMs +
+        PlaneAnimGlobals.fadeOutMs;
+
+    final baseLead = PlaneAnimGlobals.delayBeforePlaneMs +
+        PlaneAnimGlobals.planeFadeInMs +
+        PlaneAnimGlobals.delayBeforeFirstTagMs;
+
+    // Tag starts
+    final start0 = baseLead; // Model
+    final start1 = start0 + per; // Years
+    final start2 = start1 + per; // Km
+    final start3 = start2 + per; // Price (Label)
+
+    // Price (Label) extended hold segment markers
+    final priceInEnd = start3 + PlaneAnimGlobals.fadeInMs;
+    final priceHoldEnd = priceInEnd +
+        PlaneAnimGlobals.holdMs +
+        PlaneAnimGlobals.extraLabelHoldMs; // +2s
+    final priceOutEnd = priceHoldEnd + PlaneAnimGlobals.fadeOutMs;
+
+    // Plane opacity timeline (in sync with label fade-out)
+    double planeOpacity;
+    final planeFadeStart = PlaneAnimGlobals.delayBeforePlaneMs;
+    final planeFadeEnd = planeFadeStart + PlaneAnimGlobals.planeFadeInMs;
+
+    final nowMs = (t * _totalMs).round();
+
+    if (nowMs < planeFadeStart) {
+      planeOpacity = 0.0;
+    } else if (nowMs < planeFadeEnd) {
+      final k =
+          _smooth((nowMs - planeFadeStart) / PlaneAnimGlobals.planeFadeInMs);
+      planeOpacity = k;
+    } else if (nowMs < priceHoldEnd) {
+      planeOpacity = 1.0;
+    } else if (nowMs < priceOutEnd) {
+      final k = _smooth((nowMs - priceHoldEnd) / PlaneAnimGlobals.fadeOutMs);
+      planeOpacity = 1.0 - k;
+    } else {
+      planeOpacity = 0.0;
+    }
 
     return LayoutBuilder(builder: (context, box) {
       final size = box.biggest;
@@ -255,22 +356,21 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
         size.height * PlaneAnimGlobals.planeAnchorY,
       );
 
-      // --- Time segments (with lead-in) — unchanged ---
+      // --- Tag time segments ---
       final inMs = PlaneAnimGlobals.fadeInMs;
       final holdMs = PlaneAnimGlobals.holdMs;
       final outMs = PlaneAnimGlobals.fadeOutMs;
-      final per = inMs + holdMs + outMs;
 
-      int start0 = PlaneAnimGlobals.leadInMs;
-      int start1 = start0 + per;
-      int start2 = start1 + per;
-      int start3 = start2 + per;
-
-      TagState stateFor(int startMs, double w) {
+      TagState stateFor(
+        int startMs,
+        double w, {
+        int extraHoldMs = 0,
+        bool stickOnOut = false, // keep tag still on fade-out (no slide)
+      }) {
         final a0 = _f(startMs);
         final a1 = _f(startMs + inMs);
-        final a2 = _f(startMs + inMs + holdMs);
-        final a3 = _f(startMs + inMs + holdMs + outMs);
+        final a2 = _f(startMs + inMs + holdMs + extraHoldMs);
+        final a3 = _f(startMs + inMs + holdMs + extraHoldMs + outMs);
 
         final inP = seg(t, a0, a1);
         final holdP = seg(t, a1, a2);
@@ -292,14 +392,14 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
           opacity = _smooth(inP).clamp(0, 1).toDouble();
         } else if (outP > 0) {
           final k = _smooth(outP);
-          pos = _lerp(target, startPos, k);
+          pos = stickOnOut ? target : _lerp(target, startPos, k);
           opacity = (1 - _smooth(outP)).clamp(0, 1).toDouble();
         } else {
           pos = target;
           opacity = 1.0;
         }
 
-        // >>> FIX: aim the line at the tag's *current* bottom-center, not centerX
+        // Aim the line at the tag's *current* bottom-center
         final midX = pos.dx + w / 2;
         final toPoint = Offset(midX, pos.dy + tagH);
 
@@ -311,148 +411,207 @@ class _PlaneTagsPriceAnimationState extends State<PlaneTagsPriceAnimation>
       final stYears = stateFor(start1, yearsW);
       final stKm = stateFor(start2, kmW);
 
-      // Price with upward correction
-      final stPrice = stateFor(start3, priceW);
+      // Price with extended hold (+2s) and no slide on fade-out
+      final stPrice = stateFor(
+        start3,
+        priceW,
+        extraHoldMs: PlaneAnimGlobals.extraLabelHoldMs,
+        stickOnOut: true,
+      );
+
+      // Price position + opacity
       final priceVisible = stPrice.visible;
       final pricePos =
           stPrice.pos.translate(0, PlaneAnimGlobals.priceYOffsetPx);
       final priceOpacity = stPrice.opacity.toDouble();
-      // >>> FIX for price line too: use adjusted X + width/2
       final priceLineTo = Offset(pricePos.dx + priceW / 2, pricePos.dy + tagH);
 
-      // Which line to draw (one at a time)
+      // --------- FLICKER-FREE ACTIVE LINE SELECTION (HYSTERESIS) ---------
+      // Opacities & endpoints for each tag in order [0..3]
+      final opacities = <double>[
+        stModel.opacity,
+        stYears.opacity,
+        stKm.opacity,
+        priceOpacity,
+      ];
+      final endpoints = <Offset?>[
+        stModel.lineTo,
+        stYears.lineTo,
+        stKm.lineTo,
+        priceLineTo,
+      ];
+
+      // Stick & switch thresholds
+      const double stickThresh = 0.35; // keep current while > 0.35
+      const double switchThresh = 0.60; // switch to a new tag once it’s > 0.60
+
+      int pickActive(int current) {
+        if (current >= 0 && current < opacities.length) {
+          if (opacities[current] > stickThresh) return current;
+        }
+        int best = -1;
+        double bestVal = 0;
+        for (int i = 0; i < opacities.length; i++) {
+          final v = opacities[i];
+          if (v > bestVal) {
+            bestVal = v;
+            best = i;
+          }
+        }
+        if (best >= 0 && bestVal >= switchThresh) return best;
+        if (current >= 0 &&
+            current < opacities.length &&
+            opacities[current] > 0) return current;
+        return bestVal > 0 ? best : -1;
+      }
+
+      _activeLine = pickActive(_activeLine);
+
+      // Active endpoint & combined line opacity (sync with plane)
       Offset? lineTo;
-      if (stModel.visible)
-        lineTo = stModel.lineTo;
-      else if (stYears.visible)
-        lineTo = stYears.lineTo;
-      else if (stKm.visible)
-        lineTo = stKm.lineTo;
-      else if (priceVisible) lineTo = priceLineTo;
+      double activeTagOpacity = 0.0;
+      if (_activeLine >= 0) {
+        lineTo = endpoints[_activeLine];
+        activeTagOpacity = opacities[_activeLine];
+      }
+
+      // Line fully disappears as soon as either plane OR active tag is ~invisible
+      final lineAlpha = (planeOpacity <= 0.001 || activeTagOpacity <= 0.001)
+          ? 0.0
+          : (planeOpacity < activeTagOpacity ? planeOpacity : activeTagOpacity);
+      // --------------------------------------------------------------------
 
       // --- RENDER (clipped box so tags come “from behind”) ---
-      return ClipRect(
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            // Plane (bottom)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: FractionallySizedBox(
-                heightFactor: PlaneAnimGlobals.planeHeightFactor,
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: Image.asset(
-                    widget.planeAsset,
-                    errorBuilder: (_, __, ___) => const SizedBox(),
-                  ),
-                ),
-              ),
-            ),
-
-            // Connector line (follows live tag position)
-            if (lineTo != null)
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _StraightLinePainter(
-                    from: planeAnchor,
-                    to: lineTo!,
-                    shortenFromPx: PlaneAnimGlobals.lineFromInsetPx,
-                    endInsetPx: PlaneAnimGlobals.lineEndInsetPx,
-                    clampMode: PlaneAnimGlobals.lineClamp,
-                    maxLengthFrac: PlaneAnimGlobals.lineMaxLenFrac,
-                    color: PlaneAnimGlobals.lineColor,
-                  ),
-                ),
-              ),
-
-            // Model (Feature)
-            if (stModel.visible)
-              Positioned(
-                left: stModel.pos.dx,
-                top: stModel.pos.dy,
+      return RepaintBoundary(
+        child: ClipRect(
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              // Plane (bottom) with opacity tied to timeline
+              Align(
+                alignment: Alignment.bottomCenter,
                 child: Opacity(
-                  opacity: stModel.opacity.toDouble(),
-                  child: _InfoTag.twoLine(
-                    width: stModel.width,
-                    height: tagH,
-                    bg: PlaneAnimGlobals.neutralTagBg,
-                    label: 'Model',
-                    value: PlaneAnimGlobals.modelValue,
-                    valueColor: PlaneAnimGlobals.featureColor,
-                    suffixText: '(Feature)',
-                    suffixColor: PlaneAnimGlobals.featureColor,
+                  opacity: planeOpacity,
+                  child: FractionallySizedBox(
+                    heightFactor: PlaneAnimGlobals.planeHeightFactor,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: Image.asset(
+                        widget.planeAsset,
+                        gaplessPlayback: true,
+                        filterQuality: FilterQuality.medium,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
                   ),
                 ),
               ),
 
-            // Years Operated (Feature)
-            if (stYears.visible)
-              Positioned(
-                left: stYears.pos.dx,
-                top: stYears.pos.dy,
-                child: Opacity(
-                  opacity: stYears.opacity.toDouble(),
-                  child: _InfoTag.twoLine(
-                    width: stYears.width,
-                    height: tagH,
-                    bg: PlaneAnimGlobals.neutralTagBg,
-                    label: 'Years Operated',
-                    value: PlaneAnimGlobals.yearsValue,
-                    valueColor: PlaneAnimGlobals.featureColor,
-                    suffixText: '(Feature)',
-                    suffixColor: PlaneAnimGlobals.featureColor,
+              // Connector line — draws ONLY when plane & active tag are visible enough
+              if (lineTo != null && lineAlpha > 0.001)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _StraightLinePainter(
+                      from: planeAnchor,
+                      to: lineTo,
+                      shortenFromPx: PlaneAnimGlobals.lineFromInsetPx,
+                      endInsetPx: PlaneAnimGlobals.lineEndInsetPx,
+                      clampMode: PlaneAnimGlobals.lineClamp,
+                      maxLengthFrac: PlaneAnimGlobals.lineMaxLenFrac,
+                      color: PlaneAnimGlobals.lineColor
+                          .withOpacity(lineAlpha), // synced fade
+                    ),
                   ),
                 ),
-              ),
 
-            // Total Km (Feature)
-            if (stKm.visible)
-              Positioned(
-                left: stKm.pos.dx,
-                top: stKm.pos.dy,
-                child: Opacity(
-                  opacity: stKm.opacity.toDouble(),
-                  child: _InfoTag.twoLine(
-                    width: stKm.width,
-                    height: tagH,
-                    bg: PlaneAnimGlobals.neutralTagBg,
-                    label: 'Total Km',
-                    value: PlaneAnimGlobals.kmValue,
-                    valueColor: PlaneAnimGlobals.featureColor,
-                    suffixText: '(Feature)',
-                    suffixColor: PlaneAnimGlobals.featureColor,
+              // Model (Feature)
+              if (stModel.visible)
+                Positioned(
+                  left: stModel.pos.dx,
+                  top: stModel.pos.dy,
+                  child: Opacity(
+                    opacity: stModel.opacity.toDouble(),
+                    child: _InfoTag.twoLine(
+                      width: stModel.width,
+                      height: tagH,
+                      bg: PlaneAnimGlobals.neutralTagBg,
+                      label: 'Model',
+                      value: PlaneAnimGlobals.modelValue,
+                      valueColor: PlaneAnimGlobals.featureColor,
+                      suffixText: '(Feature)',
+                      suffixColor: PlaneAnimGlobals.featureColor,
+                    ),
                   ),
                 ),
-              ),
 
-            // Price (Label) — value colored vivid cyan
-            if (priceVisible)
-              Positioned(
-                left: pricePos.dx,
-                top: pricePos.dy,
-                child: Opacity(
-                  opacity: priceOpacity.toDouble(),
-                  child: _InfoTag.twoLine(
-                    width: priceW,
-                    height: tagH,
-                    bg: PlaneAnimGlobals.neutralTagBg,
-                    label: 'Price',
-                    value: priceValue,
-                    valueColor: PlaneAnimGlobals.labelColor,
-                    suffixText: '(Label)',
-                    suffixColor: PlaneAnimGlobals.labelColor,
+              // Years Operated (Feature)
+              if (stYears.visible)
+                Positioned(
+                  left: stYears.pos.dx,
+                  top: stYears.pos.dy,
+                  child: Opacity(
+                    opacity: stYears.opacity.toDouble(),
+                    child: _InfoTag.twoLine(
+                      width: stYears.width,
+                      height: tagH,
+                      bg: PlaneAnimGlobals.neutralTagBg,
+                      label: 'Years Operated',
+                      value: PlaneAnimGlobals.yearsValue,
+                      valueColor: PlaneAnimGlobals.featureColor,
+                      suffixText: '(Feature)',
+                      suffixColor: PlaneAnimGlobals.featureColor,
+                    ),
                   ),
                 ),
-              ),
 
-            // Header on top so tags/line never cover it
-            const Positioned(
-              left: 6,
-              top: 6,
-              child: _DataSampleHeader(),
-            ),
-          ],
+              // Total Km (Feature)
+              if (stKm.visible)
+                Positioned(
+                  left: stKm.pos.dx,
+                  top: stKm.pos.dy,
+                  child: Opacity(
+                    opacity: stKm.opacity.toDouble(),
+                    child: _InfoTag.twoLine(
+                      width: stKm.width,
+                      height: tagH,
+                      bg: PlaneAnimGlobals.neutralTagBg,
+                      label: 'Total Km',
+                      value: PlaneAnimGlobals.kmValue,
+                      valueColor: PlaneAnimGlobals.featureColor,
+                      suffixText: '(Feature)',
+                      suffixColor: PlaneAnimGlobals.featureColor,
+                    ),
+                  ),
+                ),
+
+              // Price (Label) — extended hold, no slide on fade-out
+              if (priceVisible)
+                Positioned(
+                  left: pricePos.dx,
+                  top: pricePos.dy,
+                  child: Opacity(
+                    opacity: priceOpacity,
+                    child: _InfoTag.twoLine(
+                      width: priceW,
+                      height: tagH,
+                      bg: PlaneAnimGlobals.neutralTagBg,
+                      label: 'Price',
+                      value: priceValue,
+                      valueColor: PlaneAnimGlobals.labelColor,
+                      suffixText: '(Label)',
+                      suffixColor: PlaneAnimGlobals.labelColor,
+                    ),
+                  ),
+                ),
+
+              // Header on top so tags/line never cover it (stays always visible)
+              const Positioned(
+                left: 6,
+                top: 6,
+                child: _DataSampleHeader(),
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -480,7 +639,7 @@ class TagState {
 
 class _StraightLinePainter extends CustomPainter {
   final Offset from; // plane anchor
-  final Offset to; // bottom-center of tag
+  final Offset to; // bottom-center of active tag
   final double shortenFromPx;
   final double endInsetPx;
   final LineClamp clampMode;
