@@ -42,7 +42,7 @@ class PlaneAnimGlobals {
   static int fadeInMs = 1000;
   static int holdMs = 1500;
   static int fadeOutMs = 1000;
-  static int secondsBeforeFirstLoop = 2;
+  static int secondsBeforeFirstLoop = 3;
 
   // Content
   static String modelValue = 'Learjet 75';
