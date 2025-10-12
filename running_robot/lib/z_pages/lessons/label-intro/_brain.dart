@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 import 'package:running_robot/core/widgets.dart';
+import 'package:running_robot/z_pages/lessons/label-intro/label_quiz.dart';
 
 // Steps
 import 'package:running_robot/z_pages/lessons/label-intro/label_quote.dart';
@@ -81,6 +82,13 @@ class _LabelIntroBrainState extends BaseLessonBrainState<LabelIntroBrain> {
           mechanic: LessonMechanic.emit,
           build: (done, reset) => LabelRecapCompleteSample(
             onStepCompleted: () => done(),
+          ),
+        ),
+        SubLesson(
+          topOffset: screenH * 0.18,
+          mechanic: LessonMechanic.emit,
+          build: (done, reset) => LabelQuiz(
+            onCompleted: () => done(),
           ),
         ),
       ];
