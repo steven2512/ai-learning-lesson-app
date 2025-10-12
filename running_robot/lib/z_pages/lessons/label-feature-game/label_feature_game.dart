@@ -52,9 +52,8 @@ final List<LFSlideData> _slides = [
       LFRow("88", "45", "Yes"),
       LFRow("102", "35", "Yes"),
       LFRow("63", "28", "No"),
-      LFRow("95", "50", "Yes"),
     ],
-    distractors: ["Color", "Brand", "Score", "Type", "Speed", "Mood"],
+    distractors: ["Color", "Brand", "Score", "Type", "Speed (Km/h)", "Mood"],
   ),
 
   // 2) Car price from Year + Model
@@ -67,7 +66,6 @@ final List<LFSlideData> _slides = [
       LFRow("2022", "Model 3", "42000"),
       LFRow("2015", "Camry", "21000"),
       LFRow("2018", "Corolla", "17000"),
-      LFRow("2020", "Mustang", "35000"),
     ],
     distractors: ["Color", "Doors", "Trim", "Fuel", "City", "Dealer"],
   ),
@@ -82,11 +80,10 @@ final List<LFSlideData> _slides = [
       LFRow("Nolan", "Bale", "9"),
       LFRow("Tarantino", "Pitt", "8"),
       LFRow("Scorsese", "DeNiro", "9"),
-      LFRow("Bong", "Song", "8"),
     ],
     distractors: [
       "Studio",
-      "Budget",
+      "Budget (\$)",
       "Country",
       "Runtime",
       "Genre",
@@ -104,7 +101,6 @@ final List<LFSlideData> _slides = [
       LFRow("3", "58", "No"),
       LFRow("5", "62", "Yes"),
       LFRow("7", "75", "Yes"),
-      LFRow("4", "68", "Yes"),
     ],
     distractors: ["Homework", "Quiz", "Club", "Day", "Seat", "Class"],
   ),
@@ -146,6 +142,11 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
   static const _emptyBorderHover = Color(0xFFB71C1C); // darker red
   static const _filledBorder = Color(0xFF2E7D32); // green
 
+  // Palette grid config (absolute positions)
+  static const int _gridCols = 3;
+  static const double _gridSpacing = 8.0;
+  static const double _chipRowHeight = 40.0; // row height for each pill slot
+
   // Fade choreography — fade ALL content out, then show StatsBoard
   static const int _contentFadeMs = 450;
   double _contentOpacity = 1.0;
@@ -159,10 +160,19 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
   bool _showEnd = false;
   bool _didWin = false;
 
+  // Fixed layout: tokens frozen to absolute positions (rows/cols)
+  late List<String> _tokenLayout;
+
   @override
   void initState() {
     super.initState();
     data = _slides[widget.slideIndex.clamp(0, _slides.length - 1)];
+    _initTokenLayout();
+  }
+
+  void _initTokenLayout() {
+    final tokens = data.allTokens().toList()..shuffle(_rng);
+    _tokenLayout = tokens;
   }
 
   void _resetGame({bool reshuffle = true}) {
@@ -173,6 +183,7 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
       _showEnd = false;
       _didWin = false;
       _contentOpacity = 1.0;
+
       if (reshuffle) {
         final list = data.distractors.toList()..shuffle(_rng);
         data = LFSlideData(
@@ -182,7 +193,10 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
           rows: data.rows,
           distractors: list,
         );
+        _initTokenLayout(); // ⬅️ only rebuild positions when reshuffling
       }
+      // ⬅️ If not reshuffling (Clear Headers), keep _tokenLayout as-is so pills
+      //     return to their original slots instead of randomizing.
     });
   }
 
@@ -258,17 +272,6 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
     );
   }
 
-  // Draggable palette chip (single-line, never wraps)
-  Widget _draggableChip(String token) {
-    if (_used.contains(token)) return const SizedBox.shrink();
-    return Draggable<String>(
-      data: token,
-      feedback: Material(type: MaterialType.transparency, child: _pill(token)),
-      childWhenDragging: Opacity(opacity: 0.18, child: _pill(token)),
-      child: _pill(token),
-    );
-  }
-
   // Header drop slot — paler fill + red border to make it obvious;
   // darker red on hover; green when filled.
   Widget _slot({
@@ -311,7 +314,7 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
           // Placeholder text that literally says Feature Here / Label Here.
           return _pill(
             placeholder,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             bg: bgColor,
             border: borderColor,
             borderWidth: borderWidth,
@@ -330,8 +333,7 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
           _used.add(s);
           onChange(s);
         });
-        // ⛔️ Removed auto-check here. Submit will decide pass/fail.
-        // Future.microtask(_checkAndFinish);
+        // Submit decides pass/fail.
       },
     );
   }
@@ -356,31 +358,89 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
     );
   }
 
-  // Tight ~3-per-row palette (chips keep natural width but capped; ellipsis in pill)
-  Widget _palette(List<String> tokens) {
-    return LayoutBuilder(builder: (context, c) {
-      const spacing = 8.0;
-      const per = 3;
-      final double maxPerChip = (c.maxWidth - spacing * (per - 1)) / per;
+  // ─────────────────────────────────────────────────────────
+  // Palette — ABSOLUTE POSITIONS (no jumping, no shrinking)
+  // - Frozen grid with fixed rows/cols from first layout.
+  // - If a pill is used, we leave a blank slot (keeps its space).
+  // - Grid container height is fixed based on rows.
+  // ─────────────────────────────────────────────────────────
+  Widget _paletteFrozenGrid(List<String> tokens) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final double maxW = constraints.maxWidth;
+      final double cellW = (maxW - (_gridCols - 1) * _gridSpacing) / _gridCols;
 
-      return Wrap(
-        spacing: spacing,
-        runSpacing: spacing,
-        children: [
-          for (final t in tokens)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxPerChip),
-              child: Align(
-                  alignment: Alignment.centerLeft, child: _draggableChip(t)),
-            ),
-        ],
+      final int rows = (_tokenLayout.length / _gridCols).ceil();
+      final double gridH = rows * _chipRowHeight + (rows - 1) * _gridSpacing;
+
+      List<Widget> tiles = [];
+      final int totalSlots = rows * _gridCols;
+      for (int i = 0; i < totalSlots; i++) {
+        if (i < _tokenLayout.length) {
+          final token = _tokenLayout[i];
+          final bool isUsed = _used.contains(token);
+          tiles.add(SizedBox(
+            width: cellW,
+            height: _chipRowHeight,
+            child: isUsed
+                ? const SizedBox.shrink() // leave blank, preserves space
+                : Draggable<String>(
+                    data: token,
+                    feedback: Material(
+                      type: MaterialType.transparency,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints.tightFor(
+                          width: cellW,
+                          height: _chipRowHeight,
+                        ),
+                        child: _pill(
+                          token,
+                          allowWrap: true, // show full text within the cell
+                          maxWrapLines: 3,
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.18,
+                      child: _pill(
+                        token,
+                        allowWrap: true,
+                        maxWrapLines: 3,
+                      ),
+                    ),
+                    child: _pill(
+                      token,
+                      allowWrap: true,
+                      maxWrapLines: 3,
+                    ),
+                  ),
+          ));
+        } else {
+          // filler slot to complete the grid; stays blank
+          tiles.add(SizedBox(width: cellW, height: _chipRowHeight));
+        }
+      }
+
+      return SizedBox(
+        height: gridH, // fixed → no shrinking when rows become empty
+        child: Center(
+          child: GridView.count(
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: _gridCols,
+            crossAxisSpacing: _gridSpacing,
+            mainAxisSpacing: _gridSpacing,
+            childAspectRatio: cellW / _chipRowHeight,
+            children: tiles,
+          ),
+        ),
       );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final tokens = data.allTokens().toList()..shuffle(_rng);
+    // NOTE: do NOT shuffle here; positions are frozen in _tokenLayout.
+    final tokens = _tokenLayout;
 
     final content = AnimatedOpacity(
       opacity: _contentOpacity,
@@ -402,8 +462,8 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
                   LessonText.word("Label", Colors.orange, fontSize: 19),
                   LessonText.word("to", Colors.black87, fontSize: 19),
                   LessonText.word("the", Colors.black87, fontSize: 19),
-                  LessonText.word("table", Colors.black87, fontSize: 19),
-                  LessonText.word("below", Colors.black87, fontSize: 19),
+                  LessonText.word("table's", Colors.black87, fontSize: 19),
+                  LessonText.word("columns", Colors.black87, fontSize: 19),
                 ],
                 alignment: WrapAlignment.center,
               ),
@@ -481,10 +541,10 @@ class _LabelFeatureGameState extends State<LabelFeatureGame> {
             ),
           ),
 
-          // Palette — tight pills, ~3 per row, capped width, ellipsis
+          // Palette — frozen grid (no jump, no shrink)
           LessonText.box(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            child: _palette(tokens),
+            child: _paletteFrozenGrid(tokens),
           ),
 
           const SizedBox(height: 8),
