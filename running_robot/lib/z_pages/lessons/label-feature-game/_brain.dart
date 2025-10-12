@@ -22,9 +22,9 @@ class _LabelFeatureGameBrainState
     extends BaseLessonBrainState<LabelFeatureGameBrain> {
   @override
   List<SubLesson> buildSubLessons() => [
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
           SubLesson(
-            topOffset: screenH * 0.15, // 👈 per your spec
+            topOffset: screenH * 0.12, // 👈 per your spec
             mechanic: LessonMechanic.emit,
             build: (done, _remountingReset) => LabelFeatureGame(
               slideIndex: i,
