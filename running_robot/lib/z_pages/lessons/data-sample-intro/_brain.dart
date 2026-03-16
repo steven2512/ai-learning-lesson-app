@@ -90,7 +90,16 @@ class _DataSampleIntroBrainState
         SubLesson(
           topOffset: screenH * 0.15,
           mechanic: LessonMechanic.emit,
-          build: (done, __) => DataSampleSetGame(onStepCompleted: done),
+          build: (done, _remountingReset /* not used */) => DataSampleSetGame(
+            onStepCompleted: done,
+            onReset: () {
+              if (mounted) {
+                setState(() {
+                  answered = false; // hides Continue after Try Again / Reset
+                });
+              }
+            },
+          ),
         ),
       ];
 }

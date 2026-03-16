@@ -3,11 +3,11 @@ LessonText.box
 “Without a goal, life is motion without meaning.” — Rick Warren
 
 Slide 2:
-Robot Dialouge
+Robot MascotDialouge
 
-"Now you understand Data Samples and Features"
+"Now you understand Features"
 
-"But Data Sample and its Features don't mean anything without a Goal to aim at!"
+"But Features don't mean anything without a Goal to aim at!"
 
 "That goal usually is some decisions or predictions humans need AI to make!"
 
@@ -28,10 +28,21 @@ True Label: $1,000,000 (verified by authorities)"
 Next Slider
 "Predicted label: what the AI thinks is the correct answer for this data sample"
 
-"E.g: Data Sample 210: A House.
+"E.g: Data Sample 210: A House. ANIMATION
 
 Features: house area: 150m2, location: Brooklyn, New York, age: 20
 
 Predicted label: ?? (Predicted label, AI need to guess this)
+
+Slide 5: 
+Combining Features and Label we have a Complete Data Sample (recap lesson 6)a
+Animation of label and features come together for a complete Data Sample
+
+Slide 6: A small MCQ quiz
+
+Slide 7: A small matching game of some kind
+
+
+Lesson 9: A big fun mini game to link concept of Features + Label = Data Sample
 
 

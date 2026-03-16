@@ -167,6 +167,10 @@ flutter:
     - assets/images/always_singular.png
     - assets/images/data_sample_mcq.png
     - assets/images/data_set.png
+    - assets/images/label_def.png
+    - assets/images/predicted_label.png
+    - assets/images/airplane.png
+
 
 
 

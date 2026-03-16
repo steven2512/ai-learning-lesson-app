@@ -2,12 +2,13 @@
 // Independent column centering (equal top/between/bottom *per column*).
 // Slot height per column = max intrinsic item height (tight text boxes).
 // Lato + word-by-word wrap (no mid-word splits). Submit/Reset below.
-// onCompleted fires only after a correct Submit.
+// onCompleted fires only after StatsBoard sequence finishes (win case).
 
 import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/z_pages/mini-games/stat_board.dart';
 
 class MatchingGame extends StatefulWidget {
   final double width;
@@ -22,30 +23,33 @@ class MatchingGame extends StatefulWidget {
   final Map<int, int>? initialConnections;
   final void Function(Map<int, int> connections)? onChanged;
 
-  /// Fired only after Submit AND if all pairs are correct.
+  /// Fired only after the StatsBoard finishes (win only).
   final VoidCallback? onCompleted;
 
+  /// Fired when the user taps either in-game Reset or StatsBoard "Try Again".
+  final VoidCallback? onReset;
+
   final bool enforceOneToOne;
-
-  /// Freeze only after a correct Submit (no auto-freeze on drag).
   final bool freezeOnPerfect;
-
   final bool readOnly;
 
-  /// Requested BETWEEN gap. Top & bottom are chosen to center the stack in
-  /// its own column while keeping between gap == verticalGap (when possible).
+  /// Requested BETWEEN gap.
   final double verticalGap;
 
-  /// Show Submit / Reset (rendered below the canvas).
+  /// Show Submit / Reset.
   final bool showControls;
 
-  /// Require all left items in [correctPairs] to be connected before enabling Submit.
+  /// Require all left items to be connected before enabling Submit.
   final bool requireAllMatchedToSubmit;
 
   /// Fractions for columns (must sum to 1.0)
   final double leftFraction;
   final double centerFraction;
   final double rightFraction;
+
+  /// Inline title shown above the game while playing (fades with content).
+  final Widget Function(BuildContext)? titleBuilder;
+  final EdgeInsets titleMargin;
 
   const MatchingGame({
     super.key,
@@ -57,17 +61,18 @@ class MatchingGame extends StatefulWidget {
     this.initialConnections,
     this.onChanged,
     this.onCompleted,
+    this.onReset,
     this.enforceOneToOne = false,
     this.freezeOnPerfect = true,
     this.readOnly = false,
     this.verticalGap = 8,
     this.showControls = true,
     this.requireAllMatchedToSubmit = true,
-
-    // 🔸 UPDATED FRACTIONS
     this.leftFraction = 0.34,
     this.centerFraction = 0.32,
     this.rightFraction = 0.34,
+    this.titleBuilder,
+    this.titleMargin = const EdgeInsets.only(bottom: 18),
   }) : assert(
           (leftFraction + centerFraction + rightFraction) > 0.999 &&
               (leftFraction + centerFraction + rightFraction) < 1.001,
@@ -89,9 +94,24 @@ class _MatchingGameState extends State<MatchingGame> {
   // Frozen after correct Submit (if freezeOnPerfect)
   bool _frozen = false;
 
+  // Show StatsBoard
+  bool _showStats = false;
+
+  // Attempts counter (each drag-drop to a right slot)
+  int _attempts = 0;
+
+  // Fade for all in-game content (title + lines + slots + controls)
+  double _contentOpacity = 1.0;
+
+  // Force-remount StatsBoard so its internal callback state resets on Try Again
+  int _statsNonce = 0;
+
   // Layout constants
   static const double _columnInnerPad = 8;
   static const double _minSlotHeight = 32;
+
+  // Content fade timing
+  static const int _contentFadeMs = 450;
 
   // Column widths
   double get _leftColWidth => widget.width * widget.leftFraction;
@@ -115,7 +135,6 @@ class _MatchingGameState extends State<MatchingGame> {
   }
 
   // ---------- Column metrics (each column centers itself) ----------
-  // We base slot height on measured intrinsic height per column to keep boxes tight.
   _Metrics _metricsForColumn({
     required int count,
     required double columnWidth,
@@ -126,26 +145,22 @@ class _MatchingGameState extends State<MatchingGame> {
     double slotH = math.max(_minSlotHeight, measuredMax);
     double between = widget.verticalGap;
 
-    // Used height with desired slotH and between gaps (top/bottom not included)
     double used = count * slotH + (count - 1) * between;
 
-    // If everything + equal top/bottom fits, center the stack:
     if (used <= widget.height) {
-      double leftover = widget.height - used;
-      double top = leftover / 2;
+      final leftover = widget.height - used;
+      final top = leftover / 2;
       return _Metrics(slotH: slotH, between: between, top: top);
     }
 
-    // Too tall: first try to reduce slotH to keep fixed between
-    double availableForSlots = widget.height - (count - 1) * between;
+    final availableForSlots = widget.height - (count - 1) * between;
     if (availableForSlots >= count * _minSlotHeight) {
       slotH = availableForSlots / count;
       return _Metrics(slotH: slotH, between: between, top: 0);
     }
 
-    // Still too tall: set slotH to min, then reduce between
     slotH = _minSlotHeight;
-    double availableForBetween = widget.height - count * slotH;
+    final availableForBetween = widget.height - count * slotH;
     if (count > 1) {
       between = math.max(0, availableForBetween / (count - 1));
     } else {
@@ -157,7 +172,6 @@ class _MatchingGameState extends State<MatchingGame> {
   Rect _leftRect(int i, _Metrics m) {
     final y = m.top + i * (m.slotH + m.between);
     return Rect.fromLTWH(_columnInnerPad, y, _leftSlotWidth, m.slotH);
-    // top/between/bottom are equal *within* this column (via m.top/m.between)
   }
 
   Rect _rightRect(int j, _Metrics m) {
@@ -167,9 +181,8 @@ class _MatchingGameState extends State<MatchingGame> {
   }
 
   int? _leftIndexFromOffset(Offset p, _Metrics m) {
-    // Expand hit area horizontally (so user doesn't need perfect precision)
-    const double extraX = 40; // how far beyond the box to allow starting drag
-    const double extraY = 16; // extra vertical tolerance
+    const double extraX = 40;
+    const double extraY = 16;
 
     for (var i = 0; i < _nLeft; i++) {
       final base = _leftRect(i, m);
@@ -226,6 +239,7 @@ class _MatchingGameState extends State<MatchingGame> {
     if (rp != null) {
       final to = _rightIndexFromOffset(rp, rm);
       if (to != null) {
+        _attempts++;
         if (widget.enforceOneToOne) {
           final removeKey = _connections.entries
               .firstWhere((e) => e.value == to,
@@ -248,9 +262,19 @@ class _MatchingGameState extends State<MatchingGame> {
     if (_frozen) return;
     final allCorrect = widget.correctPairs.entries
         .every((e) => _connections[e.key] == e.value);
+
     if (allCorrect) {
-      if (widget.freezeOnPerfect) setState(() => _frozen = true);
-      widget.onCompleted?.call(); // only after Submit & correct
+      // 1) Fade out all in-game content (title + canvas + controls)
+      setState(() => _contentOpacity = 0.0);
+
+      // 2) After content fade completes, show StatsBoard (it handles its own sequence)
+      Future.delayed(const Duration(milliseconds: _contentFadeMs), () {
+        if (!mounted) return;
+        setState(() {
+          _showStats = true;
+          if (widget.freezeOnPerfect) _frozen = true;
+        });
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Not quite — check the connections.')),
@@ -262,8 +286,13 @@ class _MatchingGameState extends State<MatchingGame> {
     setState(() {
       _connections.clear();
       _frozen = false;
+      _showStats = false;
+      _attempts = 0;
+      _contentOpacity = 1.0;
+      _statsNonce++; // force remount StatsBoard so its internal state resets
     });
     _emitChanged();
+    widget.onReset?.call(); // inform parent (hide Continue)
   }
 
   // ---------- Measurement updates ----------
@@ -288,19 +317,14 @@ class _MatchingGameState extends State<MatchingGame> {
       height: 1.8,
     ));
 
-    final tightStrut = const StrutStyle(
-      height: 1.8,
-      leading: 0,
-      forceStrutHeight: true,
-    );
-
+    final tightStrut =
+        const StrutStyle(height: 1.8, leading: 0, forceStrutHeight: true);
     const tightTHB = TextHeightBehavior(
       applyHeightToFirstAscent: false,
       applyHeightToLastDescent: false,
     );
 
     // ---------- Offstage measurement layer ----------
-    // We render once (offscreen) to get intrinsic heights for tight boxes.
     final measureLayer = Offstage(
       offstage: false,
       child: SizedBox(
@@ -381,132 +405,169 @@ class _MatchingGameState extends State<MatchingGame> {
       measuredMax: rightMeasured,
     );
 
-    // ---------- Canvas ----------
+    // ---------- Game canvas ----------
     final canvas = SizedBox(
       width: widget.width,
       height: widget.height,
       child: Stack(
         children: [
           measureLayer,
-
-          // Lines
-          CustomPaint(
-            size: Size(widget.width, widget.height),
-            painter: _LinesPainter(
-              leftCount: _nLeft,
-              rightCount: _nRight,
-              leftRect: (i) => _leftRect(i, leftMetrics),
-              rightRect: (j) => _rightRect(j, rightMetrics),
-              draggingFrom: _draggingLeftIndex,
-              dragPos: _dragPos,
-              connections: _connections,
-            ),
-          ),
-
-          // Left slots (interactive)
-          for (int i = 0; i < _nLeft; i++)
-            Positioned.fromRect(
-              rect: _leftRect(i, leftMetrics),
-              child: _SlotBox(
-                child: widget.groupA[i],
-                textStyle: textStyle,
-                strut: tightStrut,
-                thb: tightTHB,
-                isImage: widget.groupA[i] is Image || widget.groupA[i] is Icon,
-                scrollableText: true, // live boxes can scroll if needed
-              ),
-            ),
-
-          // Right slots (interactive)
-          for (int j = 0; j < _nRight; j++)
-            Positioned.fromRect(
-              rect: _rightRect(j, rightMetrics),
-              child: _SlotBox(
-                child: widget.groupB[j],
-                textStyle: textStyle,
-                strut: tightStrut,
-                thb: tightTHB,
-                isImage: widget.groupB[j] is Image || widget.groupB[j] is Icon,
-                scrollableText: true,
-              ),
-            ),
-
-          // Drag layer
-          // 🔸 Drag layer — locks gesture to first touched left slot (dominant drag)
-          IgnorePointer(
-            ignoring: _frozen || widget.readOnly,
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.translucent,
-              gestures: {
-                PanGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-                  // 👇 Create recognizer
-                  () => PanGestureRecognizer()
-                    ..gestureSettings =
-                        const DeviceGestureSettings(touchSlop: 2),
-                  // 👇 Configure recognizer
-                  (PanGestureRecognizer instance) {
-                    instance.onDown = (d) {
-                      if (_frozen || widget.readOnly) return;
-                      final pos = d.localPosition;
-                      final idx = _leftIndexFromOffset(pos, leftMetrics);
-                      if (idx != null) {
-                        _draggingLeftIndex = idx;
-                        _dragPos = pos;
-                        setState(() {});
-                      }
-                    };
-
-                    instance.onStart = (d) => _onPanStart(d, leftMetrics);
-                    instance.onUpdate = _onPanUpdate;
-                    instance.onEnd = (d) => _onPanEnd(d, rightMetrics);
-
-                    instance.onCancel = () {
-                      if (_draggingLeftIndex != null || _dragPos != null) {
-                        _draggingLeftIndex = null;
-                        _dragPos = null;
-                        setState(() {});
-                      }
-                    };
-                  },
+          AnimatedOpacity(
+            opacity: _contentOpacity,
+            duration: const Duration(milliseconds: _contentFadeMs),
+            child: Stack(
+              children: [
+                CustomPaint(
+                  size: Size(widget.width, widget.height),
+                  painter: _LinesPainter(
+                    leftCount: _nLeft,
+                    rightCount: _nRight,
+                    leftRect: (i) => _leftRect(i, leftMetrics),
+                    rightRect: (j) => _rightRect(j, rightMetrics),
+                    draggingFrom: _draggingLeftIndex,
+                    dragPos: _dragPos,
+                    connections: _connections,
+                  ),
                 ),
-              },
+                // Left slots
+                for (int i = 0; i < _nLeft; i++)
+                  Positioned.fromRect(
+                    rect: _leftRect(i, leftMetrics),
+                    child: _SlotBox(
+                      child: widget.groupA[i],
+                      textStyle: textStyle,
+                      strut: tightStrut,
+                      thb: tightTHB,
+                      isImage:
+                          widget.groupA[i] is Image || widget.groupA[i] is Icon,
+                      scrollableText: true,
+                    ),
+                  ),
+                // Right slots
+                for (int j = 0; j < _nRight; j++)
+                  Positioned.fromRect(
+                    rect: _rightRect(j, rightMetrics),
+                    child: _SlotBox(
+                      child: widget.groupB[j],
+                      textStyle: textStyle,
+                      strut: tightStrut,
+                      thb: tightTHB,
+                      isImage:
+                          widget.groupB[j] is Image || widget.groupB[j] is Icon,
+                      scrollableText: true,
+                    ),
+                  ),
+                // Drag layer
+                IgnorePointer(
+                  ignoring: _frozen || widget.readOnly,
+                  child: RawGestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    gestures: {
+                      PanGestureRecognizer:
+                          GestureRecognizerFactoryWithHandlers<
+                              PanGestureRecognizer>(
+                        () => PanGestureRecognizer()
+                          ..gestureSettings =
+                              const DeviceGestureSettings(touchSlop: 2),
+                        (PanGestureRecognizer instance) {
+                          instance.onDown = (d) {
+                            if (_frozen || widget.readOnly) return;
+                            final pos = d.localPosition;
+                            final idx = _leftIndexFromOffset(pos, leftMetrics);
+                            if (idx != null) {
+                              _draggingLeftIndex = idx;
+                              _dragPos = pos;
+                              setState(() {});
+                            }
+                          };
+
+                          instance.onStart = (d) => _onPanStart(d, leftMetrics);
+                          instance.onUpdate = _onPanUpdate;
+                          instance.onEnd = (d) => _onPanEnd(d, rightMetrics);
+
+                          instance.onCancel = () {
+                            if (_draggingLeftIndex != null ||
+                                _dragPos != null) {
+                              _draggingLeftIndex = null;
+                              _dragPos = null;
+                              setState(() {});
+                            }
+                          };
+                        },
+                      ),
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
 
-    // Controls (below)
+    // ---------- Controls ----------
     final controls = (!widget.showControls || widget.readOnly)
         ? const SizedBox.shrink()
-        : Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: (_frozen ||
-                          (widget.requireAllMatchedToSubmit &&
-                              !_allRequiredConnected))
-                      ? null
-                      : _handleSubmit,
-                  child: const Text('Submit'),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton(
-                  onPressed: _handleReset,
-                  child: const Text('Reset'),
-                ),
-              ],
+        : AnimatedOpacity(
+            opacity: _contentOpacity,
+            duration: const Duration(milliseconds: _contentFadeMs),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: (_frozen ||
+                            (widget.requireAllMatchedToSubmit &&
+                                !_allRequiredConnected))
+                        ? null
+                        : _handleSubmit,
+                    child: const Text('Submit'),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: _handleReset, // calls parent via onReset too
+                    child: const Text('Reset'),
+                  ),
+                ],
+              ),
             ),
           );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      alignment: Alignment.topCenter,
       children: [
-        canvas,
-        controls,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.titleBuilder != null)
+              AnimatedOpacity(
+                opacity: _contentOpacity,
+                duration: const Duration(milliseconds: _contentFadeMs),
+                child: Padding(
+                  padding: widget.titleMargin,
+                  child: widget.titleBuilder!(context),
+                ),
+              ),
+            canvas,
+            controls,
+          ],
+        ),
+        // Single StatsBoard overlay (remounted by _statsNonce)
+        StatsBoard(
+          key: ValueKey(_statsNonce),
+          visible: _showStats,
+          didWin: true,
+          stats: [
+            StatItem(
+                "Pairs Matched", "${widget.correctPairs.length}", Colors.green),
+            StatItem("Attempts", "$_attempts", Colors.blue),
+          ],
+          body: const Text("You matched everything perfectly!"),
+          onRestart: _handleReset, // Try Again
+          onCompleted: widget.onCompleted,
+        ),
       ],
     );
   }
@@ -579,8 +640,6 @@ class _SlotBox extends StatelessWidget {
       content = scrollableText
           ? SingleChildScrollView(primary: false, child: rich)
           : rich;
-    } else if (isImage) {
-      content = Center(child: FittedBox(fit: BoxFit.contain, child: child));
     } else {
       content = Center(child: FittedBox(fit: BoxFit.contain, child: child));
     }
@@ -593,11 +652,10 @@ class _SlotBox extends StatelessWidget {
         border: Border.all(color: Colors.black12, width: 1),
         boxShadow: const [
           BoxShadow(
-            blurRadius: 2,
-            spreadRadius: 0,
-            offset: Offset(0, 1),
-            color: Colors.black12,
-          )
+              blurRadius: 2,
+              spreadRadius: 0,
+              offset: Offset(0, 1),
+              color: Colors.black12),
         ],
       ),
       alignment: isImage ? Alignment.center : Alignment.centerLeft,
@@ -610,7 +668,7 @@ class _SlotBox extends StatelessWidget {
 class _Metrics {
   final double slotH;
   final double between;
-  final double top; // top == bottom when centered
+  final double top;
 
   const _Metrics(
       {required this.slotH, required this.between, required this.top});
@@ -620,7 +678,7 @@ class _Metrics {
         top = 0;
 }
 
-// ---------- Lines painter (curved green connections) ----------
+// ---------- Lines painter ----------
 class _LinesPainter extends CustomPainter {
   final int leftCount;
   final int rightCount;
