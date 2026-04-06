@@ -239,6 +239,83 @@ service cloud.firestore {
           );
     }
 
+    function validLessonProgressDocument(lessonId) {
+      return hasOnlyKeys(request.resource.data, lessonProgressKeys()) &&
+          hasAllKeys(request.resource.data, lessonProgressKeys()) &&
+          request.resource.data.lessonId == lessonId &&
+          request.resource.data.courseId is string &&
+          request.resource.data.chapterId is string &&
+          request.resource.data.globalLessonNumber is int &&
+          request.resource.data.globalLessonNumber >= 1 &&
+          optionalTimestamp(request.resource.data.startedAt) &&
+          optionalTimestamp(request.resource.data.lastActiveAt) &&
+          optionalTimestamp(request.resource.data.completedAt) &&
+          request.resource.data.isCompleted is bool &&
+          request.resource.data.completedCount is int &&
+          request.resource.data.completedCount >= 0;
+    }
+
+    function validLessonStart(lessonId) {
+      return validLessonProgressDocument(lessonId) &&
+          request.resource.data.startedAt is timestamp &&
+          request.resource.data.lastActiveAt is timestamp &&
+          request.resource.data.completedAt == null &&
+          request.resource.data.isCompleted == false &&
+          request.resource.data.completedCount == 0;
+    }
+
+    function validLessonActivityUpdate() {
+      return validLessonProgressDocument(resource.data.lessonId) &&
+          onlyTouches(['lastActiveAt']) &&
+          sameValue('lessonId') &&
+          sameValue('courseId') &&
+          sameValue('chapterId') &&
+          sameValue('globalLessonNumber') &&
+          sameValue('startedAt') &&
+          sameValue('completedAt') &&
+          sameValue('isCompleted') &&
+          sameValue('completedCount') &&
+          request.resource.data.lastActiveAt is timestamp;
+    }
+
+    function validLessonCompletionUpdate() {
+      return validLessonProgressDocument(resource.data.lessonId) &&
+          onlyTouches([
+            'lastActiveAt',
+            'completedAt',
+            'isCompleted',
+            'completedCount'
+          ]) &&
+          sameValue('lessonId') &&
+          sameValue('courseId') &&
+          sameValue('chapterId') &&
+          sameValue('globalLessonNumber') &&
+          sameValue('startedAt') &&
+          resource.data.isCompleted == false &&
+          request.resource.data.isCompleted == true &&
+          request.resource.data.completedAt is timestamp &&
+          request.resource.data.lastActiveAt is timestamp &&
+          request.resource.data.completedCount == resource.data.completedCount + 1;
+    }
+
+    function validLessonReplayUpdate() {
+      return validLessonProgressDocument(resource.data.lessonId) &&
+          onlyTouches([
+            'lastActiveAt',
+            'completedCount'
+          ]) &&
+          sameValue('lessonId') &&
+          sameValue('courseId') &&
+          sameValue('chapterId') &&
+          sameValue('globalLessonNumber') &&
+          sameValue('startedAt') &&
+          sameValue('completedAt') &&
+          sameValue('isCompleted') &&
+          resource.data.isCompleted == true &&
+          request.resource.data.completedCount == resource.data.completedCount + 1 &&
+          request.resource.data.lastActiveAt is timestamp;
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId);
 
@@ -251,6 +328,20 @@ service cloud.firestore {
             validResumeUpdate() ||
             validProgressionSummaryUpdate()
           );
+
+      match /lessonProgress/{lessonId} {
+        allow read: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+            validLessonStart(lessonId);
+
+        allow update: if isOwner(userId) &&
+            (
+              validLessonActivityUpdate() ||
+              validLessonCompletionUpdate() ||
+              validLessonReplayUpdate()
+            );
+      }
     }
 
     match /{document=**} {
