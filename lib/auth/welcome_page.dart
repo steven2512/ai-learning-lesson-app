@@ -29,30 +29,56 @@ class WelcomePage extends StatelessWidget {
 
             return Column(
               children: [
-                // -------- Top 80%: Illustration --------
                 SizedBox(
                   height: topH,
-                  child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.auto_awesome,
-                            size: 96, color: Colors.black12),
-                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F1FF),
+                            borderRadius: BorderRadius.circular(32),
+                          ),
+                          child: Image.asset(
+                            'assets/images/ai_learning.png',
+                            fit: BoxFit.contain,
+                            height: topH * 0.48,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.smart_toy_outlined,
+                              size: 96,
+                              color: Colors.black26,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Text(
-                          'AI Illustration Placeholder',
+                          'Learn AI through short, interactive lessons.',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.lato(
-                            fontSize: 18,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Build intuition with guided activities, not just long explanations.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.lato(
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black26,
+                            color: Colors.black54,
+                            height: 1.35,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                // -------- Bottom 20%: CTA --------
                 SizedBox(
                   height: bottomH,
                   child: Column(
