@@ -10,7 +10,7 @@ import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/end_lesson.dart';
-import 'package:running_robot/z_pages/root_nav.dart';
+import 'package:running_robot/z_pages/root_nav_live.dart';
 
 // ✅ NEW: import your ScreenSize utility
 class MyApp extends StatefulWidget {
