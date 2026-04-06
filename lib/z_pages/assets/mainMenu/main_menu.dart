@@ -47,7 +47,6 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
     // ✅ ScreenSize already initialized in MyApp.build
     final screenHeight = ScreenSize.height;
-    final screenWidth = ScreenSize.width;
     // final pixelRatio = MediaQuery.of(context).devicePixelRatio;
 
     // // Print device info for debugging

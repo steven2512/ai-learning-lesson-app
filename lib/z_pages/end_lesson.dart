@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart' hide IconButton;
 
 import 'package:running_robot/game/decorations/fancy_box.dart';
@@ -24,6 +23,7 @@ class EndLessonPage extends FlameGame {
   final int chapterProgress; // e.g. 3
   final int totalChapterLessons; // e.g. 10   => shows "3/10"
   final String topText; // headline
+  final String nextButtonText;
   final String?
       illustrationPath; // optional extra asset (kept for compatibility)
   final LessonProgressBar progressBar; // 🔹 final task bar to display
@@ -42,6 +42,7 @@ class EndLessonPage extends FlameGame {
     required this.chapterProgress,
     required this.totalChapterLessons,
     required this.topText,
+    required this.nextButtonText,
     required this.progressBar,
     this.illustrationPath,
   });
@@ -59,7 +60,7 @@ class EndLessonPage extends FlameGame {
       anchor: Anchor.center,
       buttonSize: Vector2(350, 60),
       padding: const [5, 10, 5, 10],
-      content: "Next Lesson",
+      content: nextButtonText,
       boxColor: const Color.fromARGB(255, 136, 32, 255),
       boxOpacity: 1,
       fontSize: 22,

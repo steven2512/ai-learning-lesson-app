@@ -7,7 +7,6 @@ import 'package:running_robot/core/app_router.dart'
 import 'package:running_robot/core/lesson_manifest.dart'; // 🔹 for semantic lessons
 import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart';
-import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
 
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
@@ -383,13 +382,12 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
       ),
     );
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_isFocused) {
+    return PopScope(
+      canPop: !_isFocused,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isFocused) {
           _clearFocus();
-          return false;
         }
-        return true;
       },
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -583,7 +581,7 @@ class _LightBeamPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [color.withOpacity(0.6), color.withOpacity(0.0)],
+        colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.0)],
       ).createShader(Rect.fromLTWH(
         startX - width / 2,
         startY,

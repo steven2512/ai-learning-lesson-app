@@ -9,8 +9,7 @@ enum LessonUiState { locked, available, inProgress, completed }
 class AppProgressionController extends ChangeNotifier {
   AppProgressionController._();
 
-  static final AppProgressionController instance =
-      AppProgressionController._();
+  static final AppProgressionController instance = AppProgressionController._();
 
   ProgressionSnapshot? _snapshot;
   bool _isLoading = false;

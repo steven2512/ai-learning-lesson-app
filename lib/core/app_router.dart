@@ -1,4 +1,4 @@
-/// FILE: lib/core/app_router.dart
+// FILE: lib/core/app_router.dart
 import 'package:running_robot/game/decorations/progress_bar.dart';
 
 abstract class AppRoute {
@@ -20,6 +20,7 @@ class RouteEndLesson extends AppRoute {
   final int chapterProgress;
   final int totalChapterLessons;
   final String topText;
+  final String nextButtonText;
   final String? illustrationPath;
   final AppRoute repeatLesson;
   final AppRoute? nextLesson;
@@ -31,6 +32,7 @@ class RouteEndLesson extends AppRoute {
     required this.chapterProgress,
     required this.totalChapterLessons,
     required this.topText,
+    required this.nextButtonText,
     required this.repeatLesson,
     this.nextLesson,
     this.illustrationPath,

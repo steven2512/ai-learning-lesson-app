@@ -147,6 +147,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       await saveCurrentLessonStep(nextIndex);
     } else {
       final completion = await completeLesson();
+      if (!mounted) return;
       final progression = ProgressionScope.read(context);
       await progression.refresh();
       LessonNavigator.complete(

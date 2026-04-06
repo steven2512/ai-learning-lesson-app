@@ -77,6 +77,7 @@ class _MyAppState extends State<MyApp> {
             chapterProgress: route.chapterProgress,
             totalChapterLessons: route.totalChapterLessons,
             topText: route.topText,
+            nextButtonText: route.nextButtonText,
             illustrationPath: route.illustrationPath,
           ),
         ),

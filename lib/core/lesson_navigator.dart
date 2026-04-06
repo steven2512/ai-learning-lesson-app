@@ -31,7 +31,19 @@ class LessonNavigator {
       endBar.switchPhase(EventProgressBar.proceed);
     }
 
-    final next = (idx + 1 < _allLessons.length) ? RouteLesson(idx + 2) : null;
+    final AppRoute? next;
+    final String nextButtonText;
+    if (completion.firstCompletion) {
+      next = (idx + 1 < _allLessons.length) ? RouteLesson(idx + 2) : null;
+      nextButtonText = next == null ? 'Back to Home' : 'Next Lesson';
+    } else {
+      final currentLessonNumber = progression.currentLessonNumber;
+      next =
+          currentLessonNumber > 0 && currentLessonNumber <= _allLessons.length
+              ? RouteLesson(currentLessonNumber)
+              : const RouteMainMenu(tab: 0);
+      nextButtonText = 'Continue Journey';
+    }
     final profile = progression.profile;
     final totalXp = profile?.xp ?? 0;
     final streak = profile?.dailyStreak ?? completion.dailyStreak;
@@ -50,6 +62,7 @@ class LessonNavigator {
         topText: completion.firstCompletion
             ? "Lesson ${idx + 1} completed!"
             : "Lesson ${idx + 1} reviewed!",
+        nextButtonText: nextButtonText,
         repeatLesson: RouteLesson(idx + 1),
         nextLesson: next,
       ),
