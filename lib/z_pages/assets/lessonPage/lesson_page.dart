@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:running_robot/core/app_router.dart'
     show AppNavigate, RouteLesson;
 import 'package:running_robot/core/lesson_manifest.dart'; // 🔹 for semantic lessons
+import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart';
+import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/map_geometry.dart';
 
 import 'package:running_robot/z_pages/assets/lessonPage/chapter_dropdown.dart';
@@ -219,8 +221,16 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
     return scrollY + screen.height * kTargetYFactor - kMapTopGap;
   }
 
+  int _globalLessonIndexForNode(int nodeIndex) {
+    return chapterManifest
+            .take(_currentChapter - 1)
+            .fold<int>(0, (sum, chap) => sum + chap.lessons.length) +
+        (nodeIndex + 1);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final progression = ProgressionScope.watch(context);
     final chapters = List.generate(chapterManifest.length, (i) => i + 1);
     final double statusBar = MediaQuery.of(context).padding.top;
 
@@ -346,14 +356,16 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
                       titleText: chapterManifest[_currentChapter - 1]
                           .lessons[_selectedNodeIndex!]
                           .title,
-                      buttonText: "Continue Lesson",
+                      buttonText: progression.actionLabelForLesson(
+                        lessonId: chapterManifest[_currentChapter - 1]
+                            .lessons[_selectedNodeIndex!]
+                            .id,
+                        globalLessonNumber:
+                            _globalLessonIndexForNode(_selectedNodeIndex!),
+                      ),
                       onNavigate: () {
-                        // 🔹 Compute global lesson index by summing all previous chapter lengths
-                        final globalLessonIndex = chapterManifest
-                                .take(_currentChapter - 1)
-                                .fold<int>(0,
-                                    (sum, chap) => sum + chap.lessons.length) +
-                            (_selectedNodeIndex! + 1);
+                        final globalLessonIndex =
+                            _globalLessonIndexForNode(_selectedNodeIndex!);
                         widget.onNavigate(RouteLesson(globalLessonIndex));
                       },
                       imageHeight: 120,
@@ -398,12 +410,18 @@ class _LessonPageState extends State<LessonPage> with TickerProviderStateMixin {
   }
 
   List<Widget> _buildLessonNodes(List<Offset> centers, Size screen) {
+    final progression = ProgressionScope.watch(context);
     return List<Widget>.generate(centers.length, (i) {
-      final unlocked = i < 15;
+      final lesson = chapterManifest[_currentChapter - 1].lessons[i];
+      final globalLessonIndex = _globalLessonIndexForNode(i);
+      final state = progression.lessonUiStateFor(
+        lessonId: lesson.id,
+        globalLessonNumber: globalLessonIndex,
+      );
       final c = centers[i];
 
       final node = LessonNode(
-        unlocked: unlocked,
+        state: state,
         animation: _pulseController,
         onNavigate: widget.onNavigate,
         onTapBuilder: (nav) {
