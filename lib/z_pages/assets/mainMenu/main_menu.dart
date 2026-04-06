@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart'; // ✅ use central screen size
+import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/simple_box.dart';
@@ -28,6 +30,21 @@ class MainMenuPage extends StatefulWidget {
 class _MainMenuPageState extends State<MainMenuPage> {
   @override
   Widget build(BuildContext context) {
+    final progression = ProgressionScope.watch(context);
+    final currentLesson = progression.currentLessonMeta;
+    final currentLessonNumber = progression.currentLessonNumber;
+    final currentLessonId = currentLesson?.id;
+    final lessonButtonText = currentLessonId == null
+        ? 'Start Lesson'
+        : progression.actionLabelForLesson(
+            lessonId: currentLessonId,
+            globalLessonNumber: currentLessonNumber,
+          );
+    final streakStates = buildWeeklyStreakStates(
+      dailyStreak: progression.dailyStreak,
+      lastDailyLessonDate: progression.lastDailyLessonDate,
+    );
+
     // ✅ ScreenSize already initialized in MyApp.build
     final screenHeight = ScreenSize.height;
     final screenWidth = ScreenSize.width;
@@ -53,11 +70,18 @@ class _MainMenuPageState extends State<MainMenuPage> {
         children: [
           _buildBackground(),
           const HeaderGreeting(),
+          if (progression.isLoading && progression.snapshot == null)
+            const Center(child: CircularProgressIndicator()),
           _buildMainContent(
             boxHeight1: boxHeight1,
             boxHeight2: boxHeight2,
             sectionSpacing: sectionSpacing,
             streakSpacing: streakSpacing,
+            progression: progression,
+            streakStates: streakStates,
+            lessonButtonText: lessonButtonText,
+            currentLessonTitle: currentLesson?.title ?? 'Introduction to AI',
+            currentLessonNumber: currentLessonNumber,
           ),
         ],
       ),
@@ -73,6 +97,11 @@ class _MainMenuPageState extends State<MainMenuPage> {
     required double boxHeight2,
     required double sectionSpacing,
     required double streakSpacing,
+    required AppProgressionController progression,
+    required List<StreakDayState> streakStates,
+    required String lessonButtonText,
+    required String currentLessonTitle,
+    required int currentLessonNumber,
   }) =>
       Positioned(
         top: 130,
@@ -82,16 +111,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             WeeklyStreak(
-              streakCount: 1,
-              states: const [
-                StreakDayState.missed,
-                StreakDayState.missed,
-                StreakDayState.missed,
-                StreakDayState.missed,
-                StreakDayState.missed,
-                StreakDayState.todayPending,
-                StreakDayState.missed,
-              ],
+              streakCount: progression.dailyStreak,
+              states: streakStates,
               startOnMonday: true,
             ),
             SizedBox(height: streakSpacing),
@@ -115,10 +136,14 @@ class _MainMenuPageState extends State<MainMenuPage> {
             SizedBox(
               height: boxHeight1,
               child: BoxWithProgress(
-                title: "Introduction to Artificial Intelligence",
-                buttonText: "Start Lesson",
+                title: currentLessonTitle,
+                description:
+                    'Lesson $currentLessonNumber of ${progression.totalLessonCount}',
+                buttonText: lessonButtonText,
                 buttonIcon: Icons.arrow_forward_rounded,
-                onPressed: () => widget.onNavigate(const RouteLesson(1)),
+                onPressed: () => widget.onNavigate(RouteLesson(
+                  currentLessonNumber,
+                )),
                 imageAsset: "assets/images/chat_bot_1.png",
                 imageAspectRatio: 0.92,
                 decoration: BoxDecoration(
@@ -133,7 +158,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   ],
                 ),
                 textColor: onDarkText,
-                percent: 0,
+                percent: progression.courseProgressPercent,
                 maxTextWidth: 200,
               ),
             ),
