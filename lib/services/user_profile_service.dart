@@ -48,42 +48,87 @@ class UserProfileService {
         (user.providerData.isNotEmpty
             ? user.providerData.first.providerId
             : "unknown");
+    final resolvedPhotoUrl = user.photoURL ?? data?['photoUrl']?.toString();
     final resolvedLastDevice = lastDevice ?? data?['lastDevice']?.toString();
     final resolvedAppVersion = appVersion ?? data?['appVersion']?.toString();
-    final profile = UserProfile(
-      uid: user.uid,
-      email: user.email,
+    final resolvedDob = dob ??
+        (data != null && data['dob'] != null
+            ? (data['dob'] is Timestamp
+                ? (data['dob'] as Timestamp).toDate()
+                : DateTime.tryParse(data['dob'].toString()))
+            : null);
+
+    final metadata = _profileMetadataMap(
+      user: user,
       name: name ?? user.displayName ?? data?['name']?.toString(),
-      photoUrl: user.photoURL ?? data?['photoUrl']?.toString(),
-      joinedAt: existingJoinedAt,
-      currentLesson: _readInt(data, 'currentLesson', fallback: 1),
-      currentLessonStepIndex:
-          _readInt(data, 'currentLessonStepIndex', fallback: 0),
-      xp: _readInt(data, 'xp', fallback: 0),
-      lessonsCompleted: _readInt(data, 'lessonsCompleted', fallback: 0),
-      todayLessonCount: _readInt(data, 'todayLessonCount', fallback: 0),
-      todayLessonCountDate: data?['todayLessonCountDate']?.toString(),
-      dailyStreak: _readInt(data, 'dailyStreak', fallback: 0),
-      lastDailyLessonDate: data?['lastDailyLessonDate']?.toString(),
-      dob: dob ??
-          (data != null && data['dob'] != null
-              ? (data['dob'] is Timestamp
-                  ? (data['dob'] as Timestamp).toDate()
-                  : DateTime.tryParse(data['dob'].toString()))
-              : null),
+      photoUrl: resolvedPhotoUrl,
+      dob: resolvedDob,
       provider: resolvedProvider,
       lastDevice: resolvedLastDevice,
       appVersion: resolvedAppVersion,
-      // Keep day-based progression aligned with the current device timezone.
-      timezone: timezoneNow.timeZoneName,
-      timezoneOffsetMinutes: timezoneNow.timeZoneOffset.inMinutes,
+      timezoneNow: timezoneNow,
     );
 
+    if (data == null) {
+      final profile = UserProfile(
+        uid: user.uid,
+        email: user.email,
+        name: metadata['name']?.toString(),
+        photoUrl: resolvedPhotoUrl,
+        joinedAt: existingJoinedAt,
+        currentLesson: 1,
+        currentLessonStepIndex: 0,
+        xp: 0,
+        lessonsCompleted: 0,
+        todayLessonCount: 0,
+        todayLessonCountDate: null,
+        dailyStreak: 0,
+        lastDailyLessonDate: null,
+        dob: resolvedDob,
+        provider: resolvedProvider,
+        lastDevice: resolvedLastDevice,
+        appVersion: resolvedAppVersion,
+        timezone: timezoneNow.timeZoneName,
+        timezoneOffsetMinutes: timezoneNow.timeZoneOffset.inMinutes,
+      );
+
+      await doc.set({
+        ...profile.toMap(),
+        'lastLogin': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      return;
+    }
+
     await doc.set({
-      ...profile.toMap(),
+      ...metadata,
       'lastLogin': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  static Map<String, dynamic> _profileMetadataMap({
+    required User user,
+    required String? name,
+    required String? photoUrl,
+    required DateTime? dob,
+    required String? provider,
+    required String? lastDevice,
+    required String? appVersion,
+    required DateTime timezoneNow,
+  }) {
+    return {
+      'uid': user.uid,
+      'email': user.email,
+      'name': name,
+      'photoUrl': photoUrl,
+      'provider': provider,
+      'dob': dob != null ? Timestamp.fromDate(dob) : null,
+      'lastDevice': lastDevice,
+      'appVersion': appVersion,
+      'timezone': timezoneNow.timeZoneName,
+      'timezoneOffsetMinutes': timezoneNow.timeZoneOffset.inMinutes,
+    };
   }
 
   static int _readInt(
