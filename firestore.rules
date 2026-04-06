@@ -323,24 +323,10 @@ service cloud.firestore {
           validNewUserDocument(userId);
 
       allow update: if isOwner(userId) &&
-          (
-            validMetadataUpdate() ||
-            validResumeUpdate() ||
-            validProgressionSummaryUpdate()
-          );
+          validMetadataUpdate();
 
       match /lessonProgress/{lessonId} {
         allow read: if isOwner(userId);
-
-        allow create: if isOwner(userId) &&
-            validLessonStart(lessonId);
-
-        allow update: if isOwner(userId) &&
-            (
-              validLessonActivityUpdate() ||
-              validLessonCompletionUpdate() ||
-              validLessonReplayUpdate()
-            );
       }
     }
 
