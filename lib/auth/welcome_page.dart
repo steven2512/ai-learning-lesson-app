@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart'; // ✅ Added for CupertinoPageRoute
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/z_pages/assets/lessonAssets/helpful_tools.dart'; // LessonText
 import 'package:running_robot/auth/start_button.dart'; // PillCta
-import 'login_page.dart';
-import 'signup_page.dart';
+import 'login_page_live.dart';
+import 'signup_page_live.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

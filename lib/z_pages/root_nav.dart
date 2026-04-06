@@ -1,11 +1,12 @@
-/// FILE: lib/ui/root_nav_scaffold.dart
+library root_nav_scaffold;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_page.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
-import 'package:running_robot/z_pages/assets/settings/setting.dart';
+import 'package:running_robot/z_pages/assets/settings/settings_page_live.dart';
 
 /// RootNavScaffold
 /// - Hosts a bottom NavigationBar (Material 3)
@@ -81,7 +82,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
           elevation: 2,
-          indicatorColor: Colors.black.withOpacity(0.06),
+          indicatorColor: Colors.black.withValues(alpha: 0.06),
           indicatorShape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
