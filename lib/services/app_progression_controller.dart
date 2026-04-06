@@ -1,0 +1,125 @@
+import 'package:flutter/foundation.dart';
+import 'package:running_robot/core/lesson_manifest.dart';
+import 'package:running_robot/models/lesson_progress.dart';
+import 'package:running_robot/models/user_profile.dart';
+import 'package:running_robot/services/progression_service.dart';
+
+enum LessonUiState { locked, available, inProgress, completed }
+
+class AppProgressionController extends ChangeNotifier {
+  AppProgressionController._();
+
+  static final AppProgressionController instance =
+      AppProgressionController._();
+
+  ProgressionSnapshot? _snapshot;
+  bool _isLoading = false;
+  Object? _error;
+
+  ProgressionSnapshot? get snapshot => _snapshot;
+  bool get isLoading => _isLoading;
+  Object? get error => _error;
+
+  UserProfile? get profile => _snapshot?.profile;
+  Map<String, LessonProgress> get lessonProgressById =>
+      _snapshot?.lessonProgressById ?? const {};
+
+  List<LessonMeta> get allLessons =>
+      chapterManifest.expand((chapter) => chapter.lessons).toList();
+
+  int get totalLessonCount => allLessons.length;
+  int get currentLessonNumber => profile?.currentLesson ?? 1;
+  int get currentLessonStepIndex => profile?.currentLessonStepIndex ?? 0;
+  int get lessonsCompleted => profile?.lessonsCompleted ?? 0;
+  int get totalXp => profile?.xp ?? 0;
+  int get dailyStreak => profile?.dailyStreak ?? 0;
+  int get todayLessonCount => profile?.todayLessonCount ?? 0;
+  String? get lastDailyLessonDate => profile?.lastDailyLessonDate;
+
+  int get courseProgressPercent {
+    if (totalLessonCount == 0) return 0;
+    return ((lessonsCompleted / totalLessonCount) * 100).round().clamp(0, 100);
+  }
+
+  LessonMeta? get currentLessonMeta {
+    if (allLessons.isEmpty) return null;
+    final safeIndex = (currentLessonNumber - 1).clamp(0, allLessons.length - 1);
+    return allLessons[safeIndex];
+  }
+
+  String? get currentLessonId => currentLessonMeta?.id;
+
+  Future<void> load() async {
+    if (_snapshot != null || _isLoading) return;
+    await refresh();
+  }
+
+  Future<void> refresh() async {
+    if (_isLoading) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _snapshot = await ProgressionService.loadCurrentProgression();
+      _error = null;
+    } catch (error) {
+      _error = error;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void clear() {
+    _snapshot = null;
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  LessonProgress? lessonProgressByIdOrNull(String lessonId) {
+    return lessonProgressById[lessonId];
+  }
+
+  bool isLessonCompleted(String lessonId) {
+    return lessonProgressById[lessonId]?.isCompleted == true;
+  }
+
+  bool isLessonUnlocked(int globalLessonNumber) {
+    return globalLessonNumber <= currentLessonNumber;
+  }
+
+  LessonUiState lessonUiStateFor({
+    required String lessonId,
+    required int globalLessonNumber,
+  }) {
+    if (isLessonCompleted(lessonId)) return LessonUiState.completed;
+    if (globalLessonNumber == currentLessonNumber) {
+      return LessonUiState.inProgress;
+    }
+    if (isLessonUnlocked(globalLessonNumber)) return LessonUiState.available;
+    return LessonUiState.locked;
+  }
+
+  String actionLabelForLesson({
+    required String lessonId,
+    required int globalLessonNumber,
+  }) {
+    final state = lessonUiStateFor(
+      lessonId: lessonId,
+      globalLessonNumber: globalLessonNumber,
+    );
+
+    switch (state) {
+      case LessonUiState.completed:
+        return 'Review Lesson';
+      case LessonUiState.inProgress:
+        return currentLessonStepIndex > 0 ? 'Continue Lesson' : 'Start Lesson';
+      case LessonUiState.available:
+        return 'Start Lesson';
+      case LessonUiState.locked:
+        return 'Locked';
+    }
+  }
+}

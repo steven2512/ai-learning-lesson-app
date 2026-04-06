@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:running_robot/my_app.dart';
+import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/auth/welcome_page.dart';
 
 class AuthGate extends StatelessWidget {
@@ -17,8 +18,10 @@ class AuthGate extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
+          AppProgressionController.instance.load();
           return const MyApp(); // ✅ Logged in → main app
         }
+        AppProgressionController.instance.clear();
         return const WelcomePage(); // ❌ Not logged in → landing
       },
     );
