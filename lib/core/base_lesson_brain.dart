@@ -68,6 +68,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
     extends State<T> {
   int currentIndex = 0;
   bool answered = false;
+  bool _isBootstrapping = true;
   late final List<SubLesson> subLessons;
 
   // ✅ FIX: a nonce that forces a full remount of the current sublesson subtree
@@ -84,29 +85,41 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
     debugPrint("🔥 initState for ${widget.lessonId}");
     subLessons = buildSubLessons();
     LessonStepRegistry.register(widget.lessonId, subLessons.length);
-    handleLesson();
+    _bootstrapLesson();
   }
 
   // ─────────────────────────────
   // 🔹 API Wrappers
   // ─────────────────────────────
 
-  Future<void> handleLesson() async {
+  Future<void> _bootstrapLesson() async {
     debugPrint("📘 handleLesson called for ${widget.lessonId}");
-    await LessonService.handleLesson(
+    final launchState = await LessonService.handleLesson(
       courseId: widget.courseId,
       chapterId: widget.chapterId,
       lessonId: widget.lessonId,
       globalLessonNumber: widget.globalLessonNumber,
     );
+
+    if (!mounted) return;
+
+    setState(() {
+      final clampedIndex = launchState.initialStepIndex < 0
+          ? 0
+          : (launchState.initialStepIndex >= subLessons.length
+              ? subLessons.length - 1
+              : launchState.initialStepIndex);
+      currentIndex = clampedIndex;
+      answered = false;
+      _isBootstrapping = false;
+    });
   }
 
-  Future<void> updateLesson(Map<String, dynamic> fields) async {
-    await LessonService.updateLesson(
-      courseId: widget.courseId,
-      chapterId: widget.chapterId,
+  Future<void> saveCurrentLessonStep(int stepIndex) async {
+    await LessonService.saveCurrentLessonStep(
       lessonId: widget.lessonId,
-      fields: fields,
+      globalLessonNumber: widget.globalLessonNumber,
+      stepIndex: stepIndex,
     );
   }
 
@@ -121,17 +134,18 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
 
   // ─────────────────────────────
 
-  void goNext() {
+  Future<void> goNext() async {
     if (currentIndex < subLessons.length - 1) {
+      final nextIndex = currentIndex + 1;
       setState(() {
-        currentIndex++;
+        currentIndex = nextIndex;
         answered = false;
-        _restartNonce = 0; // ✅ reset nonce when moving to a new step
+        _restartNonce = 0;
       });
 
-      updateLesson({'lastStepIndex': currentIndex});
+      await saveCurrentLessonStep(nextIndex);
     } else {
-      completeLesson();
+      await completeLesson();
       LessonNavigator.complete(widget.lessonId, widget.onNavigate);
     }
   }
@@ -147,6 +161,13 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
 
   @override
   Widget build(BuildContext context) {
+    if (_isBootstrapping) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final sub = subLessons[currentIndex];
 
     // Build current sub-lesson
@@ -195,7 +216,9 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
               bottom: 40,
               left: 0,
               right: 0,
-              child: ContinueButton(onPressed: goNext),
+              child: ContinueButton(onPressed: () {
+                goNext();
+              }),
             ),
 
           // 4) X button LAST so it paints on top and receives taps first
