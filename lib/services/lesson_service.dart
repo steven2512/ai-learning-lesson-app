@@ -71,17 +71,14 @@ class LessonService {
         currentLesson == globalLessonNumber && !isCompleted;
 
     if (!snap.exists) {
-      await doc.set({
-        'lessonId': lessonId,
-        'courseId': courseId,
-        'chapterId': chapterId,
-        'globalLessonNumber': globalLessonNumber,
-        'startedAt': FieldValue.serverTimestamp(),
-        'lastActiveAt': FieldValue.serverTimestamp(),
-        'isCompleted': false,
-        'completedAt': null,
-        'completedCount': 0,
-      });
+      await doc.set(
+        _newLessonProgressPayload(
+          lessonId: lessonId,
+          courseId: courseId,
+          chapterId: chapterId,
+          globalLessonNumber: globalLessonNumber,
+        ),
+      );
     } else {
       await doc.update({
         'lastActiveAt': FieldValue.serverTimestamp(),
@@ -105,6 +102,7 @@ class LessonService {
     final userSnap = await userDoc.get();
     final userData = userSnap.data() ?? <String, dynamic>{};
     final currentLesson = _readInt(userData['currentLesson'], fallback: 1);
+    final safeStepIndex = stepIndex < 0 ? 0 : stepIndex;
 
     await doc.set({
       'lastActiveAt': FieldValue.serverTimestamp(),
@@ -112,7 +110,7 @@ class LessonService {
 
     if (currentLesson == globalLessonNumber) {
       await userDoc.set({
-        'currentLessonStepIndex': stepIndex,
+        'currentLessonStepIndex': safeStepIndex,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     }
@@ -140,18 +138,15 @@ class LessonService {
 
       transaction.set(
           lessonDoc,
-          {
-            'lessonId': lessonId,
-            'courseId': courseId,
-            'chapterId': chapterId,
-            'globalLessonNumber': globalLessonNumber,
-            'startedAt':
-                lessonData['startedAt'] ?? FieldValue.serverTimestamp(),
-            'lastActiveAt': FieldValue.serverTimestamp(),
-            'completedCount': completedCount + 1,
-            if (!alreadyCompleted) 'isCompleted': true,
-            if (!alreadyCompleted) 'completedAt': FieldValue.serverTimestamp(),
-          },
+          _lessonCompletionPayload(
+            lessonData: lessonData,
+            lessonId: lessonId,
+            courseId: courseId,
+            chapterId: chapterId,
+            globalLessonNumber: globalLessonNumber,
+            completedCount: completedCount,
+            alreadyCompleted: alreadyCompleted,
+          ),
           SetOptions(merge: true));
 
       if (!alreadyCompleted) {
@@ -176,21 +171,80 @@ class LessonService {
 
         transaction.set(
             userDoc,
-            {
-              'lessonsCompleted': lessonsCompleted + 1,
-              'xp': xp + lessonXpReward,
-              'todayLessonCount': nextTodayLessonCount,
-              'todayLessonCountDate': todayKey,
-              'dailyStreak': nextDailyStreak,
-              'lastDailyLessonDate': todayKey,
-              'currentLesson':
+            _userCompletionSummaryPayload(
+              lessonsCompleted: lessonsCompleted,
+              xp: xp,
+              todayLessonCount: nextTodayLessonCount,
+              todayKey: todayKey,
+              dailyStreak: nextDailyStreak,
+              currentLesson:
                   currentLesson < nextLesson ? nextLesson : currentLesson,
-              'currentLessonStepIndex': 0,
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
+            ),
             SetOptions(merge: true));
       }
     });
+  }
+
+  static Map<String, dynamic> _newLessonProgressPayload({
+    required String lessonId,
+    required String courseId,
+    required String chapterId,
+    required int globalLessonNumber,
+  }) {
+    return {
+      'lessonId': lessonId,
+      'courseId': courseId,
+      'chapterId': chapterId,
+      'globalLessonNumber': globalLessonNumber,
+      'startedAt': FieldValue.serverTimestamp(),
+      'lastActiveAt': FieldValue.serverTimestamp(),
+      'isCompleted': false,
+      'completedAt': null,
+      'completedCount': 0,
+    };
+  }
+
+  static Map<String, dynamic> _lessonCompletionPayload({
+    required Map<String, dynamic> lessonData,
+    required String lessonId,
+    required String courseId,
+    required String chapterId,
+    required int globalLessonNumber,
+    required int completedCount,
+    required bool alreadyCompleted,
+  }) {
+    return {
+      'lessonId': lessonId,
+      'courseId': courseId,
+      'chapterId': chapterId,
+      'globalLessonNumber': globalLessonNumber,
+      'startedAt': lessonData['startedAt'] ?? FieldValue.serverTimestamp(),
+      'lastActiveAt': FieldValue.serverTimestamp(),
+      'completedCount': completedCount + 1,
+      if (!alreadyCompleted) 'isCompleted': true,
+      if (!alreadyCompleted) 'completedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  static Map<String, dynamic> _userCompletionSummaryPayload({
+    required int lessonsCompleted,
+    required int xp,
+    required int todayLessonCount,
+    required String todayKey,
+    required int dailyStreak,
+    required int currentLesson,
+  }) {
+    return {
+      'lessonsCompleted': lessonsCompleted + 1,
+      'xp': xp + lessonXpReward,
+      'todayLessonCount': todayLessonCount,
+      'todayLessonCountDate': todayKey,
+      'dailyStreak': dailyStreak,
+      'lastDailyLessonDate': todayKey,
+      'currentLesson': currentLesson,
+      'currentLessonStepIndex': 0,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
   }
 
   static String _dateKeyForUser(Map<String, dynamic> userData) {

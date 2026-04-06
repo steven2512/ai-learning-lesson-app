@@ -131,14 +131,4 @@ class UserProfileService {
     };
   }
 
-  static int _readInt(
-    Map<String, dynamic>? data,
-    String key, {
-    required int fallback,
-  }) {
-    if (data == null) return fallback;
-    final value = data[key];
-    if (value is int) return value;
-    return int.tryParse(value?.toString() ?? '') ?? fallback;
-  }
 }
