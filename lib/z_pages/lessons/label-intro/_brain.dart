@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/z_pages/lessons/label-intro/label_quiz.dart';
@@ -15,8 +14,7 @@ final double screenW = ScreenSize.width;
 final double screenH = ScreenSize.height;
 
 class LabelIntroBrain extends BaseLessonBrain {
-  const LabelIntroBrain({super.key, required AppNavigate onNavigate})
-      : super(onNavigate: onNavigate);
+  const LabelIntroBrain({super.key, required super.onNavigate});
 
   @override
   String get lessonId => "label-intro";
@@ -26,19 +24,30 @@ class LabelIntroBrain extends BaseLessonBrain {
 }
 
 class _LabelIntroBrainState extends BaseLessonBrainState<LabelIntroBrain> {
+  bool _didPrecacheAssets = false;
+
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final ctx = context;
-      // Precache commonly used assets in this lesson
-      precacheImage(
-          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
-      precacheImage(const AssetImage("assets/images/true_label.png"), ctx);
-      precacheImage(const AssetImage("assets/images/predicted_label.png"), ctx);
-      precacheImage(
-          const AssetImage("assets/images/complete_data_sample.png"), ctx);
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didPrecacheAssets) return;
+
+    precacheImage(
+      const AssetImage("assets/images/mascot_pointing_up.png"),
+      context,
+    );
+    precacheImage(
+      const AssetImage("assets/images/label_def.png"),
+      context,
+    );
+    precacheImage(
+      const AssetImage("assets/images/predicted_label.png"),
+      context,
+    );
+    precacheImage(
+      const AssetImage("assets/images/data_sample.png"),
+      context,
+    );
+    _didPrecacheAssets = true;
   }
 
   @override

@@ -65,7 +65,7 @@ class _HeaderGreetingState extends State<HeaderGreeting> {
     if (_photoUrl != null && _photoUrl!.isNotEmpty) {
       return CachedNetworkImageProvider(_photoUrl!); // cached locally
     }
-    return const AssetImage("assets/images/default_avatar.png");
+    return const AssetImage("assets/images/robot_family1.jpg");
   }
 
   @override

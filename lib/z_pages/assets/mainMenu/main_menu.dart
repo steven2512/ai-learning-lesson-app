@@ -17,6 +17,7 @@ const box1Color = Color(0xFF00796B); // Teal hero (unchanged)
 const box2Color = Color.fromARGB(255, 47, 51, 73); // clean steel blue
 const box3Color = Color.fromARGB(255, 192, 91, 91); // polished plum
 const onDarkText = Colors.white; // White text on the dark cards
+const bool showMiniGamesCard = false;
 
 class MainMenuPage extends StatefulWidget {
   final void Function(AppRoute) onNavigate;
@@ -58,7 +59,6 @@ class _MainMenuPageState extends State<MainMenuPage> {
     // 🔹 Proportional card heights
     final boxHeight1 = screenHeight * 0.23;
     final boxHeight2 = screenHeight * 0.20;
-
     // 🔹 Shared spacing values
     const sectionSpacing = 12.0;
     const streakSpacing = 20.0;
@@ -162,48 +162,46 @@ class _MainMenuPageState extends State<MainMenuPage> {
               ),
             ),
 
-            SizedBox(height: sectionSpacing),
-
-            // === Exercises ===
-            Padding(
-              padding: const EdgeInsets.only(left: 2),
-              child: Text(
-                "Exercises",
-                style: GoogleFonts.lato(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                  letterSpacing: 0.2,
+            if (showMiniGamesCard) ...[
+              SizedBox(height: sectionSpacing),
+              Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: Text(
+                  "Exercises",
+                  style: GoogleFonts.lato(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 5),
-
-            // ====== CARD 2: MINI GAMES ======
-            SizedBox(
-              height: boxHeight2,
-              child: SimpleBox(
-                title: "Mini Games (Coming Soon)",
-                description: "Shapren your AI knowledge",
-                buttonText: "Start Challenge",
-                buttonIcon: Icons.arrow_forward_rounded,
-                onPressed: () => debugPrint("Open Daily Challenges"),
-                imageAsset: "assets/images/trophy_people.png",
-                imageAspectRatio: 0.90,
-                decoration: BoxDecoration(
-                  color: box3Color,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+              const SizedBox(height: 5),
+              SizedBox(
+                height: boxHeight2,
+                child: SimpleBox(
+                  title: "Mini Games (Coming Soon)",
+                  description: "Shapren your AI knowledge",
+                  buttonText: "Start Challenge",
+                  buttonIcon: Icons.arrow_forward_rounded,
+                  onPressed: () => debugPrint("Open Daily Challenges"),
+                  imageAsset: "assets/images/trophy_people.png",
+                  imageAspectRatio: 0.90,
+                  decoration: BoxDecoration(
+                    color: box3Color,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  textColor: onDarkText,
                 ),
-                textColor: onDarkText,
               ),
-            ),
+            ],
           ],
         ),
       );

@@ -1,6 +1,5 @@
 // FILE: lib/z_pages/lessons/data-sample-intro/_brain.dart
 import 'package:flutter/material.dart';
-import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/base_lesson_brain.dart';
 import 'package:running_robot/core/widgets.dart';
 
@@ -17,8 +16,7 @@ final double screenW = ScreenSize.width;
 final double screenH = ScreenSize.height;
 
 class DataSampleIntroBrain extends BaseLessonBrain {
-  const DataSampleIntroBrain({super.key, required AppNavigate onNavigate})
-      : super(onNavigate: onNavigate);
+  const DataSampleIntroBrain({super.key, required super.onNavigate});
 
   @override
   String get lessonId => "data-sample-intro";
@@ -29,15 +27,22 @@ class DataSampleIntroBrain extends BaseLessonBrain {
 
 class _DataSampleIntroBrainState
     extends BaseLessonBrainState<DataSampleIntroBrain> {
+  bool _didPrecacheAssets = false;
+
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final ctx = context;
-      precacheImage(
-          const AssetImage("assets/images/mascot_pointing_up.png"), ctx);
-      precacheImage(const AssetImage("assets/images/placeholder.png"), ctx);
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didPrecacheAssets) return;
+
+    precacheImage(
+      const AssetImage("assets/images/mascot_pointing_up.png"),
+      context,
+    );
+    precacheImage(
+      const AssetImage("assets/images/data_sample.png"),
+      context,
+    );
+    _didPrecacheAssets = true;
   }
 
   @override
@@ -90,7 +95,7 @@ class _DataSampleIntroBrainState
         SubLesson(
           topOffset: screenH * 0.15,
           mechanic: LessonMechanic.emit,
-          build: (done, _remountingReset /* not used */) => DataSampleSetGame(
+          build: (done, remountingReset /* not used */) => DataSampleSetGame(
             onStepCompleted: done,
             onReset: () {
               if (mounted) {
