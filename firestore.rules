@@ -29,6 +29,15 @@ service cloud.firestore {
       return value == null || value is timestamp;
     }
 
+    function sameValue(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    function onlyTouches(allowedKeys) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(allowedKeys);
+    }
+
     function userKeys() {
       return [
         'uid',
@@ -67,6 +76,181 @@ service cloud.firestore {
         'isCompleted',
         'completedCount'
       ];
+    }
+
+    function metadataUpdateKeys() {
+      return [
+        'name',
+        'email',
+        'photoUrl',
+        'provider',
+        'dob',
+        'lastDevice',
+        'appVersion',
+        'timezone',
+        'timezoneOffsetMinutes',
+        'lastLogin',
+        'updatedAt'
+      ];
+    }
+
+    function resumeKeys() {
+      return [
+        'currentLessonStepIndex',
+        'updatedAt'
+      ];
+    }
+
+    function progressionSummaryKeys() {
+      return [
+        'currentLesson',
+        'currentLessonStepIndex',
+        'xp',
+        'lessonsCompleted',
+        'todayLessonCount',
+        'todayLessonCountDate',
+        'dailyStreak',
+        'lastDailyLessonDate',
+        'updatedAt'
+      ];
+    }
+
+    function validUserDocument(userId) {
+      return hasOnlyKeys(request.resource.data, userKeys()) &&
+          hasAllKeys(request.resource.data, userKeys()) &&
+          request.resource.data.uid == userId &&
+          optionalString(request.resource.data.name) &&
+          optionalString(request.resource.data.email) &&
+          optionalString(request.resource.data.photoUrl) &&
+          request.resource.data.joinedAt is timestamp &&
+          request.resource.data.currentLesson is int &&
+          request.resource.data.currentLesson >= 1 &&
+          request.resource.data.currentLessonStepIndex is int &&
+          request.resource.data.currentLessonStepIndex >= 0 &&
+          request.resource.data.xp is int &&
+          request.resource.data.xp >= 0 &&
+          request.resource.data.lessonsCompleted is int &&
+          request.resource.data.lessonsCompleted >= 0 &&
+          request.resource.data.todayLessonCount is int &&
+          request.resource.data.todayLessonCount >= 0 &&
+          optionalString(request.resource.data.todayLessonCountDate) &&
+          request.resource.data.dailyStreak is int &&
+          request.resource.data.dailyStreak >= 0 &&
+          optionalString(request.resource.data.lastDailyLessonDate) &&
+          optionalTimestamp(request.resource.data.dob) &&
+          optionalString(request.resource.data.provider) &&
+          optionalString(request.resource.data.lastDevice) &&
+          optionalString(request.resource.data.appVersion) &&
+          optionalString(request.resource.data.timezone) &&
+          optionalInt(request.resource.data.timezoneOffsetMinutes) &&
+          optionalTimestamp(request.resource.data.lastLogin) &&
+          optionalTimestamp(request.resource.data.updatedAt);
+    }
+
+    function validNewUserDocument(userId) {
+      return validUserDocument(userId) &&
+          request.resource.data.currentLesson == 1 &&
+          request.resource.data.currentLessonStepIndex == 0 &&
+          request.resource.data.xp == 0 &&
+          request.resource.data.lessonsCompleted == 0 &&
+          request.resource.data.todayLessonCount == 0 &&
+          request.resource.data.todayLessonCountDate == null &&
+          request.resource.data.dailyStreak == 0 &&
+          request.resource.data.lastDailyLessonDate == null;
+    }
+
+    function validMetadataUpdate() {
+      return validUserDocument(request.auth.uid) &&
+          onlyTouches(metadataUpdateKeys()) &&
+          sameValue('uid') &&
+          sameValue('joinedAt') &&
+          sameValue('currentLesson') &&
+          sameValue('currentLessonStepIndex') &&
+          sameValue('xp') &&
+          sameValue('lessonsCompleted') &&
+          sameValue('todayLessonCount') &&
+          sameValue('todayLessonCountDate') &&
+          sameValue('dailyStreak') &&
+          sameValue('lastDailyLessonDate');
+    }
+
+    function validResumeUpdate() {
+      return validUserDocument(request.auth.uid) &&
+          onlyTouches(resumeKeys()) &&
+          sameValue('uid') &&
+          sameValue('joinedAt') &&
+          sameValue('currentLesson') &&
+          sameValue('xp') &&
+          sameValue('lessonsCompleted') &&
+          sameValue('todayLessonCount') &&
+          sameValue('todayLessonCountDate') &&
+          sameValue('dailyStreak') &&
+          sameValue('lastDailyLessonDate') &&
+          request.resource.data.currentLessonStepIndex is int &&
+          request.resource.data.currentLessonStepIndex >= 0;
+    }
+
+    function validProgressionSummaryUpdate() {
+      let sameDay = request.resource.data.todayLessonCountDate ==
+          resource.data.todayLessonCountDate;
+      let isNewDay = request.resource.data.todayLessonCountDate !=
+          resource.data.todayLessonCountDate;
+
+      return validUserDocument(request.auth.uid) &&
+          onlyTouches(progressionSummaryKeys()) &&
+          sameValue('uid') &&
+          sameValue('joinedAt') &&
+          sameValue('name') &&
+          sameValue('email') &&
+          sameValue('photoUrl') &&
+          sameValue('provider') &&
+          sameValue('dob') &&
+          sameValue('lastDevice') &&
+          sameValue('appVersion') &&
+          sameValue('timezone') &&
+          sameValue('timezoneOffsetMinutes') &&
+          sameValue('lastLogin') &&
+          request.resource.data.lessonsCompleted ==
+              resource.data.lessonsCompleted + 1 &&
+          request.resource.data.xp == resource.data.xp + 50 &&
+          request.resource.data.currentLesson >= resource.data.currentLesson &&
+          request.resource.data.currentLesson <= resource.data.currentLesson + 1 &&
+          request.resource.data.currentLessonStepIndex == 0 &&
+          (
+            (
+              sameDay &&
+              request.resource.data.todayLessonCount ==
+                  resource.data.todayLessonCount + 1 &&
+              request.resource.data.dailyStreak == resource.data.dailyStreak &&
+              request.resource.data.lastDailyLessonDate ==
+                  resource.data.lastDailyLessonDate
+            ) ||
+            (
+              isNewDay &&
+              request.resource.data.todayLessonCount == 1 &&
+              request.resource.data.lastDailyLessonDate ==
+                  request.resource.data.todayLessonCountDate &&
+              (
+                request.resource.data.dailyStreak == 1 ||
+                request.resource.data.dailyStreak ==
+                    resource.data.dailyStreak + 1
+              )
+            )
+          );
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+          validNewUserDocument(userId);
+
+      allow update: if isOwner(userId) &&
+          (
+            validMetadataUpdate() ||
+            validResumeUpdate() ||
+            validProgressionSummaryUpdate()
+          );
     }
 
     match /{document=**} {
