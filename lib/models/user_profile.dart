@@ -7,14 +7,20 @@ class UserProfile {
   final String? email;
   final String? photoUrl;
   final DateTime joinedAt;
-  final String? currentLesson;
-  final int streak;
+  final int currentLesson;
+  final int currentLessonStepIndex;
   final int xp;
-  final int lessonsCompleted; // ✅ NEW
+  final int lessonsCompleted;
+  final int todayLessonCount;
+  final String? todayLessonCountDate;
+  final int dailyStreak;
+  final String? lastDailyLessonDate;
   final DateTime? dob;
-  final String? provider; // ✅ NEW
-  final String? lastDevice; // ✅ NEW
-  final String? appVersion; // ✅ NEW
+  final String? provider;
+  final String? lastDevice;
+  final String? appVersion;
+  final String? timezone;
+  final int? timezoneOffsetMinutes;
 
   UserProfile({
     required this.uid,
@@ -22,14 +28,20 @@ class UserProfile {
     this.email,
     this.photoUrl,
     required this.joinedAt,
-    this.currentLesson,
-    this.streak = 0,
+    this.currentLesson = 1,
+    this.currentLessonStepIndex = 0,
     this.xp = 0,
-    this.lessonsCompleted = 0, // ✅ NEW default
+    this.lessonsCompleted = 0,
+    this.todayLessonCount = 0,
+    this.todayLessonCountDate,
+    this.dailyStreak = 0,
+    this.lastDailyLessonDate,
     this.dob,
     this.provider,
     this.lastDevice,
     this.appVersion,
+    this.timezone,
+    this.timezoneOffsetMinutes,
   });
 
   Map<String, dynamic> toMap() {
@@ -40,13 +52,19 @@ class UserProfile {
       'photoUrl': photoUrl,
       'joinedAt': Timestamp.fromDate(joinedAt),
       'currentLesson': currentLesson,
-      'streak': streak,
+      'currentLessonStepIndex': currentLessonStepIndex,
       'xp': xp,
-      'lessonsCompleted': lessonsCompleted, // ✅ NEW
+      'lessonsCompleted': lessonsCompleted,
+      'todayLessonCount': todayLessonCount,
+      'todayLessonCountDate': todayLessonCountDate,
+      'dailyStreak': dailyStreak,
+      'lastDailyLessonDate': lastDailyLessonDate,
       'dob': dob != null ? Timestamp.fromDate(dob!) : null,
       'provider': provider,
       'lastDevice': lastDevice,
       'appVersion': appVersion,
+      'timezone': timezone,
+      'timezoneOffsetMinutes': timezoneOffsetMinutes,
     };
   }
 
@@ -59,10 +77,26 @@ class UserProfile {
       joinedAt: (map['joinedAt'] is Timestamp)
           ? (map['joinedAt'] as Timestamp).toDate()
           : DateTime.tryParse(map['joinedAt'].toString()) ?? DateTime.now(),
-      currentLesson: map['currentLesson'],
-      streak: map['streak'] ?? 0,
-      xp: map['xp'] ?? 0,
-      lessonsCompleted: map['lessonsCompleted'] ?? 0, // ✅ NEW
+      currentLesson: (map['currentLesson'] ?? 1) is int
+          ? map['currentLesson'] ?? 1
+          : int.tryParse(map['currentLesson'].toString()) ?? 1,
+      currentLessonStepIndex: (map['currentLessonStepIndex'] ?? 0) is int
+          ? map['currentLessonStepIndex'] ?? 0
+          : int.tryParse(map['currentLessonStepIndex'].toString()) ?? 0,
+      xp: (map['xp'] ?? 0) is int
+          ? map['xp'] ?? 0
+          : int.tryParse(map['xp'].toString()) ?? 0,
+      lessonsCompleted: (map['lessonsCompleted'] ?? 0) is int
+          ? map['lessonsCompleted'] ?? 0
+          : int.tryParse(map['lessonsCompleted'].toString()) ?? 0,
+      todayLessonCount: (map['todayLessonCount'] ?? 0) is int
+          ? map['todayLessonCount'] ?? 0
+          : int.tryParse(map['todayLessonCount'].toString()) ?? 0,
+      todayLessonCountDate: map['todayLessonCountDate'],
+      dailyStreak: (map['dailyStreak'] ?? 0) is int
+          ? map['dailyStreak'] ?? 0
+          : int.tryParse(map['dailyStreak'].toString()) ?? 0,
+      lastDailyLessonDate: map['lastDailyLessonDate'],
       dob: map['dob'] != null
           ? (map['dob'] is Timestamp
               ? (map['dob'] as Timestamp).toDate()
@@ -71,6 +105,10 @@ class UserProfile {
       provider: map['provider'],
       lastDevice: map['lastDevice'],
       appVersion: map['appVersion'],
+      timezone: map['timezone'],
+      timezoneOffsetMinutes: (map['timezoneOffsetMinutes'] is int)
+          ? map['timezoneOffsetMinutes']
+          : int.tryParse(map['timezoneOffsetMinutes']?.toString() ?? ''),
     );
   }
 }
