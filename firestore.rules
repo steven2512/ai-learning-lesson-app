@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function hasOnlyKeys(data, allowedKeys) {
+      return data.keys().hasOnly(allowedKeys);
+    }
+
+    function hasAllKeys(data, requiredKeys) {
+      return data.keys().hasAll(requiredKeys);
+    }
+
+    function optionalString(value) {
+      return value == null || value is string;
+    }
+
+    function optionalInt(value) {
+      return value == null || value is int;
+    }
+
+    function optionalTimestamp(value) {
+      return value == null || value is timestamp;
+    }
+
+    function userKeys() {
+      return [
+        'uid',
+        'name',
+        'email',
+        'photoUrl',
+        'joinedAt',
+        'lastLogin',
+        'provider',
+        'dob',
+        'currentLesson',
+        'currentLessonStepIndex',
+        'xp',
+        'lessonsCompleted',
+        'todayLessonCount',
+        'todayLessonCountDate',
+        'dailyStreak',
+        'lastDailyLessonDate',
+        'lastDevice',
+        'appVersion',
+        'timezone',
+        'timezoneOffsetMinutes',
+        'updatedAt'
+      ];
+    }
+
+    function lessonProgressKeys() {
+      return [
+        'lessonId',
+        'courseId',
+        'chapterId',
+        'globalLessonNumber',
+        'startedAt',
+        'lastActiveAt',
+        'completedAt',
+        'isCompleted',
+        'completedCount'
+      ];
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
