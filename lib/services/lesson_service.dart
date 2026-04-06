@@ -17,6 +17,26 @@ class LessonLaunchState {
   });
 }
 
+class LessonCompletionResult {
+  final bool firstCompletion;
+  final int completedCount;
+  final int xpAwarded;
+  final int currentLesson;
+  final int lessonsCompleted;
+  final int todayLessonCount;
+  final int dailyStreak;
+
+  const LessonCompletionResult({
+    required this.firstCompletion,
+    required this.completedCount,
+    required this.xpAwarded,
+    required this.currentLesson,
+    required this.lessonsCompleted,
+    required this.todayLessonCount,
+    required this.dailyStreak,
+  });
+}
+
 class LessonService {
   static final _firestore = FirebaseFirestore.instance;
   static final _auth = FirebaseAuth.instance;
@@ -80,15 +100,25 @@ class LessonService {
     );
   }
 
-  static Future<void> completeLesson({
+  static Future<LessonCompletionResult> completeLesson({
     required String courseId,
     required String chapterId,
     required String lessonId,
     required int globalLessonNumber,
   }) async {
-    await _callProgressionFunction(
+    final data = await _callProgressionFunction(
       'completeLesson',
       {'lessonId': lessonId},
+    );
+
+    return LessonCompletionResult(
+      firstCompletion: data['firstCompletion'] == true,
+      completedCount: _readInt(data['completedCount'], fallback: 1),
+      xpAwarded: _readInt(data['xpAwarded'], fallback: 0),
+      currentLesson: _readInt(data['currentLesson'], fallback: 1),
+      lessonsCompleted: _readInt(data['lessonsCompleted'], fallback: 0),
+      todayLessonCount: _readInt(data['todayLessonCount'], fallback: 0),
+      dailyStreak: _readInt(data['dailyStreak'], fallback: 0),
     );
   }
 

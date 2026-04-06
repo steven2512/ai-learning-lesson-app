@@ -5,6 +5,7 @@ import 'package:running_robot/core/lesson_manifest.dart';
 import 'package:running_robot/core/lesson_navigator.dart';
 import 'package:running_robot/core/lesson_steps.dart';
 import 'package:running_robot/core/lesson_locator.dart'; // 👈 NEW
+import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart';
 import 'package:running_robot/services/lesson_service.dart';
 
@@ -123,8 +124,8 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
     );
   }
 
-  Future<void> completeLesson() async {
-    await LessonService.completeLesson(
+  Future<LessonCompletionResult> completeLesson() async {
+    return LessonService.completeLesson(
       courseId: widget.courseId,
       chapterId: widget.chapterId,
       lessonId: widget.lessonId,
@@ -145,8 +146,15 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
 
       await saveCurrentLessonStep(nextIndex);
     } else {
-      await completeLesson();
-      LessonNavigator.complete(widget.lessonId, widget.onNavigate);
+      final completion = await completeLesson();
+      final progression = ProgressionScope.read(context);
+      await progression.refresh();
+      LessonNavigator.complete(
+        widget.lessonId,
+        widget.onNavigate,
+        progression: progression,
+        completion: completion,
+      );
     }
   }
 
