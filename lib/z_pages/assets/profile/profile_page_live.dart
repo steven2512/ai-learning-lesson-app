@@ -292,6 +292,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: showSkeleton
                 ? const _ProfileSkeletonView()
                 : ListView(
+                    physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(18, 10, 18, 96),
                     children: [
                       _ProfileHero(
@@ -1127,6 +1128,7 @@ class _ProfileSkeletonView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 96),
       children: [
         Container(
