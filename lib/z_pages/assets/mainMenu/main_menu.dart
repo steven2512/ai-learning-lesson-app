@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/core/progression_scope.dart';
+import 'package:running_robot/core/loading_skeleton.dart';
 import 'package:running_robot/core/widgets.dart'; // ✅ use central screen size
 import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart';
@@ -33,6 +34,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   @override
   Widget build(BuildContext context) {
     final progression = ProgressionScope.watch(context);
+    final showSkeleton = !progression.hasSnapshot;
     final currentLesson = progression.currentLessonMeta;
     final currentLessonNumber = progression.currentLessonNumber;
     final currentLessonId = currentLesson?.id;
@@ -69,20 +71,25 @@ class _MainMenuPageState extends State<MainMenuPage> {
       body: Stack(
         children: [
           _buildBackground(),
-          const HeaderGreeting(),
-          if (progression.isLoading && progression.snapshot == null)
-            const Center(child: CircularProgressIndicator()),
-          _buildMainContent(
-            boxHeight1: boxHeight1,
-            boxHeight2: boxHeight2,
-            sectionSpacing: sectionSpacing,
-            streakSpacing: streakSpacing,
-            progression: progression,
-            streakStates: streakStates,
-            lessonButtonText: lessonButtonText,
-            currentLessonTitle: currentLesson?.title ?? 'Introduction to AI',
-            currentLessonNumber: currentLessonNumber,
-          ),
+          if (showSkeleton) const AppHeaderSkeleton() else const HeaderGreeting(),
+          if (showSkeleton)
+            _buildSkeletonContent(
+              boxHeight1: boxHeight1,
+              boxHeight2: boxHeight2,
+              streakSpacing: streakSpacing,
+            )
+          else
+            _buildMainContent(
+              boxHeight1: boxHeight1,
+              boxHeight2: boxHeight2,
+              sectionSpacing: sectionSpacing,
+              streakSpacing: streakSpacing,
+              progression: progression,
+              streakStates: streakStates,
+              lessonButtonText: lessonButtonText,
+              currentLessonTitle: currentLesson?.title ?? 'Introduction to AI',
+              currentLessonNumber: currentLessonNumber,
+            ),
         ],
       ),
     );
@@ -90,6 +97,58 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
   Widget _buildBackground() => const Positioned.fill(
         child: ColoredBox(color: Colors.white),
+      );
+
+  Widget _buildSkeletonContent({
+    required double boxHeight1,
+    required double boxHeight2,
+    required double streakSpacing,
+  }) =>
+      Positioned(
+        top: 130,
+        left: 30,
+        right: 30,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _WeeklyStreakSkeleton(),
+            SizedBox(height: streakSpacing),
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                "Learning Hub",
+                style: GoogleFonts.lato(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            _LessonCardSkeleton(height: boxHeight1),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: boxHeight2 * 1.02,
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _MetricRingCardSkeleton(
+                      labelWidth: 82,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricRingCardSkeleton(
+                      labelWidth: 64,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
   Widget _buildMainContent({
@@ -244,6 +303,197 @@ class _MainMenuPageState extends State<MainMenuPage> {
           ],
         ),
       );
+}
+
+class _WeeklyStreakSkeleton extends StatelessWidget {
+  const _WeeklyStreakSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            LoadingSkeleton.circle(size: 25),
+            SizedBox(width: 8),
+            LoadingSkeleton(width: 118, height: 28),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(
+            7,
+            (_) => const SizedBox(
+              width: 34,
+              child: Column(
+                children: [
+                  LoadingSkeleton(width: 34, height: 34),
+                  SizedBox(height: 6),
+                  LoadingSkeleton(width: 24, height: 10),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LessonCardSkeleton extends StatelessWidget {
+  final double height;
+
+  const _LessonCardSkeleton({
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      child: Stack(
+        children: [
+          const Positioned(
+            left: 0,
+            right: 34,
+            top: 0,
+            child: LoadingSkeleton(height: 13),
+          ),
+          const Positioned(
+            right: 0,
+            top: -1,
+            child: LoadingSkeleton(width: 34, height: 14),
+          ),
+          const Positioned(
+            left: 0,
+            top: 46,
+            child: LoadingSkeleton(width: 182, height: 26),
+          ),
+          const Positioned(
+            left: 0,
+            top: 82,
+            child: LoadingSkeleton(width: 92, height: 14),
+          ),
+          const Positioned(
+            left: 0,
+            bottom: 0,
+            child: LoadingSkeleton(width: 146, height: 48),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Column(
+              children: const [
+                LoadingSkeleton.circle(size: 72),
+                SizedBox(height: 8),
+                LoadingSkeleton(width: 64, height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricRingCardSkeleton extends StatelessWidget {
+  final double labelWidth;
+
+  const _MetricRingCardSkeleton({
+    required this.labelWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 1,
+            offset: Offset(0, 1),
+          ),
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          LoadingSkeleton(width: labelWidth, height: 30),
+          const Spacer(),
+          const _RingSkeleton(size: 100),
+        ],
+      ),
+    );
+  }
+}
+
+class _RingSkeleton extends StatelessWidget {
+  final double size;
+
+  const _RingSkeleton({
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFFE8EDF3),
+                width: 11,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x05000000),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+          const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LoadingSkeleton(width: 28, height: 28),
+              SizedBox(height: 6),
+              LoadingSkeleton(width: 30, height: 12),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MetricRingCard extends StatelessWidget {
