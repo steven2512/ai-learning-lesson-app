@@ -53,12 +53,14 @@ class WeeklyStreak extends StatelessWidget {
   final int streakCount;
   final List<StreakDayState> states; // exactly 7
   final bool startOnMonday;
+  final DateTime? now;
 
   const WeeklyStreak({
     super.key,
     required this.streakCount,
     required this.states,
     this.startOnMonday = true,
+    this.now,
   });
 
   @override
@@ -68,6 +70,8 @@ class WeeklyStreak extends StatelessWidget {
     final days = startOnMonday
         ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         : const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final today = now ?? DateTime.now();
+    final todayIndex = startOnMonday ? today.weekday - 1 : today.weekday % 7;
 
     return LayoutBuilder(
       builder: (context, c) {
@@ -124,6 +128,7 @@ class WeeklyStreak extends StatelessWidget {
                   label: days[i],
                   state: states[i],
                   size: token,
+                  isToday: i == todayIndex,
                 );
               }),
             ),
@@ -138,11 +143,13 @@ class _DayToken extends StatelessWidget {
   final String label;
   final StreakDayState state;
   final double size;
+  final bool isToday;
 
   const _DayToken({
     required this.label,
     required this.state,
     required this.size,
+    required this.isToday,
   });
 
   @override
@@ -156,12 +163,33 @@ class _DayToken extends StatelessWidget {
           Stack(
             alignment: Alignment.center,
             children: [
+              if (isToday)
+                Container(
+                  width: newSize + 8,
+                  height: newSize + 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD84D).withValues(alpha: 0.28),
+                        blurRadius: 12,
+                        spreadRadius: 1.5,
+                      ),
+                    ],
+                  ),
+                ),
               Container(
                 width: newSize,
                 height: newSize,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  border: isToday
+                      ? Border.all(
+                          color: const Color(0xFFFFC72C),
+                          width: 2.2,
+                        )
+                      : null,
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x14000000),
