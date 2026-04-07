@@ -6,7 +6,6 @@ import 'package:running_robot/core/loading_skeleton.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/services/user_profile_service.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/circle_progress.dart';
 import 'package:running_robot/z_pages/assets/settings/settings_page_live.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -258,13 +257,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final profile = progression.profile;
     final showSkeleton = !progression.hasSnapshot;
     final xp = progression.totalXp;
-    final level = (xp ~/ 120) + 1;
-    final levelProgress = (xp % 120) / 120;
-    final totalLessons = progression.totalLessonCount;
     final completedLessons = progression.lessonsCompleted;
-    final courseProgress = totalLessons == 0
-        ? 0.0
-        : (completedLessons / totalLessons).clamp(0.0, 1.0);
     final completionStepsLeft = [
       if ((profile?.name ?? '').trim().isEmpty) 'name',
       if (profile?.dob == null) 'birthday',
@@ -307,48 +300,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         onOpenSettings: _openSettings,
                         onEditProfile: _openEditProfileSheet,
                       ),
-                      const SizedBox(height: 18),
-                      _CourseJourneyCard(
-                        progress: courseProgress,
-                        progressPercent:
-                            progression.courseProgressPercent.clamp(0, 100),
-                        currentLesson: progression.currentLessonNumber,
-                        totalLessons: totalLessons,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _MetricRingProfileCard(
-                              icon: Icons.menu_book_rounded,
-                              title: 'Today',
-                              ringColor: const Color(0xFF1CB0F6),
-                              trackColor: const Color(0xFFE6F5FE),
-                              progress:
-                                  (progression.todayLessonCount / 3).clamp(
-                                0.0,
-                                1.0,
-                              ),
-                              value: progression.todayLessonCount.toString(),
-                              caption: 'lessons',
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _MetricRingProfileCard(
-                              icon: Icons.bolt_rounded,
-                              title: 'Level',
-                              ringColor: const Color(0xFFFFB020),
-                              trackColor: const Color(0xFFFFF1D9),
-                              progress: levelProgress,
-                              value: level.toString(),
-                              caption: 'lvl',
-                            ),
-                          ),
-                        ],
-                      ),
                       if (completionStepsLeft > 0) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
                         _ProfileCompletionCard(
                           stepsLeft: completionStepsLeft,
                           onTap: _openEditProfileSheet,
@@ -706,222 +659,6 @@ class _HeroStatPill extends StatelessWidget {
   }
 }
 
-class _CourseJourneyCard extends StatelessWidget {
-  final double progress;
-  final int progressPercent;
-  final int currentLesson;
-  final int totalLessons;
-
-  const _CourseJourneyCard({
-    required this.progress,
-    required this.progressPercent,
-    required this.currentLesson,
-    required this.totalLessons,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF4F53B8),
-            Color(0xFF6C7AE4),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x143D4FC1),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.auto_graph_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Course journey',
-                      style: GoogleFonts.lato(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '$progressPercent%',
-                style: GoogleFonts.lato(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFFFFF2A6),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Lesson $currentLesson of $totalLessons',
-            style: GoogleFonts.lato(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 0.95,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            progressPercent == 0
-                ? "You're just getting started. Keep the momentum going."
-                : "You're doing well. Keep the momentum going.",
-            style: GoogleFonts.lato(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.82),
-            ),
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 14,
-              backgroundColor: Colors.white.withValues(alpha: 0.24),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFFFFDF73),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricRingProfileCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Color ringColor;
-  final Color trackColor;
-  final double progress;
-  final String value;
-  final String caption;
-
-  const _MetricRingProfileCard({
-    required this.icon,
-    required this.title,
-    required this.ringColor,
-    required this.trackColor,
-    required this.progress,
-    required this.value,
-    required this.caption,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 14,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: ringColor),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          CircleProgress(
-            percent: progress,
-            size: 118,
-            strokeWidth: 12,
-            progressColor: ringColor,
-            trackColor: trackColor,
-            onTap: () {},
-            center: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: GoogleFonts.lato(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF0F172A),
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  caption,
-                  style: GoogleFonts.lato(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF94A3B8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProfileCompletionCard extends StatelessWidget {
   final int stepsLeft;
   final VoidCallback onTap;
@@ -1077,17 +814,6 @@ class _ProfileSkeletonView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const LoadingSkeleton(height: 190),
-        const SizedBox(height: 16),
-        const Row(
-          children: [
-            Expanded(child: LoadingSkeleton(height: 190)),
-            SizedBox(width: 12),
-            Expanded(child: LoadingSkeleton(height: 190)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const LoadingSkeleton(height: 146),
       ],
     );
   }
