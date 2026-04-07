@@ -302,24 +302,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         photoUrl: profile?.photoUrl,
                         xp: xp,
                         streak: progression.dailyStreak,
+                        completedLessons: completedLessons,
                         currentLesson: progression.currentLessonNumber,
                         onOpenSettings: _openSettings,
                         onEditProfile: _openEditProfileSheet,
                       ),
                       const SizedBox(height: 18),
-                      _OverviewGrid(
-                        streak: progression.dailyStreak,
-                        xp: xp,
-                        completedLessons: completedLessons,
-                      ),
-                      const SizedBox(height: 16),
                       _CourseJourneyCard(
                         progress: courseProgress,
                         progressPercent:
                             progression.courseProgressPercent.clamp(0, 100),
                         currentLesson: progression.currentLessonNumber,
                         totalLessons: totalLessons,
-                        currentStep: progression.currentLessonStepIndex,
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -402,6 +396,7 @@ class _ProfileHero extends StatelessWidget {
   final String? photoUrl;
   final int xp;
   final int streak;
+  final int completedLessons;
   final int currentLesson;
   final VoidCallback onOpenSettings;
   final VoidCallback onEditProfile;
@@ -413,6 +408,7 @@ class _ProfileHero extends StatelessWidget {
     required this.photoUrl,
     required this.xp,
     required this.streak,
+    required this.completedLessons,
     required this.currentLesson,
     required this.onOpenSettings,
     required this.onEditProfile,
@@ -450,18 +446,6 @@ class _ProfileHero extends StatelessWidget {
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF334155),
               onTap: onOpenSettings,
-            ),
-          ),
-          Positioned(
-            top: -12,
-            left: -18,
-            child: Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1CB0F6).withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
             ),
           ),
           Column(
@@ -522,6 +506,11 @@ class _ProfileHero extends StatelessWidget {
                     iconColor: const Color(0xFF1CB0F6),
                     label: 'Lesson $currentLesson',
                   ),
+                  _HeroStatPill(
+                    icon: Icons.flag_rounded,
+                    iconColor: const Color(0xFF58CC02),
+                    label: '$completedLessons done',
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -575,6 +564,7 @@ class _AvatarBadge extends StatelessWidget {
       height: 94,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
+        color: Colors.white,
         border: Border.all(color: Colors.white, width: 5),
         boxShadow: const [
           BoxShadow(
@@ -710,121 +700,17 @@ class _HeroStatPill extends StatelessWidget {
   }
 }
 
-class _OverviewGrid extends StatelessWidget {
-  final int streak;
-  final int xp;
-  final int completedLessons;
-
-  const _OverviewGrid({
-    required this.streak,
-    required this.xp,
-    required this.completedLessons,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _OverviewStatCard(
-            icon: Icons.local_fire_department_rounded,
-            iconColor: const Color(0xFFFF8A00),
-            value: streak.toString(),
-            label: 'Streak',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _OverviewStatCard(
-            icon: Icons.bolt_rounded,
-            iconColor: const Color(0xFFFFB020),
-            value: xp.toString(),
-            label: 'XP',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _OverviewStatCard(
-            icon: Icons.flag_rounded,
-            iconColor: const Color(0xFF58CC02),
-            value: completedLessons.toString(),
-            label: 'Done',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OverviewStatCard extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String value;
-  final String label;
-
-  const _OverviewStatCard({
-    required this.icon,
-    required this.iconColor,
-    required this.value,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 14,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(height: 18),
-          Text(
-            value,
-            style: GoogleFonts.lato(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.lato(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CourseJourneyCard extends StatelessWidget {
   final double progress;
   final int progressPercent;
   final int currentLesson;
   final int totalLessons;
-  final int currentStep;
 
   const _CourseJourneyCard({
     required this.progress,
     required this.progressPercent,
     required this.currentLesson,
     required this.totalLessons,
-    required this.currentStep,
   });
 
   @override
@@ -906,7 +792,9 @@ class _CourseJourneyCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Step ${currentStep + 1} is where you jump back in.',
+            progressPercent == 0
+                ? "You're just getting started. Keep the momentum going."
+                : "You're doing well. Keep the momentum going.",
             style: GoogleFonts.lato(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -1174,22 +1062,13 @@ class _ProfileSkeletonView extends StatelessWidget {
                   LoadingSkeleton(width: 110, height: 38),
                   LoadingSkeleton(width: 110, height: 38),
                   LoadingSkeleton(width: 94, height: 38),
+                  LoadingSkeleton(width: 102, height: 38),
                 ],
               ),
               const SizedBox(height: 18),
               const LoadingSkeleton(height: 48),
             ],
           ),
-        ),
-        const SizedBox(height: 18),
-        const Row(
-          children: [
-            Expanded(child: LoadingSkeleton(height: 124)),
-            SizedBox(width: 10),
-            Expanded(child: LoadingSkeleton(height: 124)),
-            SizedBox(width: 10),
-            Expanded(child: LoadingSkeleton(height: 124)),
-          ],
         ),
         const SizedBox(height: 16),
         const LoadingSkeleton(height: 190),
