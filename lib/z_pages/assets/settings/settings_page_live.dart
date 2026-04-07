@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/loading_skeleton.dart';
 import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/services/auth_account_service.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -92,26 +91,38 @@ class _SettingsPageState extends State<SettingsPage> {
         AuthAccountService.supportsPasswordReset(effectiveProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: ColoredBox(color: Colors.white)),
-          if (showSkeleton) const AppHeaderSkeleton() else const HeaderGreeting(),
-          if (showSkeleton)
-            const _SettingsSkeletonView()
-          else
+      backgroundColor: const Color(0xFFF8FBFF),
+      body: SafeArea(
+        child: Stack(
+          children: [
             Positioned.fill(
-              top: 140,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Container(
+                color: const Color(0xFFF8FBFF),
+              ),
+            ),
+            if (showSkeleton)
+              const _SettingsSkeletonView()
+            else
+              ListView(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
                 children: [
+                  _SettingsTopBar(onClose: () => Navigator.of(context).pop()),
+                  const SizedBox(height: 14),
+                  _SettingsHeroCard(
+                    email: profile?.email ?? firebaseUser?.email ?? 'Unknown',
+                    provider:
+                        AuthAccountService.providerLabel(effectiveProvider),
+                    timezone: profile?.timezone ?? 'Unknown',
+                  ),
+                  const SizedBox(height: 18),
                   _SettingsSection(
                     title: 'Account',
                     children: [
                       _InfoTile(
-                        icon: Icons.mail_outline,
+                        icon: Icons.mail_outline_rounded,
                         title: 'Email',
-                        value: profile?.email ?? firebaseUser?.email ?? 'Unknown',
+                        value:
+                            profile?.email ?? firebaseUser?.email ?? 'Unknown',
                       ),
                       _InfoTile(
                         icon: Icons.badge_outlined,
@@ -124,8 +135,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: 'Date of Birth',
                         value: _displayDate(profile?.dob),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsSection(
+                    title: 'Data',
+                    children: [
                       _ActionTile(
-                        icon: Icons.refresh,
+                        icon: Icons.refresh_rounded,
                         title: 'Refresh Account Data',
                         subtitle:
                             'Pull the latest saved progression from Firebase.',
@@ -136,9 +153,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       if (canResetPassword)
                         _ActionTile(
-                          icon: Icons.password_outlined,
+                          icon: Icons.password_rounded,
                           title: 'Send Password Reset Email',
-                          subtitle: 'Email a reset link to your account address.',
+                          subtitle:
+                              'Email a reset link to your account address.',
                           trailingLabel:
                               _isResettingPassword ? 'Sending...' : null,
                           enabled: !_isResettingPassword,
@@ -148,75 +166,201 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 16),
                   _SettingsSection(
-                    title: 'Learning Progress',
-                    children: [
-                      _InfoTile(
-                        icon: Icons.auto_stories_outlined,
-                        title: 'Current Lesson',
-                        value: 'Lesson ${progression.currentLessonNumber}',
-                      ),
-                      _InfoTile(
-                        icon: Icons.flag_outlined,
-                        title: 'Lessons Completed',
-                        value: progression.lessonsCompleted.toString(),
-                      ),
-                      _InfoTile(
-                        icon: Icons.bolt_outlined,
-                        title: 'XP',
-                        value: progression.totalXp.toString(),
-                      ),
-                      _InfoTile(
-                        icon: Icons.local_fire_department_outlined,
-                        title: 'Daily Streak',
-                        value: progression.dailyStreak.toString(),
-                      ),
-                      _InfoTile(
-                        icon: Icons.today_outlined,
-                        title: 'Lessons Today',
-                        value: progression.todayLessonCount.toString(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsSection(
                     title: 'App',
                     children: [
                       _InfoTile(
-                        icon: Icons.info_outline,
+                        icon: Icons.info_outline_rounded,
                         title: 'Version',
-                        value:
-                            profile?.appVersion ?? AuthAccountService.appVersion,
+                        value: profile?.appVersion ??
+                            AuthAccountService.appVersion,
                       ),
                       _InfoTile(
-                        icon: Icons.public_outlined,
+                        icon: Icons.public_rounded,
                         title: 'Timezone',
                         value: profile?.timezone ?? 'Unknown',
                       ),
                       _InfoTile(
-                        icon: Icons.phone_android_outlined,
+                        icon: Icons.phone_android_rounded,
                         title: 'Last Device',
                         value: profile?.lastDevice ?? 'Unknown',
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: TextButton(
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
                       onPressed: _isLoggingOut ? null : _logOut,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF4B4B),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: Text(
                         _isLoggingOut ? 'Logging Out...' : 'Log Out',
                         style: GoogleFonts.lato(
-                          color: Colors.red,
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsTopBar extends StatelessWidget {
+  final VoidCallback onClose;
+
+  const _SettingsTopBar({
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Settings',
+            style: GoogleFonts.lato(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF14213D),
             ),
+          ),
+        ),
+        InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onClose,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Image.asset(
+              'assets/images/x_icon.png',
+              width: 18,
+              height: 18,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingsHeroCard extends StatelessWidget {
+  final String email;
+  final String provider;
+  final String timezone;
+
+  const _SettingsHeroCard({
+    required this.email,
+    required this.provider,
+    required this.timezone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFEAF7FF),
+            Color(0xFFF3FFF1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            email,
+            style: GoogleFonts.lato(
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF14213D),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _SettingsChip(
+                icon: Icons.verified_user_rounded,
+                color: const Color(0xFF1CB0F6),
+                label: provider,
+              ),
+              _SettingsChip(
+                icon: Icons.public_rounded,
+                color: const Color(0xFF58CC02),
+                label: timezone,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _SettingsChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF334155),
+            ),
+          ),
         ],
       ),
     );
@@ -228,21 +372,27 @@ class _SettingsSkeletonView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      top: 140,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        children: const [
-          _SettingsSkeletonSection(itemCount: 5),
-          SizedBox(height: 16),
-          _SettingsSkeletonSection(itemCount: 5),
-          SizedBox(height: 16),
-          _SettingsSkeletonSection(itemCount: 3),
-          SizedBox(height: 24),
-          Center(child: LoadingSkeleton(width: 96, height: 18)),
-          SizedBox(height: 24),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+      children: const [
+        Row(
+          children: [
+            Expanded(child: LoadingSkeleton(width: 120, height: 30)),
+            SizedBox(width: 12),
+            LoadingSkeleton(width: 44, height: 44),
+          ],
+        ),
+        SizedBox(height: 14),
+        LoadingSkeleton(height: 108),
+        SizedBox(height: 18),
+        _SettingsSkeletonSection(itemCount: 3),
+        SizedBox(height: 16),
+        _SettingsSkeletonSection(itemCount: 2),
+        SizedBox(height: 16),
+        _SettingsSkeletonSection(itemCount: 3),
+        SizedBox(height: 22),
+        LoadingSkeleton(height: 52),
+      ],
     );
   }
 }
@@ -261,13 +411,20 @@ class _SettingsSkeletonSection extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          child: LoadingSkeleton(width: 74, height: 12),
+          child: LoadingSkeleton(width: 90, height: 12),
         ),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x10000000),
+                blurRadius: 14,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          elevation: 1,
           child: Column(
             children: List.generate(
               itemCount,
@@ -314,17 +471,24 @@ class _SettingsSection extends StatelessWidget {
             title.toUpperCase(),
             style: GoogleFonts.lato(
               fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF94A3B8),
               letterSpacing: 1.2,
             ),
           ),
         ),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x10000000),
+                blurRadius: 14,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          elevation: 1,
           child: Column(children: children),
         ),
       ],
@@ -346,21 +510,21 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black87),
+      leading: Icon(icon, color: const Color(0xFF334155)),
       title: Text(
         title,
         style: GoogleFonts.lato(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
         ),
       ),
       subtitle: Text(
         value,
         style: GoogleFonts.lato(
           fontSize: 13,
-          fontWeight: FontWeight.w400,
-          color: Colors.black54,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF64748B),
         ),
       ),
     );
@@ -388,21 +552,21 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       enabled: enabled,
-      leading: Icon(icon, color: Colors.black87),
+      leading: Icon(icon, color: const Color(0xFF334155)),
       title: Text(
         title,
         style: GoogleFonts.lato(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
         ),
       ),
       subtitle: Text(
         subtitle,
         style: GoogleFonts.lato(
           fontSize: 13,
-          fontWeight: FontWeight.w400,
-          color: Colors.black54,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF64748B),
         ),
       ),
       trailing: trailingLabel != null
@@ -410,11 +574,11 @@ class _ActionTile extends StatelessWidget {
               trailingLabel!,
               style: GoogleFonts.lato(
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.black45,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF94A3B8),
               ),
             )
-          : const Icon(Icons.chevron_right, color: Colors.black26),
+          : const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
       onTap: enabled ? onTap : null,
     );
   }
