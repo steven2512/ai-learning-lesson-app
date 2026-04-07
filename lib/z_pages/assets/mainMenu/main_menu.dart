@@ -247,15 +247,16 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: const _MetricRingCard(
+                    child: _MetricRingCard(
                       icon: Icons.auto_awesome_rounded,
                       label: 'Level',
-                      ringColor: Color(0xFFF59E0B),
-                      ringTrackColor: Color(0xFFFFF1D6),
-                      iconColor: Color(0xFFF59E0B),
-                      progress: 0.62,
+                      ringColor: const Color(0xFFF59E0B),
+                      ringTrackColor: const Color(0xFFFFF1D6),
+                      iconColor: const Color(0xFFF59E0B),
+                      progress:
+                          ((progression.totalXp % 200) / 200).clamp(0.0, 1.0),
                       center: _RingValue(
-                        value: '5',
+                        value: progression.level.toString(),
                         caption: 'lvl',
                       ),
                     ),
