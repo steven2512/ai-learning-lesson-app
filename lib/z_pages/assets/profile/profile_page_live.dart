@@ -127,8 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         onTap: () async {
                           final picked = await showDatePicker(
                             context: context,
-                            initialDate:
-                                selectedDob ?? DateTime(2000, 1, 1),
+                            initialDate: selectedDob ?? DateTime(2000, 1, 1),
                             firstDate: DateTime(1950, 1, 1),
                             lastDate: DateTime.now(),
                           );
@@ -197,24 +196,25 @@ class _ProfilePageState extends State<ProfilePage> {
                           onPressed: _isSavingProfile
                               ? null
                               : () async {
+                                  final messenger =
+                                      ScaffoldMessenger.of(pageContext);
+                                  final progressionController =
+                                      ProgressionScope.read(pageContext);
                                   setState(() => _isSavingProfile = true);
                                   Navigator.of(context).pop();
                                   try {
-                                    await UserProfileService.updateEditableProfile(
+                                    await UserProfileService
+                                        .updateEditableProfile(
                                       name: nameController.text,
                                       dob: selectedDob,
                                     );
-                                    await ProgressionScope.read(pageContext)
-                                        .refresh();
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(pageContext)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content:
-                                              Text('Profile updated.'),
-                                        ),
-                                      );
-                                    }
+                                    await progressionController.refresh();
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Profile updated.'),
+                                      ),
+                                    );
                                   } finally {
                                     if (mounted) {
                                       setState(
@@ -567,9 +567,8 @@ class _AvatarBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = displayName.trim().isEmpty
-        ? 'P'
-        : displayName.trim()[0].toUpperCase();
+    final initial =
+        displayName.trim().isEmpty ? 'P' : displayName.trim()[0].toUpperCase();
 
     return Container(
       width: 94,
