@@ -162,6 +162,20 @@ class UserProfileService {
     }, SetOptions(merge: true));
   }
 
+  static Future<void> updateEditableProfile({
+    required String? name,
+    required DateTime? dob,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await userDoc(user.uid).set({
+      'name': name?.trim().isNotEmpty == true ? name!.trim() : null,
+      'dob': dob != null ? Timestamp.fromDate(dob) : null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   static Map<String, dynamic> _profileMetadataMap({
     required User user,
     required String? name,
