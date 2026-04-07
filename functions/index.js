@@ -12,6 +12,8 @@ admin.initializeApp();
 
 const db = admin.firestore();
 const LESSON_XP_REWARD = 50;
+const XP_PER_LEVEL = 200;
+const MAX_SESSION_SECONDS_PER_FLUSH = 60 * 60 * 4;
 
 function requireAuth(request) {
   if (!request.auth?.uid) {
@@ -57,6 +59,33 @@ function lessonDoc(uid, lessonId) {
   return userDoc(uid).collection("lessonProgress").doc(lessonId);
 }
 
+function levelForXp(xp) {
+  const safeXp = Math.max(0, readInt(xp, 0));
+  return Math.floor(safeXp / XP_PER_LEVEL) + 1;
+}
+
+function readTimestampMillis(value) {
+  if (value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  return null;
+}
+
+function sessionSecondsSince(lessonData) {
+  const startedAtMillis = readTimestampMillis(lessonData.activeSessionStartedAt);
+  if (startedAtMillis == null) {
+    return 0;
+  }
+
+  const elapsedSeconds = Math.floor((Date.now() - startedAtMillis) / 1000);
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) {
+    return 0;
+  }
+
+  return Math.min(elapsedSeconds, MAX_SESSION_SECONDS_PER_FLUSH);
+}
+
 function newLessonProgressPayload(lesson) {
   return {
     lessonId: lesson.lessonId,
@@ -64,6 +93,7 @@ function newLessonProgressPayload(lesson) {
     chapterId: lesson.chapterId,
     globalLessonNumber: lesson.globalLessonNumber,
     startedAt: admin.firestore.FieldValue.serverTimestamp(),
+    activeSessionStartedAt: admin.firestore.FieldValue.serverTimestamp(),
     lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
     isCompleted: false,
     completedAt: null,
@@ -71,13 +101,19 @@ function newLessonProgressPayload(lesson) {
   };
 }
 
-function lessonCompletionPayload(lessonData, lesson, completedCount, alreadyCompleted) {
+function lessonCompletionPayload(
+  lessonData,
+  lesson,
+  completedCount,
+  alreadyCompleted,
+) {
   return {
     lessonId: lesson.lessonId,
     courseId: lesson.courseId,
     chapterId: lesson.chapterId,
     globalLessonNumber: lesson.globalLessonNumber,
     startedAt: lessonData.startedAt ?? admin.firestore.FieldValue.serverTimestamp(),
+    activeSessionStartedAt: null,
     lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
     completedCount: completedCount + 1,
     ...(alreadyCompleted
@@ -92,6 +128,8 @@ function lessonCompletionPayload(lessonData, lesson, completedCount, alreadyComp
 function userCompletionSummaryPayload({
   lessonsCompleted,
   xp,
+  level,
+  totalLearningSeconds,
   todayLessonCount,
   todayKey,
   dailyStreak,
@@ -106,6 +144,8 @@ function userCompletionSummaryPayload({
     lastDailyLessonDate: todayKey,
     currentLesson,
     currentLessonStepIndex: 0,
+    level,
+    totalLearningSeconds,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 }
@@ -154,9 +194,10 @@ exports.startLesson = onCall(async (request) => {
     if (!lessonSnap.exists) {
       transaction.set(lessonRef, newLessonProgressPayload(lesson));
     } else {
-      transaction.update(lessonRef, {
+      transaction.set(lessonRef, {
+        activeSessionStartedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      }, { merge: true });
     }
 
     return {
@@ -197,6 +238,9 @@ exports.saveLessonProgress = onCall(async (request) => {
 
     const lessonData = lessonSnap.data() ?? {};
     const isCompleted = lessonData.isCompleted === true;
+    const elapsedSeconds = sessionSecondsSince(lessonData);
+    const totalLearningSeconds =
+      readInt(userData.totalLearningSeconds, 0) + elapsedSeconds;
 
     if (!lessonSnap.exists) {
       transaction.set(lessonRef, newLessonProgressPayload(lesson));
@@ -204,26 +248,93 @@ exports.saveLessonProgress = onCall(async (request) => {
       transaction.set(
         lessonRef,
         {
+          activeSessionStartedAt: admin.firestore.FieldValue.serverTimestamp(),
           lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true },
       );
     }
 
-    let savedStepIndex = 0;
+    let savedStepIndex = readInt(userData.currentLessonStepIndex, 0);
     if (currentLesson === lesson.globalLessonNumber && !isCompleted) {
       savedStepIndex = stepIndex;
-      transaction.set(
-        userRef,
-        {
-          currentLessonStepIndex: stepIndex,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true },
+    }
+
+    transaction.set(
+      userRef,
+      {
+        currentLessonStepIndex: savedStepIndex,
+        totalLearningSeconds,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return { savedStepIndex };
+  });
+
+  return response;
+});
+
+exports.pauseLessonSession = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const lesson = requireLesson(request.data);
+  const stepIndex = requireStepIndex(request.data);
+
+  const response = await db.runTransaction(async (transaction) => {
+    const userRef = userDoc(uid);
+    const lessonRef = lessonDoc(uid, lesson.lessonId);
+
+    const [userSnap, lessonSnap] = await Promise.all([
+      transaction.get(userRef),
+      transaction.get(lessonRef),
+    ]);
+
+    if (!userSnap.exists) {
+      throw new HttpsError(
+        "failed-precondition",
+        "User profile must exist before pausing a lesson session.",
       );
     }
 
-    return { savedStepIndex };
+    if (!lessonSnap.exists) {
+      return { totalLearningSeconds: readInt(userSnap.data()?.totalLearningSeconds, 0) };
+    }
+
+    const userData = userSnap.data() ?? {};
+    const currentLesson = readInt(userData.currentLesson, 1);
+    ensureUnlocked(currentLesson, lesson);
+
+    const lessonData = lessonSnap.data() ?? {};
+    const isCompleted = lessonData.isCompleted === true;
+    const elapsedSeconds = sessionSecondsSince(lessonData);
+    const totalLearningSeconds =
+      readInt(userData.totalLearningSeconds, 0) + elapsedSeconds;
+    const savedStepIndex =
+      currentLesson === lesson.globalLessonNumber && !isCompleted
+        ? stepIndex
+        : readInt(userData.currentLessonStepIndex, 0);
+
+    transaction.set(
+      lessonRef,
+      {
+        activeSessionStartedAt: null,
+        lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    transaction.set(
+      userRef,
+      {
+        currentLessonStepIndex: savedStepIndex,
+        totalLearningSeconds,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return { totalLearningSeconds };
   });
 
   return response;
@@ -256,6 +367,10 @@ exports.completeLesson = onCall(async (request) => {
     const lessonData = lessonSnap.data() ?? {};
     const alreadyCompleted = lessonData.isCompleted === true;
     const completedCount = readInt(lessonData.completedCount, 0);
+    const elapsedSeconds = sessionSecondsSince(lessonData);
+    const currentXp = readInt(userData.xp, 0);
+    const totalLearningSeconds =
+      readInt(userData.totalLearningSeconds, 0) + elapsedSeconds;
 
     transaction.set(
       lessonRef,
@@ -273,6 +388,7 @@ exports.completeLesson = onCall(async (request) => {
     let lessonsCompleted = readInt(userData.lessonsCompleted, 0);
     let todayLessonCount = readInt(userData.todayLessonCount, 0);
     let dailyStreak = readInt(userData.dailyStreak, 0);
+    let level = readInt(userData.level, levelForXp(currentXp));
 
     if (!alreadyCompleted) {
       const nextLesson = lesson.globalLessonNumber < TOTAL_LESSON_COUNT
@@ -280,7 +396,6 @@ exports.completeLesson = onCall(async (request) => {
         : lesson.globalLessonNumber;
       const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
       const todayLessonCountDate = userData.todayLessonCountDate ?? null;
-      const currentXp = readInt(userData.xp, 0);
       const lastDailyLessonDate = userData.lastDailyLessonDate ?? null;
       const isSameDay = todayLessonCountDate === todayKey;
       const nextTodayLessonCount = isSameDay ? todayLessonCount + 1 : 1;
@@ -295,17 +410,30 @@ exports.completeLesson = onCall(async (request) => {
       lessonsCompleted += 1;
       todayLessonCount = nextTodayLessonCount;
       dailyStreak = nextDailyStreak;
+      level = levelForXp(currentXp + LESSON_XP_REWARD);
 
       transaction.set(
         userRef,
         userCompletionSummaryPayload({
           lessonsCompleted: readInt(userData.lessonsCompleted, 0),
           xp: currentXp,
+          level,
+          totalLearningSeconds,
           todayLessonCount: nextTodayLessonCount,
           todayKey,
           dailyStreak: nextDailyStreak,
           currentLesson: nextCurrentLesson,
         }),
+        { merge: true },
+      );
+    } else {
+      transaction.set(
+        userRef,
+        {
+          totalLearningSeconds,
+          level,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
         { merge: true },
       );
     }
@@ -314,6 +442,8 @@ exports.completeLesson = onCall(async (request) => {
       firstCompletion: !alreadyCompleted,
       completedCount: completedCount + 1,
       xpAwarded,
+      level,
+      totalLearningSeconds,
       currentLesson: nextCurrentLesson,
       lessonsCompleted,
       todayLessonCount,

@@ -103,6 +103,34 @@ class LessonService {
     );
   }
 
+  static Future<void> pauseLessonSession({
+    required String lessonId,
+    required int globalLessonNumber,
+    required int stepIndex,
+  }) async {
+    final safeStepIndex = stepIndex < 0 ? 0 : stepIndex;
+
+    await _callProgressionFunction(
+      'pauseLessonSession',
+      {
+        'lessonId': lessonId,
+        'stepIndex': safeStepIndex,
+      },
+    );
+  }
+
+  static Future<void> resumeLessonSession({
+    required String courseId,
+    required String chapterId,
+    required String lessonId,
+    required int globalLessonNumber,
+  }) async {
+    await _callProgressionFunction(
+      'startLesson',
+      {'lessonId': lessonId},
+    );
+  }
+
   static Future<LessonCompletionResult> completeLesson({
     required String courseId,
     required String chapterId,
