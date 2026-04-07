@@ -258,6 +258,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final showSkeleton = !progression.hasSnapshot;
     final xp = progression.totalXp;
     final completedLessons = progression.lessonsCompleted;
+    final estimatedLearningMinutes = _estimatedLearningMinutes(
+      profile,
+      completedLessons,
+    );
     final completionStepsLeft = [
       if ((profile?.name ?? '').trim().isEmpty) 'name',
       if (profile?.dob == null) 'birthday',
@@ -298,7 +302,46 @@ class _ProfilePageState extends State<ProfilePage> {
                         completedLessons: completedLessons,
                         currentLesson: progression.currentLessonNumber,
                         onOpenSettings: _openSettings,
-                        onEditProfile: _openEditProfileSheet,
+                      ),
+                      const SizedBox(height: 18),
+                      _WeeklyStreakHeatCard(
+                        dailyStreak: progression.dailyStreak,
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ProfileStatCard(
+                              icon: Icons.schedule_rounded,
+                              iconColor: const Color(0xFF7F56D9),
+                              badgeColor: const Color(0xFFF4ECFF),
+                              title: 'Total time',
+                              value: _formatDurationLabel(
+                                estimatedLearningMinutes,
+                              ),
+                              subtitle: 'learning',
+                              gradient: const [
+                                Color(0xFFF8F3FF),
+                                Color(0xFFF1F6FF),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ProfileStatCard(
+                              icon: Icons.flag_rounded,
+                              iconColor: const Color(0xFFFF9F1C),
+                              badgeColor: const Color(0xFFFFF2DE),
+                              title: 'Total lessons',
+                              value: completedLessons.toString(),
+                              subtitle: 'completed',
+                              gradient: const [
+                                Color(0xFFFFF7EC),
+                                Color(0xFFFFFBF2),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       if (completionStepsLeft > 0) ...[
                         const SizedBox(height: 18),
@@ -340,6 +383,22 @@ class _ProfilePageState extends State<ProfilePage> {
     final day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
   }
+
+  static int _estimatedLearningMinutes(
+    UserProfile? profile,
+    int completedLessons,
+  ) {
+    final currentStepIndex = profile?.currentLessonStepIndex ?? 0;
+    return (completedLessons * 7) + (currentStepIndex * 2);
+  }
+
+  static String _formatDurationLabel(int totalMinutes) {
+    if (totalMinutes <= 0) return '0m';
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (hours == 0) return '${minutes}m';
+    return '${hours}h ${minutes}m';
+  }
 }
 
 class _ProfileHero extends StatelessWidget {
@@ -352,7 +411,6 @@ class _ProfileHero extends StatelessWidget {
   final int completedLessons;
   final int currentLesson;
   final VoidCallback onOpenSettings;
-  final VoidCallback onEditProfile;
 
   const _ProfileHero({
     required this.displayName,
@@ -364,7 +422,6 @@ class _ProfileHero extends StatelessWidget {
     required this.completedLessons,
     required this.currentLesson,
     required this.onOpenSettings,
-    required this.onEditProfile,
   });
 
   @override
@@ -375,22 +432,16 @@ class _ProfileHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFF7F0FF),
-            Color(0xFFF1EBFF),
-            Color(0xFFEFF7FF),
+            Color(0xFFFFFFFF),
+            Color(0xFFFCFDFF),
           ],
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x147F56D9),
-            blurRadius: 24,
+            color: Color(0x110F172A),
+            blurRadius: 22,
             offset: Offset(0, 12),
-          ),
-          BoxShadow(
-            color: Color(0x0A312E81),
-            blurRadius: 8,
-            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -471,30 +522,6 @@ class _ProfileHero extends StatelessWidget {
                     label: '$completedLessons done',
                   ),
                 ],
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onEditProfile,
-                  icon: const Icon(Icons.edit_rounded, size: 19),
-                  label: Text(
-                    'Edit profile',
-                    style: GoogleFonts.lato(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7F56D9),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
@@ -659,6 +686,332 @@ class _HeroStatPill extends StatelessWidget {
   }
 }
 
+class _WeeklyStreakHeatCard extends StatelessWidget {
+  final int dailyStreak;
+
+  const _WeeklyStreakHeatCard({
+    required this.dailyStreak,
+  });
+
+  static const List<String> _dayLabels = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+
+  static const List<double> _barHeights = [
+    52,
+    82,
+    62,
+    44,
+    76,
+    56,
+    68,
+  ];
+
+  static const List<Color> _dayColors = [
+    Color(0xFF64C8FF),
+    Color(0xFF7F56D9),
+    Color(0xFF58CCB1),
+    Color(0xFFFFAF45),
+    Color(0xFF5B8DEF),
+    Color(0xFFFF7A59),
+    Color(0xFFA855F7),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final todayIndex = DateTime.now().weekday - 1;
+    final activeDayIndexes = <int>{};
+    final cappedStreak = dailyStreak.clamp(0, 7);
+
+    for (var offset = 0; offset < cappedStreak; offset++) {
+      activeDayIndexes.add((todayIndex - offset + 7) % 7);
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFF3F8FF),
+            Color(0xFFF9F4FF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x120F172A),
+            blurRadius: 18,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.auto_graph_rounded,
+                      size: 17,
+                      color: Color(0xFF6D5DF6),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'Streak flow',
+                      style: GoogleFonts.lato(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF22304A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                dailyStreak == 1 ? '1 day' : '$dailyStreak days',
+                style: GoogleFonts.lato(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF6F52C8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'A quick look at your weekly rhythm.',
+            style: GoogleFonts.lato(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(_dayLabels.length, (index) {
+              final isToday = index == todayIndex;
+              final isActive = activeDayIndexes.contains(index);
+              return _StreakBarDay(
+                label: _dayLabels[index],
+                height: _barHeights[index],
+                color: _dayColors[index],
+                isToday: isToday,
+                isActive: isActive,
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakBarDay extends StatelessWidget {
+  final String label;
+  final double height;
+  final Color color;
+  final bool isToday;
+  final bool isActive;
+
+  const _StreakBarDay({
+    required this.label,
+    required this.height,
+    required this.color,
+    required this.isToday,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final outerGlow = isToday
+        ? color.withValues(alpha: isActive ? 0.30 : 0.14)
+        : Colors.transparent;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 38,
+          height: 92,
+          alignment: Alignment.bottomCenter,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            width: 30,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isToday
+                    ? color.withValues(alpha: 0.95)
+                    : isActive
+                        ? Colors.transparent
+                        : const Color(0xFFD9E2F2),
+                width: isToday ? 2.0 : 1.2,
+              ),
+              gradient: isActive
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        color.withValues(alpha: isToday ? 1.0 : 0.92),
+                        isToday
+                            ? const Color(0xFF14213D)
+                            : color.withValues(alpha: 0.72),
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: isToday
+                          ? [
+                              const Color(0xFFEAE3FF),
+                              const Color(0xFFF5F1FF),
+                            ]
+                          : [
+                              const Color(0xFFF6F8FC),
+                              const Color(0xFFEDF2F8),
+                            ],
+                    ),
+              boxShadow: outerGlow == Colors.transparent
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: outerGlow,
+                        blurRadius: 14,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          label,
+          style: GoogleFonts.lato(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: isToday
+                ? const Color(0xFF1F2937)
+                : const Color(0xFF7B8799),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileStatCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color badgeColor;
+  final String title;
+  final String value;
+  final String subtitle;
+  final List<Color> gradient;
+
+  const _ProfileStatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.badgeColor,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.gradient,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F0F172A),
+            blurRadius: 14,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: iconColor),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: GoogleFonts.lato(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF24324A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            value,
+            style: GoogleFonts.lato(
+              fontSize: 29,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF0F172A),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: GoogleFonts.lato(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF758296),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProfileCompletionCard extends StatelessWidget {
   final int stepsLeft;
   final VoidCallback onTap;
@@ -812,6 +1165,16 @@ class _ProfileSkeletonView extends StatelessWidget {
               const LoadingSkeleton(height: 48),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        const LoadingSkeleton(height: 186),
+        const SizedBox(height: 14),
+        const Row(
+          children: [
+            Expanded(child: LoadingSkeleton(height: 150)),
+            SizedBox(width: 12),
+            Expanded(child: LoadingSkeleton(height: 150)),
+          ],
         ),
         const SizedBox(height: 16),
       ],
