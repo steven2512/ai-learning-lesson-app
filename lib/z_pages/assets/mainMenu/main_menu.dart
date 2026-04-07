@@ -6,6 +6,7 @@ import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/core/widgets.dart'; // ✅ use central screen size
 import 'package:running_robot/services/app_progression_controller.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/box_with_progress.dart';
+import 'package:running_robot/z_pages/assets/mainMenu/circle_progress.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/header_greeting.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/simple_box.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/weekly_streak.dart';
@@ -13,7 +14,7 @@ import 'package:running_robot/z_pages/assets/mainMenu/weekly_streak.dart';
 /// =========================
 /// COLORS — edit here
 /// =========================
-const box1Color = Color(0xFF00796B); // Teal hero (unchanged)
+const box1Color = Color(0xFF00796B); // original teal hero
 const box2Color = Color.fromARGB(255, 47, 51, 73); // clean steel blue
 const box3Color = Color.fromARGB(255, 192, 91, 91); // polished plum
 const onDarkText = Colors.white; // White text on the dark cards
@@ -150,7 +151,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: const [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: Color(0x14000000),
                       blurRadius: 8,
                       offset: Offset(0, 4),
                     ),
@@ -159,6 +160,44 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 textColor: onDarkText,
                 percent: progression.courseProgressPercent,
                 maxTextWidth: 200,
+              ),
+            ),
+            SizedBox(height: sectionSpacing + 2),
+            SizedBox(
+              height: boxHeight2 * 1.02,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _MetricRingCard(
+                      icon: Icons.menu_book_rounded,
+                      label: 'Lessons',
+                      ringColor: const Color(0xFF1CB0F6),
+                      ringTrackColor: const Color(0xFFE8F1F7),
+                      iconColor: const Color(0xFF0284C7),
+                      progress: (progression.todayLessonCount / 3).clamp(0.0, 1.0),
+                      center: _RingValue(
+                        value: progression.todayLessonCount.toString(),
+                        caption: 'today',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: const _MetricRingCard(
+                      icon: Icons.auto_awesome_rounded,
+                      label: 'Level',
+                      ringColor: Color(0xFFF59E0B),
+                      ringTrackColor: Color(0xFFFFF1D6),
+                      iconColor: Color(0xFFF59E0B),
+                      progress: 0.62,
+                      center: _RingValue(
+                        value: '5',
+                        caption: 'lvl',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -205,4 +244,128 @@ class _MainMenuPageState extends State<MainMenuPage> {
           ],
         ),
       );
+}
+
+class _MetricRingCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final double progress;
+  final Color ringColor;
+  final Color ringTrackColor;
+  final Widget center;
+  final Color iconColor;
+
+  const _MetricRingCard({
+    required this.icon,
+    required this.label,
+    required this.progress,
+    required this.ringColor,
+    required this.ringTrackColor,
+    required this.center,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 1,
+            offset: Offset(0, 1),
+          ),
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 16.1,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: GoogleFonts.lato(
+                    fontSize: 18.3,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Align(
+            alignment: Alignment.center,
+            child: CircleProgress(
+              percent: progress,
+              size: 100,
+              strokeWidth: 11,
+              progressColor: ringColor,
+              trackColor: ringTrackColor,
+              onTap: () {},
+              center: center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RingValue extends StatelessWidget {
+  final String value;
+  final String caption;
+
+  const _RingValue({
+    required this.value,
+    required this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.lato(
+            fontSize: 28.7,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF0F172A),
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          caption,
+          style: GoogleFonts.lato(
+            fontSize: 12.4,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF94A3B8),
+          ),
+        ),
+      ],
+    );
+  }
 }
