@@ -422,16 +422,22 @@ class _ProfileHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFEEF8FF),
-            Color(0xFFE8FFF2),
+            Color(0xFFF7F0FF),
+            Color(0xFFF1EBFF),
+            Color(0xFFEFF7FF),
           ],
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
+            color: Color(0x147F56D9),
+            blurRadius: 24,
+            offset: Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Color(0x0A312E81),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -444,7 +450,7 @@ class _ProfileHero extends StatelessWidget {
             child: _TopIconButton(
               icon: Icons.settings_rounded,
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF334155),
+              foregroundColor: const Color(0xFF6F52C8),
               onTap: onOpenSettings,
             ),
           ),
@@ -477,7 +483,7 @@ class _ProfileHero extends StatelessWidget {
                           style: GoogleFonts.lato(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF64748B),
+                            color: const Color(0xFF756A94),
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -527,7 +533,7 @@ class _ProfileHero extends StatelessWidget {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1CB0F6),
+                    backgroundColor: const Color(0xFF7F56D9),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -577,8 +583,8 @@ class _AvatarBadge extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF58CC02),
-            Color(0xFF1CB0F6),
+            Color(0xFF8B5CF6),
+            Color(0xFF5B8DEF),
           ],
         ),
       ),
@@ -610,14 +616,14 @@ class _AvatarFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFD9F2FF),
+      color: const Color(0xFFF1EBFF),
       child: Center(
         child: Text(
           initial,
           style: GoogleFonts.lato(
             fontSize: 42,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFF14532D),
+            color: const Color(0xFF41356F),
           ),
         ),
       ),
@@ -721,15 +727,15 @@ class _CourseJourneyCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF14213D),
-            Color(0xFF1F5EFF),
+            Color(0xFF4F53B8),
+            Color(0xFF6C7AE4),
           ],
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 18,
+            color: Color(0x143D4FC1),
+            blurRadius: 20,
             offset: Offset(0, 10),
           ),
         ],
@@ -746,7 +752,7 @@ class _CourseJourneyCard extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Row(
@@ -775,7 +781,7 @@ class _CourseJourneyCard extends StatelessWidget {
                 style: GoogleFonts.lato(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
-                  color: const Color(0xFFFFF176),
+                  color: const Color(0xFFFFF2A6),
                 ),
               ),
             ],
@@ -798,7 +804,7 @@ class _CourseJourneyCard extends StatelessWidget {
             style: GoogleFonts.lato(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.78),
+              color: Colors.white.withValues(alpha: 0.82),
             ),
           ),
           const SizedBox(height: 18),
@@ -807,9 +813,9 @@ class _CourseJourneyCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 14,
-              backgroundColor: Colors.white.withValues(alpha: 0.28),
+              backgroundColor: Colors.white.withValues(alpha: 0.24),
               valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFFFFD83D),
+                Color(0xFFFFDF73),
               ),
             ),
           ),
