@@ -63,6 +63,7 @@ class BoxWithProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final int clamped = percent.clamp(0, 100);
     final double p = clamped / 100.0;
+    const actionTextColor = Colors.white;
 
     final EdgeInsets contentPad = padding.copyWith(
       top: padding.top +
@@ -71,135 +72,194 @@ class BoxWithProgress extends StatelessWidget {
           progressPadding.bottom,
     );
 
-    return Stack(
-      children: [
-        Container(
-          width: boxWidth, // 👈 fixed width
-          height: boxHeight, // 👈 fixed height
-          padding: contentPad,
-          decoration: decoration,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: leftTextPadding),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxTextWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.lato(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: textColor,
-                          letterSpacing: 0.15,
-                          height: 1.3,
-                        ),
-                      ),
-                      if (description != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          description!,
-                          style: GoogleFonts.lato(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w400,
-                            color: textColor.withOpacity(0.72),
-                            height: 1.3,
-                            letterSpacing: 0.05,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: onPressed,
-                        icon: Padding(
-                          padding: const EdgeInsets.only(top: 1),
-                          child: Text(
-                            buttonText,
-                            style: GoogleFonts.lato(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.1,
-                              color: textColor,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final resolvedWidth =
+            constraints.hasBoundedWidth ? constraints.maxWidth : boxWidth;
+        final resolvedHeight =
+            constraints.hasBoundedHeight ? constraints.maxHeight : boxHeight;
+
+        return Stack(
+          children: [
+            Container(
+              width: resolvedWidth,
+              height: resolvedHeight,
+              padding: contentPad,
+              decoration: decoration,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: leftTextPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: maxTextWidth),
+                            child: Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lato(
+                                fontSize: 20.5,
+                                fontWeight: FontWeight.w800,
+                                color: textColor,
+                                letterSpacing: 0.15,
+                                height: 1.25,
+                              ),
                             ),
                           ),
-                        ),
-                        label: Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Transform.scale(
-                            scaleX: 1.3,
-                            child: Icon(buttonIcon, size: 18, color: textColor),
+                          if (description != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              description!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lato(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w400,
+                                color: textColor.withValues(alpha: 0.72),
+                                height: 1.25,
+                                letterSpacing: 0.05,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: onPressed,
+                                borderRadius: BorderRadius.circular(30),
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color(0xFFF89A36),
+                                        Color(0xFFE9771A),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                      color: const Color(0xFFFFB85A),
+                                      width: 1.1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFE9771A)
+                                            .withValues(alpha: 0.34),
+                                        blurRadius: 12,
+                                        spreadRadius: 0.5,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.10),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                      horizontal: 19,
+                                      vertical: 10,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          buttonText,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 17.9,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.1,
+                                            color: actionTextColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Transform.scale(
+                                          scaleX: 1.2,
+                                          child: Icon(
+                                            buttonIcon,
+                                            size: 22,
+                                            color: actionTextColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: textColor,
-                          side: BorderSide(color: textColor, width: 1.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
-                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: imagePadding,
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: AspectRatio(
+                          aspectRatio: imageAspectRatio,
+                          child: Image.asset(imageAsset, fit: BoxFit.contain),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: imagePadding,
-                  child: AspectRatio(
-                    aspectRatio: imageAspectRatio,
-                    child: Image.asset(imageAsset, fit: BoxFit.contain),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
 
-        // Progress bar
-        Positioned(
-          left: progressPadding.left,
-          right: progressPadding.right,
-          top: progressPadding.top,
-          child: Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(progressThickness),
-                  child: Stack(
-                    children: [
-                      Container(height: progressThickness, color: trackColor),
-                      FractionallySizedBox(
-                        widthFactor: p,
-                        child: Container(
-                          height: progressThickness,
-                          color: progressColor,
-                        ),
+            // Progress bar
+            Positioned(
+              left: progressPadding.left,
+              right: progressPadding.right,
+              top: progressPadding.top,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(progressThickness),
+                      child: Stack(
+                        children: [
+                          Container(
+                              height: progressThickness, color: trackColor),
+                          FractionallySizedBox(
+                            widthFactor: p,
+                            child: Container(
+                              height: progressThickness,
+                              color: progressColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "$clamped%",
+                    style: GoogleFonts.lato(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Text(
-                "$clamped%",
-                style: GoogleFonts.lato(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
