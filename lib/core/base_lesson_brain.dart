@@ -65,8 +65,8 @@ abstract class BaseLessonBrain extends StatefulWidget {
 }
 
 /// Shared state implementation for all lessons
-abstract class BaseLessonBrainState<T extends BaseLessonBrain>
-    extends State<T> with WidgetsBindingObserver {
+abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
+    with WidgetsBindingObserver {
   int currentIndex = 0;
   bool answered = false;
   bool _isBootstrapping = true;
@@ -288,48 +288,50 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       child: built,
     );
 
-    return WillPopScope(
-      onWillPop: () async {
-        await _pauseLessonSession();
-        return true;
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          await _pauseLessonSession();
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Stack(
           clipBehavior: Clip.none,
           children: [
-          // 1) Sub-lesson content UNDER everything else
-          Positioned.fill(
-            top: sub.topOffset,
-            bottom: 100,
-            child: keyedBuilt,
-          ),
+            // 1) Sub-lesson content UNDER everything else
+            Positioned.fill(
+              top: sub.topOffset,
+              bottom: 100,
+              child: keyedBuilt,
+            ),
 
-          // 2) Progress bar above content
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 70),
-              child: flutter_ui_bar.LessonProgressBar(
-                totalStages: subLessons.length,
-                currentStage: currentIndex,
+            // 2) Progress bar above content
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 70),
+                child: flutter_ui_bar.LessonProgressBar(
+                  totalStages: subLessons.length,
+                  currentStage: currentIndex,
+                ),
               ),
             ),
-          ),
 
-          // 3) Continue button above content (if applicable)
-          if (sub.mechanic == LessonMechanic.manual ||
-              (sub.mechanic == LessonMechanic.emit && answered))
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: ContinueButton(onPressed: () {
-                goNext();
-              }),
-            ),
+            // 3) Continue button above content (if applicable)
+            if (sub.mechanic == LessonMechanic.manual ||
+                (sub.mechanic == LessonMechanic.emit && answered))
+              Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: ContinueButton(onPressed: () {
+                  goNext();
+                }),
+              ),
 
-          // 4) X button LAST so it paints on top and receives taps first
+            // 4) X button LAST so it paints on top and receives taps first
             Positioned(
               top: 69,
               left: screenH * 0.035,
