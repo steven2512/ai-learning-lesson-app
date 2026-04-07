@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:running_robot/core/lesson_manifest.dart';
 import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
+import 'package:running_robot/services/app_cache_service.dart';
 import 'package:running_robot/services/progression_service.dart';
 
 enum LessonUiState { locked, available, inProgress, completed }
@@ -16,8 +18,10 @@ class AppProgressionController extends ChangeNotifier {
   Object? _error;
 
   ProgressionSnapshot? get snapshot => _snapshot;
+  bool get hasSnapshot => _snapshot != null;
   bool get isLoading => _isLoading;
   Object? get error => _error;
+  bool get shouldShowShellSkeleton => _snapshot == null && _isLoading;
 
   UserProfile? get profile => _snapshot?.profile;
   Map<String, LessonProgress> get lessonProgressById =>
@@ -50,7 +54,7 @@ class AppProgressionController extends ChangeNotifier {
 
   Future<void> load() async {
     if (_snapshot != null || _isLoading) return;
-    await refresh();
+    await _hydrateAndRefresh();
   }
 
   Future<void> refresh() async {
@@ -60,8 +64,18 @@ class AppProgressionController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _snapshot = await ProgressionService.loadCurrentProgression();
+      final user = FirebaseAuth.instance.currentUser;
+      final freshSnapshot = await ProgressionService.loadCurrentProgression();
       _error = null;
+      if (freshSnapshot != null) {
+        _snapshot = freshSnapshot;
+        if (user != null) {
+          await AppCacheService.writeProgressionSnapshot(
+            user.uid,
+            freshSnapshot,
+          );
+        }
+      }
     } catch (error) {
       _error = error;
     } finally {
@@ -75,6 +89,40 @@ class AppProgressionController extends ChangeNotifier {
     _error = null;
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> _hydrateAndRefresh() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      clear();
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final cachedSnapshot =
+          await AppCacheService.readProgressionSnapshot(user.uid);
+      if (cachedSnapshot != null) {
+        _snapshot = cachedSnapshot;
+        _error = null;
+        notifyListeners();
+      }
+
+      final freshSnapshot = await ProgressionService.loadCurrentProgression();
+      _error = null;
+
+      if (freshSnapshot != null) {
+        _snapshot = freshSnapshot;
+        await AppCacheService.writeProgressionSnapshot(user.uid, freshSnapshot);
+      }
+    } catch (error) {
+      _error = error;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   LessonProgress? lessonProgressByIdOrNull(String lessonId) {
