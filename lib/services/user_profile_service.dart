@@ -5,6 +5,29 @@ import 'package:running_robot/models/user_profile.dart';
 
 class UserProfileService {
   static final _firestore = FirebaseFirestore.instance;
+  static const _requiredProfileKeys = <String>{
+    'uid',
+    'name',
+    'email',
+    'photoUrl',
+    'joinedAt',
+    'lastLogin',
+    'provider',
+    'dob',
+    'currentLesson',
+    'currentLessonStepIndex',
+    'xp',
+    'lessonsCompleted',
+    'todayLessonCount',
+    'todayLessonCountDate',
+    'dailyStreak',
+    'lastDailyLessonDate',
+    'lastDevice',
+    'appVersion',
+    'timezone',
+    'timezoneOffsetMinutes',
+    'updatedAt',
+  };
 
   static DocumentReference<Map<String, dynamic>> userDoc(String uid) {
     return _firestore.collection('users').doc(uid);
@@ -100,6 +123,38 @@ class UserProfileService {
       return;
     }
 
+    if (!_hasCanonicalProfileShape(data)) {
+      final profile = UserProfile(
+        uid: user.uid,
+        email: user.email ?? data['email']?.toString(),
+        name: metadata['name']?.toString(),
+        photoUrl: resolvedPhotoUrl,
+        joinedAt: existingJoinedAt,
+        currentLesson: _readLegacyInt(data['currentLesson'], fallback: 1),
+        currentLessonStepIndex:
+            _readLegacyInt(data['currentLessonStepIndex'], fallback: 0),
+        xp: _readLegacyInt(data['xp'], fallback: 0),
+        lessonsCompleted: _readLegacyInt(data['lessonsCompleted'], fallback: 0),
+        todayLessonCount: _readLegacyInt(data['todayLessonCount'], fallback: 0),
+        todayLessonCountDate: data['todayLessonCountDate']?.toString(),
+        dailyStreak: _readLegacyInt(data['dailyStreak'], fallback: 0),
+        lastDailyLessonDate: data['lastDailyLessonDate']?.toString(),
+        dob: resolvedDob,
+        provider: resolvedProvider,
+        lastDevice: resolvedLastDevice,
+        appVersion: resolvedAppVersion,
+        timezone: timezoneNow.timeZoneName,
+        timezoneOffsetMinutes: timezoneNow.timeZoneOffset.inMinutes,
+      );
+
+      await doc.set({
+        ...profile.toMap(),
+        'lastLogin': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return;
+    }
+
     await doc.set({
       ...metadata,
       'lastLogin': FieldValue.serverTimestamp(),
@@ -131,4 +186,19 @@ class UserProfileService {
     };
   }
 
+  static bool _hasCanonicalProfileShape(Map<String, dynamic> data) {
+    return data.keys.toSet().containsAll(_requiredProfileKeys) &&
+        data['joinedAt'] is Timestamp &&
+        data['currentLesson'] is int &&
+        data['currentLessonStepIndex'] is int &&
+        data['xp'] is int &&
+        data['lessonsCompleted'] is int &&
+        data['todayLessonCount'] is int &&
+        data['dailyStreak'] is int;
+  }
+
+  static int _readLegacyInt(dynamic value, {required int fallback}) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
 }

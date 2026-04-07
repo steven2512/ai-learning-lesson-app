@@ -115,6 +115,76 @@ service cloud.firestore {
       ];
     }
 
+    function existingIntOrDefault(field, fallback) {
+      return resource.data.keys().hasAll([field]) &&
+          resource.data[field] is int
+          ? resource.data[field]
+          : fallback;
+    }
+
+    function existingStringOrDefault(field, fallback) {
+      return resource.data.keys().hasAll([field]) &&
+          resource.data[field] is string
+          ? resource.data[field]
+          : fallback;
+    }
+
+    function existingTimestampOrNull(field) {
+      return resource.data.keys().hasAll([field]) &&
+          resource.data[field] is timestamp
+          ? resource.data[field]
+          : null;
+    }
+
+    function needsSchemaRepair() {
+      return !resource.data.keys().hasAll(userKeys()) ||
+          !(resource.data.currentLesson is int) ||
+          !(resource.data.currentLessonStepIndex is int) ||
+          !(resource.data.xp is int) ||
+          !(resource.data.lessonsCompleted is int) ||
+          !(resource.data.todayLessonCount is int) ||
+          !(resource.data.dailyStreak is int);
+    }
+
+    function validLegacyIntValue(field, fallback) {
+      return (
+          resource.data.keys().hasAll([field]) &&
+          resource.data[field] is int &&
+          request.resource.data[field] == resource.data[field]
+        ) || (
+          resource.data.keys().hasAll([field]) &&
+          resource.data[field] is string &&
+          resource.data[field].matches('^-?[0-9]+$') &&
+          request.resource.data[field].toString() == resource.data[field]
+        ) || (
+          !(
+            resource.data.keys().hasAll([field]) &&
+            (
+              resource.data[field] is int ||
+              (
+                resource.data[field] is string &&
+                resource.data[field].matches('^-?[0-9]+$')
+              )
+            )
+          ) &&
+          request.resource.data[field] == fallback
+        );
+    }
+
+    function validRequiredTimestampRepair(field) {
+      return (
+          resource.data.keys().hasAll([field]) &&
+          resource.data[field] is timestamp &&
+          request.resource.data[field] == resource.data[field]
+        ) || (
+          !(
+            resource.data.keys().hasAll([field]) &&
+            resource.data[field] is timestamp
+          ) &&
+          request.resource.data[field] is timestamp
+        );
+    }
+
     function validUserDocument(userId) {
       return hasOnlyKeys(request.resource.data, userKeys()) &&
           hasAllKeys(request.resource.data, userKeys()) &&
@@ -172,6 +242,29 @@ service cloud.firestore {
           sameValue('todayLessonCountDate') &&
           sameValue('dailyStreak') &&
           sameValue('lastDailyLessonDate');
+    }
+
+    function validLegacySchemaRepair(userId) {
+      return validUserDocument(userId) &&
+          needsSchemaRepair() &&
+          request.resource.data.uid == userId &&
+          validRequiredTimestampRepair('joinedAt') &&
+          validLegacyIntValue('currentLesson', 1) &&
+          validLegacyIntValue('currentLessonStepIndex', 0) &&
+          validLegacyIntValue('xp', 0) &&
+          validLegacyIntValue('lessonsCompleted', 0) &&
+          validLegacyIntValue('todayLessonCount', 0) &&
+          (
+            request.resource.data.todayLessonCountDate ==
+                existingStringOrDefault('todayLessonCountDate', null) ||
+            request.resource.data.todayLessonCountDate == null
+          ) &&
+          validLegacyIntValue('dailyStreak', 0) &&
+          (
+            request.resource.data.lastDailyLessonDate ==
+                existingStringOrDefault('lastDailyLessonDate', null) ||
+            request.resource.data.lastDailyLessonDate == null
+          );
     }
 
     function validResumeUpdate() {
@@ -323,7 +416,7 @@ service cloud.firestore {
           validNewUserDocument(userId);
 
       allow update: if isOwner(userId) &&
-          validMetadataUpdate();
+          (validMetadataUpdate() || validLegacySchemaRepair(userId));
 
       match /lessonProgress/{lessonId} {
         allow read: if isOwner(userId);

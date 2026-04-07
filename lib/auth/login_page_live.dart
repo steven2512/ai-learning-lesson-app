@@ -44,12 +44,25 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _onLoginSuccess(User user, {required String provider}) async {
-    await UserProfileService.createOrUpdateUserProfile(
-      user,
-      lastDevice: _detectPlatform(context),
-      appVersion: AuthAccountService.appVersion,
-      provider: provider,
-    );
+    try {
+      await UserProfileService.createOrUpdateUserProfile(
+        user,
+        lastDevice: _detectPlatform(context),
+        appVersion: AuthAccountService.appVersion,
+        provider: provider,
+      );
+    } catch (error) {
+      debugPrint('Profile sync failed after sign-in: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Signed in. Finishing profile sync in the background...',
+            ),
+          ),
+        );
+      }
+    }
 
     if (!mounted) return;
 
