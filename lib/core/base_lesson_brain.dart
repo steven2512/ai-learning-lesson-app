@@ -66,11 +66,14 @@ abstract class BaseLessonBrain extends StatefulWidget {
 
 /// Shared state implementation for all lessons
 abstract class BaseLessonBrainState<T extends BaseLessonBrain>
-    extends State<T> {
+    extends State<T> with WidgetsBindingObserver {
   int currentIndex = 0;
   bool answered = false;
   bool _isBootstrapping = true;
   bool _isAdvancing = false;
+  bool _sessionSyncInFlight = false;
+  bool _lessonSessionActive = false;
+  bool _lessonSessionClosed = false;
   late final List<SubLesson> subLessons;
 
   // ✅ FIX: a nonce that forces a full remount of the current sublesson subtree
@@ -84,6 +87,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     debugPrint("🔥 initState for ${widget.lessonId}");
     subLessons = buildSubLessons();
     LessonStepRegistry.register(widget.lessonId, subLessons.length);
@@ -115,6 +119,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       answered = false;
       _isBootstrapping = false;
     });
+    _lessonSessionActive = true;
   }
 
   Future<void> saveCurrentLessonStep(int stepIndex) async {
@@ -132,6 +137,79 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       lessonId: widget.lessonId,
       globalLessonNumber: widget.globalLessonNumber,
     );
+  }
+
+  Future<void> _pauseLessonSession() async {
+    if (_isBootstrapping ||
+        _isAdvancing ||
+        _sessionSyncInFlight ||
+        !_lessonSessionActive ||
+        _lessonSessionClosed) {
+      return;
+    }
+
+    _sessionSyncInFlight = true;
+    try {
+      await LessonService.pauseLessonSession(
+        lessonId: widget.lessonId,
+        globalLessonNumber: widget.globalLessonNumber,
+        stepIndex: currentIndex,
+      );
+      _lessonSessionActive = false;
+    } catch (error) {
+      debugPrint('Failed to pause lesson session: $error');
+    } finally {
+      _sessionSyncInFlight = false;
+    }
+  }
+
+  Future<void> _resumeLessonSession() async {
+    if (_isBootstrapping ||
+        _isAdvancing ||
+        _sessionSyncInFlight ||
+        _lessonSessionActive ||
+        _lessonSessionClosed) {
+      return;
+    }
+
+    _sessionSyncInFlight = true;
+    try {
+      await LessonService.resumeLessonSession(
+        courseId: widget.courseId,
+        chapterId: widget.chapterId,
+        lessonId: widget.lessonId,
+        globalLessonNumber: widget.globalLessonNumber,
+      );
+      _lessonSessionActive = true;
+    } catch (error) {
+      debugPrint('Failed to resume lesson session: $error');
+    } finally {
+      _sessionSyncInFlight = false;
+    }
+  }
+
+  Future<void> _exitLessonToMainMenu() async {
+    final progression = ProgressionScope.read(context);
+    await _pauseLessonSession();
+    if (!mounted) return;
+    await progression.refresh();
+    if (!mounted) return;
+    widget.onNavigate(const RouteMainMenu(tab: 0));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _resumeLessonSession();
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _pauseLessonSession();
+        break;
+    }
   }
 
   // ─────────────────────────────
@@ -152,6 +230,8 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
         await saveCurrentLessonStep(nextIndex);
       } else {
         final completion = await completeLesson();
+        _lessonSessionClosed = true;
+        _lessonSessionActive = false;
         if (!mounted) return;
         final progression = ProgressionScope.read(context);
         await progression.refresh();
@@ -174,6 +254,12 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       answered = false;
       _restartNonce++; // 👈 force a fresh instance of the game
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -202,11 +288,16 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
       child: built,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        clipBehavior: Clip.none,
-        children: [
+    return WillPopScope(
+      onWillPop: () async {
+        await _pauseLessonSession();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          clipBehavior: Clip.none,
+          children: [
           // 1) Sub-lesson content UNDER everything else
           Positioned.fill(
             top: sub.topOffset,
@@ -239,17 +330,20 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
             ),
 
           // 4) X button LAST so it paints on top and receives taps first
-          Positioned(
-            top: 69,
-            left: screenH * 0.035,
-            child: IconButtonWidget<void>(
-              iconPath: 'assets/images/x_icon.png',
-              tint: Colors.black87,
-              size: 22,
-              onPressed: (_) => widget.onNavigate(const RouteMainMenu(tab: 0)),
+            Positioned(
+              top: 69,
+              left: screenH * 0.035,
+              child: IconButtonWidget<void>(
+                iconPath: 'assets/images/x_icon.png',
+                tint: Colors.black87,
+                size: 22,
+                onPressed: (_) async {
+                  await _exitLessonToMainMenu();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

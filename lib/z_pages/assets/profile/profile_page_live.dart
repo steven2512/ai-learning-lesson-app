@@ -258,10 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final showSkeleton = !progression.hasSnapshot;
     final xp = progression.totalXp;
     final completedLessons = progression.lessonsCompleted;
-    final estimatedLearningMinutes = _estimatedLearningMinutes(
-      profile,
-      completedLessons,
-    );
+    final totalLearningSeconds = progression.totalLearningSeconds;
     final completionStepsLeft = [
       if ((profile?.name ?? '').trim().isEmpty) 'name',
       if (profile?.dob == null) 'birthday',
@@ -317,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               badgeColor: const Color(0xFFF4ECFF),
                               title: 'Total time',
                               value: _formatDurationLabel(
-                                estimatedLearningMinutes,
+                                totalLearningSeconds,
                               ),
                               subtitle: 'learning',
                               gradient: const [
@@ -384,19 +381,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${date.year}-$month-$day';
   }
 
-  static int _estimatedLearningMinutes(
-    UserProfile? profile,
-    int completedLessons,
-  ) {
-    final currentStepIndex = profile?.currentLessonStepIndex ?? 0;
-    return (completedLessons * 7) + (currentStepIndex * 2);
-  }
-
-  static String _formatDurationLabel(int totalMinutes) {
-    if (totalMinutes <= 0) return '0m';
+  static String _formatDurationLabel(int totalSeconds) {
+    if (totalSeconds <= 0) return '0m';
+    final totalMinutes = totalSeconds ~/ 60;
     final hours = totalMinutes ~/ 60;
     final minutes = totalMinutes % 60;
-    if (hours == 0) return '${minutes}m';
+    if (hours == 0) return '${totalMinutes}m';
     return '${hours}h ${minutes}m';
   }
 }

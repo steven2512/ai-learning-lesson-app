@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:running_robot/core/app_router.dart';
+import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_page.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
 import 'package:running_robot/z_pages/assets/profile/profile_page_live.dart';
@@ -73,7 +74,12 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
         ),
         child: NavigationBar(
           selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
+          onDestinationSelected: (i) {
+            setState(() => _index = i);
+            if (i == 2) {
+              ProgressionScope.read(context).refresh();
+            }
+          },
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
