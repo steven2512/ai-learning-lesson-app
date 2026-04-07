@@ -290,7 +290,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
 
     return PopScope(
       canPop: true,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop) {
           await _pauseLessonSession();
         }
