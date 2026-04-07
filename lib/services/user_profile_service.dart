@@ -17,7 +17,9 @@ class UserProfileService {
     'currentLesson',
     'currentLessonStepIndex',
     'xp',
+    'level',
     'lessonsCompleted',
+    'totalLearningSeconds',
     'todayLessonCount',
     'todayLessonCountDate',
     'dailyStreak',
@@ -102,7 +104,9 @@ class UserProfileService {
         currentLesson: 1,
         currentLessonStepIndex: 0,
         xp: 0,
+        level: 1,
         lessonsCompleted: 0,
+        totalLearningSeconds: 0,
         todayLessonCount: 0,
         todayLessonCountDate: null,
         dailyStreak: 0,
@@ -134,7 +138,10 @@ class UserProfileService {
         currentLessonStepIndex:
             _readLegacyInt(data['currentLessonStepIndex'], fallback: 0),
         xp: _readLegacyInt(data['xp'], fallback: 0),
+        level: _levelFromXp(_readLegacyInt(data['xp'], fallback: 0)),
         lessonsCompleted: _readLegacyInt(data['lessonsCompleted'], fallback: 0),
+        totalLearningSeconds:
+            _readLegacyInt(data['totalLearningSeconds'], fallback: 0),
         todayLessonCount: _readLegacyInt(data['todayLessonCount'], fallback: 0),
         todayLessonCountDate: data['todayLessonCountDate']?.toString(),
         dailyStreak: _readLegacyInt(data['dailyStreak'], fallback: 0),
@@ -206,9 +213,16 @@ class UserProfileService {
         data['currentLesson'] is int &&
         data['currentLessonStepIndex'] is int &&
         data['xp'] is int &&
+        data['level'] is int &&
         data['lessonsCompleted'] is int &&
+        data['totalLearningSeconds'] is int &&
         data['todayLessonCount'] is int &&
         data['dailyStreak'] is int;
+  }
+
+  static int _levelFromXp(int xp) {
+    final safeXp = xp < 0 ? 0 : xp;
+    return (safeXp ~/ 200) + 1;
   }
 
   static int _readLegacyInt(dynamic value, {required int fallback}) {

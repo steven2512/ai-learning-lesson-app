@@ -11,7 +11,8 @@ class AppCacheService {
 
   static String _snapshotKey(String uid) => '$_snapshotPrefix$uid';
 
-  static Future<ProgressionSnapshot?> readProgressionSnapshot(String uid) async {
+  static Future<ProgressionSnapshot?> readProgressionSnapshot(
+      String uid) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_snapshotKey(uid));
     if (raw == null || raw.isEmpty) return null;
@@ -84,7 +85,9 @@ class AppCacheService {
       'currentLesson': profile.currentLesson,
       'currentLessonStepIndex': profile.currentLessonStepIndex,
       'xp': profile.xp,
+      'level': profile.level,
       'lessonsCompleted': profile.lessonsCompleted,
+      'totalLearningSeconds': profile.totalLearningSeconds,
       'todayLessonCount': profile.todayLessonCount,
       'todayLessonCountDate': profile.todayLessonCountDate,
       'dailyStreak': profile.dailyStreak,

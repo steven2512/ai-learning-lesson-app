@@ -35,6 +35,8 @@ class AppProgressionController extends ChangeNotifier {
   int get currentLessonStepIndex => profile?.currentLessonStepIndex ?? 0;
   int get lessonsCompleted => profile?.lessonsCompleted ?? 0;
   int get totalXp => profile?.xp ?? 0;
+  int get level => profile?.level ?? 1;
+  int get totalLearningSeconds => profile?.totalLearningSeconds ?? 0;
   int get dailyStreak => profile?.dailyStreak ?? 0;
   int get todayLessonCount => profile?.todayLessonCount ?? 0;
   String? get lastDailyLessonDate => profile?.lastDailyLessonDate;
