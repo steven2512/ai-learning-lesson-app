@@ -15,17 +15,16 @@ class Background extends RectangleComponent {
   Background({
     required this.backgroundSize,
     List<Color>? colors,
-  }) : colors = _resolveColors(colors),
-       super(
-         size: backgroundSize,
-         paint: Paint()
-           ..shader =
-               LinearGradient(
-                 colors: _resolveColors(colors),
-                 begin: Alignment.topLeft,
-                 end: Alignment.bottomRight,
-               ).createShader(
-                 Rect.fromLTWH(0, 0, backgroundSize.x, backgroundSize.y),
-               ),
-       );
+  })  : colors = _resolveColors(colors),
+        super(
+          size: backgroundSize,
+          paint: Paint()
+            ..shader = LinearGradient(
+              colors: _resolveColors(colors),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(
+              Rect.fromLTWH(0, 0, backgroundSize.x, backgroundSize.y),
+            ),
+        );
 }

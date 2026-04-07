@@ -71,7 +71,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
       body: Stack(
         children: [
           _buildBackground(),
-          if (showSkeleton) const AppHeaderSkeleton() else const HeaderGreeting(),
+          if (showSkeleton)
+            const AppHeaderSkeleton()
+          else
+            const HeaderGreeting(),
           if (showSkeleton)
             _buildSkeletonContent(
               boxHeight1: boxHeight1,
@@ -234,7 +237,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
                       ringColor: const Color(0xFF1CB0F6),
                       ringTrackColor: const Color(0xFFE8F1F7),
                       iconColor: const Color(0xFF0284C7),
-                      progress: (progression.todayLessonCount / 3).clamp(0.0, 1.0),
+                      progress:
+                          (progression.todayLessonCount / 3).clamp(0.0, 1.0),
                       center: _RingValue(
                         value: progression.todayLessonCount.toString(),
                         caption: 'today',

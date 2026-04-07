@@ -159,14 +159,15 @@ class BoxWithProgress extends StatelessWidget {
                                         offset: const Offset(0, 4),
                                       ),
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.10),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.10),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 19,
                                       vertical: 10,
                                     ),

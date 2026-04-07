@@ -904,9 +904,7 @@ class _StreakBarDay extends StatelessWidget {
           style: GoogleFonts.lato(
             fontSize: 12,
             fontWeight: FontWeight.w900,
-            color: isToday
-                ? const Color(0xFF1F2937)
-                : const Color(0xFF7B8799),
+            color: isToday ? const Color(0xFF1F2937) : const Color(0xFF7B8799),
           ),
         ),
       ],

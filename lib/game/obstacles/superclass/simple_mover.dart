@@ -10,10 +10,10 @@ class SimpleMover extends SpriteComponent {
     required this.picturePath,
     required Vector2 size,
   }) : super(
-         position: initialPosition.clone(),
-         size: size,
-         anchor: Anchor.center,
-       );
+          position: initialPosition.clone(),
+          size: size,
+          anchor: Anchor.center,
+        );
 
   @override
   Future<void> onLoad() async {

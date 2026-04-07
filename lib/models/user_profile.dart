@@ -94,8 +94,7 @@ class UserProfile {
           : int.tryParse(map['xp'].toString()) ?? 0,
       level: (map['level'] ?? _levelFromXp(map['xp'])) is int
           ? map['level'] ?? _levelFromXp(map['xp'])
-          : int.tryParse(map['level'].toString()) ??
-              _levelFromXp(map['xp']),
+          : int.tryParse(map['level'].toString()) ?? _levelFromXp(map['xp']),
       lessonsCompleted: (map['lessonsCompleted'] ?? 0) is int
           ? map['lessonsCompleted'] ?? 0
           : int.tryParse(map['lessonsCompleted'].toString()) ?? 0,
@@ -126,9 +125,8 @@ class UserProfile {
   }
 
   static int _levelFromXp(dynamic rawXp) {
-    final xp = (rawXp is int)
-        ? rawXp
-        : int.tryParse(rawXp?.toString() ?? '') ?? 0;
+    final xp =
+        (rawXp is int) ? rawXp : int.tryParse(rawXp?.toString() ?? '') ?? 0;
     final normalizedXp = xp < 0 ? 0 : xp;
     return (normalizedXp ~/ 200) + 1;
   }
