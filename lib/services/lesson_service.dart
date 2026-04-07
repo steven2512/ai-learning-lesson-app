@@ -1,4 +1,6 @@
 // FILE: lib/services/lesson_service.dart
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,6 +43,7 @@ class LessonService {
   static final _firestore = FirebaseFirestore.instance;
   static final _auth = FirebaseAuth.instance;
   static final _functions = FirebaseFunctions.instance;
+  static final Map<String, Future<Map<String, dynamic>>> _inFlightCalls = {};
 
   static String get _uid {
     final user = _auth.currentUser;
@@ -131,11 +134,36 @@ class LessonService {
     String name,
     Map<String, dynamic> payload,
   ) async {
-    final result = await _functions.httpsCallable(name).call(payload);
-    final data = result.data;
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
+    final key = '$name:${jsonEncode(payload)}';
+    final existing = _inFlightCalls[key];
+    if (existing != null) {
+      return existing;
     }
-    throw Exception('Invalid response from $name');
+
+    final future = () async {
+      final result = await _functions
+          .httpsCallable(
+            name,
+            options: HttpsCallableOptions(
+              timeout: const Duration(seconds: 20),
+            ),
+          )
+          .call(payload);
+      final data = result.data;
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      throw Exception('Invalid response from $name');
+    }();
+
+    _inFlightCalls[key] = future;
+
+    try {
+      return await future;
+    } finally {
+      if (identical(_inFlightCalls[key], future)) {
+        _inFlightCalls.remove(key);
+      }
+    }
   }
 }

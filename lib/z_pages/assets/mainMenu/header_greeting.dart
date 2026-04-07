@@ -2,82 +2,44 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // ✅ for local caching
+import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 
-class HeaderGreeting extends StatefulWidget {
+class HeaderGreeting extends StatelessWidget {
   final double topOffset;
   const HeaderGreeting({super.key, this.topOffset = 60});
 
   @override
-  State<HeaderGreeting> createState() => _HeaderGreetingState();
-}
-
-class _HeaderGreetingState extends State<HeaderGreeting> {
-  String? _photoUrl;
-  String _displayName = "User";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      // Load profile basics
-      setState(() {
-        _displayName = user.displayName ?? "User";
-      });
-
-      try {
-        // 🔹 Fetch latest photoUrl from Firestore (faster + more consistent)
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (doc.exists && doc.data()?['photoUrl'] != null) {
-          setState(() {
-            _photoUrl = doc.data()!['photoUrl'] as String;
-          });
-        } else {
-          // fallback to FirebaseAuth photoURL
-          setState(() {
-            _photoUrl = user.photoURL;
-          });
-        }
-      } catch (e) {
-        debugPrint("⚠️ Failed to fetch Firestore user photo: $e");
-        setState(() {
-          _photoUrl = user.photoURL;
-        });
-      }
-    }
-  }
-
-  // ✅ Helper: always returns an ImageProvider<Object>
-  ImageProvider<Object> _getAvatarProvider() {
-    if (_photoUrl != null && _photoUrl!.isNotEmpty) {
-      return CachedNetworkImageProvider(_photoUrl!); // cached locally
-    }
-    return const AssetImage("assets/images/robot_family1.jpg");
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final progression = ProgressionScope.watch(context);
+    final profile = progression.profile;
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = (profile?.name?.trim().isNotEmpty ?? false)
+        ? profile!.name!.trim()
+        : (user?.displayName?.trim().isNotEmpty ?? false)
+            ? user!.displayName!.trim()
+            : "User";
+    final photoUrl = (profile?.photoUrl?.trim().isNotEmpty ?? false)
+        ? profile!.photoUrl!.trim()
+        : user?.photoURL;
+
+    ImageProvider<Object> avatarProvider;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      avatarProvider = CachedNetworkImageProvider(photoUrl);
+    } else {
+      avatarProvider = const AssetImage("assets/images/robot_family1.jpg");
+    }
+
     return Stack(
       children: [
         Positioned(
           left: 19,
-          top: widget.topOffset,
+          top: topOffset,
           child: ProfileAvatar(
             size: 55,
-            image: _getAvatarProvider(),
+            image: avatarProvider,
             imageScale: 1.2,
             onPressed: () => debugPrint("Avatar tapped!"),
             fillColor: const Color.fromARGB(255, 228, 228, 228),
@@ -86,7 +48,7 @@ class _HeaderGreetingState extends State<HeaderGreeting> {
         Positioned(
           left: 86,
           right: 24,
-          top: widget.topOffset + 7,
+          top: topOffset + 7,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -105,7 +67,7 @@ class _HeaderGreetingState extends State<HeaderGreeting> {
                       ),
                     ),
                     Text(
-                      _displayName,
+                      displayName,
                       style: GoogleFonts.lato(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
