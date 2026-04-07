@@ -44,6 +44,11 @@ class _LessonProgressBarState extends State<LessonProgressBar>
   double _from = 0.0;
   double _to = 0.0;
 
+  double _normalizedStageProgress() {
+    if (widget.totalStages <= 0) return 0.0;
+    return (widget.currentStage / widget.totalStages).clamp(0.0, 1.0);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -51,15 +56,19 @@ class _LessonProgressBarState extends State<LessonProgressBar>
       vsync: this,
       duration: widget.stepDuration,
     );
+    _from = _normalizedStageProgress();
+    _to = _from;
     _setupAnimation();
+    _controller.value = 1.0;
   }
 
   @override
   void didUpdateWidget(LessonProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentStage != widget.currentStage) {
+    if (oldWidget.currentStage != widget.currentStage ||
+        oldWidget.totalStages != widget.totalStages) {
       _from = _animation.value;
-      _to = (widget.currentStage / widget.totalStages).clamp(0.0, 1.0);
+      _to = _normalizedStageProgress();
       _setupAnimation();
       _controller.forward(from: 0);
     }
@@ -133,8 +142,10 @@ class _ProgressPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          _LessonProgressBarState._trackBase.withOpacity(trackAlpha + 0.08),
-          _LessonProgressBarState._trackBase.withOpacity(trackAlpha),
+          _LessonProgressBarState._trackBase.withValues(
+            alpha: trackAlpha + 0.08,
+          ),
+          _LessonProgressBarState._trackBase.withValues(alpha: trackAlpha),
         ],
       ).createShader(rect);
     canvas.drawRRect(rrect, trackPaint);
@@ -143,15 +154,16 @@ class _ProgressPainter extends CustomPainter {
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = _LessonProgressBarState._borderColor
-          .withOpacity(_LessonProgressBarState._borderAlpha);
+      ..color = _LessonProgressBarState._borderColor.withValues(
+        alpha: _LessonProgressBarState._borderAlpha,
+      );
     canvas.drawRRect(rrect, borderPaint);
 
     // Stage markers
     if (totalStages > 1 && totalStages <= 12) {
       final sepPaint = Paint()
         ..strokeWidth = 1
-        ..color = _LessonProgressBarState._borderColor.withOpacity(0.10);
+        ..color = _LessonProgressBarState._borderColor.withValues(alpha: 0.10);
       final double stepW = size.width / totalStages;
       for (int i = 1; i < totalStages; i++) {
         final x = stepW * i;
@@ -174,8 +186,8 @@ class _ProgressPainter extends CustomPainter {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            _LessonProgressBarState._fillStart.withOpacity(fillAlpha),
-            _LessonProgressBarState._fillEnd.withOpacity(fillAlpha),
+            _LessonProgressBarState._fillStart.withValues(alpha: fillAlpha),
+            _LessonProgressBarState._fillEnd.withValues(alpha: fillAlpha),
           ],
         ).createShader(fillRect);
       canvas.drawRRect(fillRRect, fillPaint);
@@ -187,8 +199,8 @@ class _ProgressPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.white.withOpacity(isInitialLook ? 0.14 : 0.10),
-            Colors.white.withOpacity(0.00),
+            Colors.white.withValues(alpha: isInitialLook ? 0.14 : 0.10),
+            Colors.white.withValues(alpha: 0.00),
           ],
         ).createShader(glossRect);
       canvas.drawRRect(
@@ -200,14 +212,15 @@ class _ProgressPainter extends CustomPainter {
       final innerEdge = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.8
-        ..color = Colors.black.withOpacity(0.05);
+        ..color = Colors.black.withValues(alpha: 0.05);
       canvas.drawRRect(fillRRect.deflate(0.4), innerEdge);
 
       // Glow
       if (!isInitialLook) {
         final glowPaint = Paint()
-          ..color = _LessonProgressBarState._fillEnd
-              .withOpacity(_LessonProgressBarState._glowAlpha)
+          ..color = _LessonProgressBarState._fillEnd.withValues(
+            alpha: _LessonProgressBarState._glowAlpha,
+          )
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
         canvas.save();
         canvas.clipRRect(rrect);
