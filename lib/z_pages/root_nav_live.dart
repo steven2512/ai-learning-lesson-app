@@ -6,11 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/app_router.dart';
 import 'package:running_robot/z_pages/assets/lessonPage/lesson_page.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/main_menu.dart';
-import 'package:running_robot/z_pages/assets/settings/settings_page_live.dart';
+import 'package:running_robot/z_pages/assets/profile/profile_page_live.dart';
 
 class RootNavScaffold extends StatefulWidget {
   final AppNavigate onNavigate;
-  final int initialIndex; // 0=Home, 1=Lessons, 2=Settings
+  final int initialIndex; // 0=Home, 1=Lessons, 2=Profile
 
   const RootNavScaffold({
     super.key,
@@ -32,7 +32,7 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
       onNavigate: widget.onNavigate,
       key: const PageStorageKey('lessons_tab'),
     ),
-    const SettingsPage(),
+    const ProfilePage(),
   ];
 
   @override
@@ -86,9 +86,9 @@ class _RootNavScaffoldState extends State<RootNavScaffold> {
               label: 'Lessons',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Settings',
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Profile',
             ),
           ],
         ),
