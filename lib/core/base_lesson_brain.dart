@@ -70,6 +70,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   int currentIndex = 0;
   bool answered = false;
   bool _isBootstrapping = true;
+  bool _isAdvancing = false;
   late final List<SubLesson> subLessons;
 
   // ✅ FIX: a nonce that forces a full remount of the current sublesson subtree
@@ -136,26 +137,33 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain>
   // ─────────────────────────────
 
   Future<void> goNext() async {
-    if (currentIndex < subLessons.length - 1) {
-      final nextIndex = currentIndex + 1;
-      setState(() {
-        currentIndex = nextIndex;
-        answered = false;
-        _restartNonce = 0;
-      });
+    if (_isAdvancing) return;
+    _isAdvancing = true;
 
-      await saveCurrentLessonStep(nextIndex);
-    } else {
-      final completion = await completeLesson();
-      if (!mounted) return;
-      final progression = ProgressionScope.read(context);
-      await progression.refresh();
-      LessonNavigator.complete(
-        widget.lessonId,
-        widget.onNavigate,
-        progression: progression,
-        completion: completion,
-      );
+    try {
+      if (currentIndex < subLessons.length - 1) {
+        final nextIndex = currentIndex + 1;
+        setState(() {
+          currentIndex = nextIndex;
+          answered = false;
+          _restartNonce = 0;
+        });
+
+        await saveCurrentLessonStep(nextIndex);
+      } else {
+        final completion = await completeLesson();
+        if (!mounted) return;
+        final progression = ProgressionScope.read(context);
+        await progression.refresh();
+        LessonNavigator.complete(
+          widget.lessonId,
+          widget.onNavigate,
+          progression: progression,
+          completion: completion,
+        );
+      }
+    } finally {
+      _isAdvancing = false;
     }
   }
 
