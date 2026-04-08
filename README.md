@@ -1,99 +1,47 @@
 # Running Robot
 
-Interactive Flutter app for teaching AI and data science basics through short lessons, mini-games, and a progression-based learning path. The app uses Firebase Authentication, Cloud Firestore, and callable Cloud Functions to keep user progress, lesson state, XP, and streak data in sync.
+Running Robot is a cross-platform Flutter learning app that teaches AI and data fundamentals through short interactive lessons, mini-games, and progression-driven onboarding. It combines a polished client experience with a Firebase backend that tracks lesson state, XP, streaks, daily activity, and resume progress across sessions.
 
-## What Is In This Repo
+This repository is not just a UI prototype. It includes the actual product loop end to end:
 
-- Flutter client for Android, iOS, Web, Windows, macOS, and Linux
-- Firebase Cloud Functions for lesson lifecycle and progression updates
-- Firestore security rules for profile schema and access control
-- Lesson content, mini-games, and progression UI
+- multi-provider authentication
+- lesson manifest and progression logic
+- resumable lesson sessions
+- profile and settings flows
+- Cloud Functions-backed progression updates
+- Firestore rules for schema enforcement and access control
 
-## Current Feature Set
+## Why This Project Is Strong
 
-- Email/password sign up and login
+Running Robot showcases product thinking and backend discipline in the same codebase.
+
+- It is built as a real learning product, not a static demo screen.
+- Lesson progression is server-aware, not only stored in local widget state.
+- The app mixes educational content, lightweight game mechanics, and user progression in one experience.
+- Progression reads are fast because the client hydrates from cache first, then refreshes from Firestore.
+- Sensitive progression writes are routed through callable Cloud Functions instead of relying on broad client-side write access.
+- Firestore rules enforce a canonical user profile shape and tightly scoped reads.
+
+## Core Experience
+
+The app is designed around a guided AI foundations course. Users can sign in, continue from where they left off, complete lessons, build streaks, earn XP, and unlock the next lesson in sequence.
+
+Current product features:
+
+- Email/password authentication
 - Google sign in
 - Facebook sign in
 - Password reset flow
-- Cached progression shell using `SharedPreferences`
-- Home dashboard with lesson CTA, lesson count, level ring, and weekly streak
-- Lesson map with locked, available, in-progress, and completed states
-- Nine lesson entries in the manifest
-- Profile page with editable name and birthday
-- Settings page with refresh, password reset, app info, and logout
-- Callable Cloud Functions for lesson start, save, pause, and completion flows
+- Home dashboard with current lesson CTA and progression summary
+- Lessons tab with locked, available, in-progress, and completed lesson states
+- Profile page with editable display name and birthday
+- Settings page with account info, refresh controls, version info, and logout
+- Local progression caching with `SharedPreferences`
+- Cloud Functions for lesson start, save, pause, and completion flows
 
-## Tech Stack
+## Current Curriculum
 
-| Layer | Technology |
-| --- | --- |
-| Client | Flutter, Dart |
-| Backend | Firebase Authentication, Cloud Firestore, Cloud Functions |
-| Functions runtime | Node.js 20 |
-| Game / interactive layer | Flame, flame_forge2d |
-| UI | Material 3, Google Fonts, flutter_svg |
-| Local cache | shared_preferences |
-
-## Project Structure
-
-```text
-lib/
-  auth/                     Authentication screens and auth gate
-  core/                     Router, lesson manifest, progression scope, shared lesson base
-  game/                     Flame components, progress bar, robot, obstacles
-  models/                   UserProfile and LessonProgress models
-  services/                 Firestore, callable functions, cache, auth helpers
-  z_pages/                  Home, lessons map, profile, settings, lesson UIs, mini-games
-
-functions/
-  index.js                  Callable Cloud Functions
-  lessonManifest.js         Server-side lesson metadata and ordering
-  progression.js            Shared progression helpers for functions
-
-firestore.rules             Firestore access and schema rules
-firebase.json               Firebase config for functions + Firestore rules
-```
-
-## App Flow
-
-### Authentication
-
-`lib/main.dart` initializes Firebase and boots into `AuthGate`.
-
-`AuthGate` listens to `FirebaseAuth.instance.authStateChanges()`:
-
-- signed out users see the welcome flow
-- signed in users enter `MyApp`
-- progression is loaded on sign in and cleared on sign out
-
-### Navigation
-
-The app uses a lightweight custom route model in `lib/core/app_router.dart` instead of `Navigator` stacks for lesson flow.
-
-Main shell tabs:
-
-- Home
-- Lessons
-- Profile
-
-The root shell lives in `lib/z_pages/root_nav_live.dart` and uses an `IndexedStack` plus `PageStorage` so the lessons tab can preserve state like scroll position.
-
-### Progression Loading
-
-`AppProgressionController` is the central client-side progression source.
-
-It:
-
-- loads cached progression snapshots from `SharedPreferences`
-- refreshes from Firestore when a user is available
-- exposes derived values such as current lesson, level, total XP, streak, and lesson UI state
-- drives the home page, lesson page, profile page, and end-of-lesson routing
-
-## Lessons And Progression
-
-### Lesson Manifest
-
-The current course manifest lives in `lib/core/lesson_manifest.dart`.
+The active course id is `ai-theory-foundations`.
 
 Current ordered lessons:
 
@@ -107,50 +55,115 @@ Current ordered lessons:
 8. What is a Label?
 9. label-Features Game
 
-The course id used by both app and functions is `ai-theory-foundations`.
+These lessons live in the client manifest at `lib/core/lesson_manifest.dart`, and the backend keeps a matching manifest in `functions/lessonManifest.js` so unlock order and lesson identity stay aligned.
 
-### Base Lesson System
+## Product Architecture
 
-All lessons build on `BaseLessonBrain` in `lib/core/base_lesson_brain.dart`.
+### Client
 
-That shared state handles:
+The Flutter client targets Android, iOS, Web, Windows, macOS, and Linux from one codebase.
 
-- lesson bootstrapping through the backend
-- restoring the saved step index
-- pausing and resuming lesson sessions on app lifecycle changes
-- saving current step progress
-- completing lessons and routing to the end screen
-- refreshing progression after lesson completion
+Main responsibilities:
 
-Each lesson is composed from `SubLesson` entries with one of three mechanics:
+- authentication and auth-gated boot flow
+- lesson navigation and UI composition
+- cached progression hydration
+- profile and settings experiences
+- Flame-based mini-game integration
+
+Entry point:
+
+- `lib/main.dart` initializes Firebase and launches `AuthGate`
+
+Main shell:
+
+- `lib/z_pages/root_nav_live.dart` hosts `Home`, `Lessons`, and `Profile`
+- the shell uses `IndexedStack` plus `PageStorage` to preserve tab state
+
+### Progression Layer
+
+`AppProgressionController` is the central client-side progression source.
+
+It:
+
+- hydrates the last known progression snapshot from local cache
+- refreshes the latest profile and lesson progress from Firestore
+- exposes derived values like current lesson, XP, level, streak, and completion percentage
+- feeds the home screen, lesson screen, profile, and post-lesson transitions
+
+This gives the app a better user experience than a cold-start-only Firestore load because the shell can show meaningful state quickly and then reconcile with the backend.
+
+### Lesson System
+
+All active lessons build on `BaseLessonBrain` in `lib/core/base_lesson_brain.dart`.
+
+That shared lesson infrastructure handles:
+
+- backend lesson bootstrap
+- resume from saved step index
+- save-on-progress
+- pause handling on lifecycle changes
+- completion submission
+- progression refresh after lesson completion
+
+Each lesson is composed from `SubLesson` units using three execution styles:
 
 - `manual`
 - `emit`
 - `auto`
 
-### Lesson Persistence Model
+This structure makes the lesson system reusable and keeps content screens from re-implementing the same lifecycle logic.
 
-Lesson progress is stored under:
+## Backend Design
 
-`users/{uid}/lessonProgress/{lessonId}`
+### Firebase Stack
 
-The client reads lesson progress directly, but lesson writes are handled through callable Cloud Functions instead of direct client writes.
+| Layer | Technology |
+| --- | --- |
+| Client | Flutter, Dart |
+| Auth | Firebase Authentication |
+| Database | Cloud Firestore |
+| Backend logic | Firebase Cloud Functions |
+| Functions runtime | Node.js 20 |
+| Interactive/game layer | Flame, flame_forge2d |
+| UI support | Material 3, Google Fonts, flutter_svg |
+| Local cache | shared_preferences |
 
-Tracked fields include:
+### Callable Cloud Functions
 
-- `lessonId`
-- `courseId`
-- `chapterId`
-- `globalLessonNumber`
-- `startedAt`
-- `lastActiveAt`
-- `completedAt`
-- `isCompleted`
-- `completedCount`
+Progression writes are now fully wired through callable Cloud Functions in `functions/index.js`.
 
-User progression summary lives on:
+Implemented functions:
+
+- `startLesson`
+- `saveLessonProgress`
+- `pauseLessonSession`
+- `completeLesson`
+
+What they do:
+
+- validate authentication
+- validate lesson identity against the server manifest
+- enforce lesson unlock order
+- create lesson progress documents when needed
+- resume active lessons safely
+- store active learning time
+- update current lesson step index
+- award XP on first completion
+- advance the unlocked lesson pointer
+- update daily lesson count and streak metrics
+
+The most important design choice here is that lesson progression writes are backend-owned. That makes the progression system more robust than a direct-write client model and gives the project a much stronger engineering story.
+
+### Firestore Model
+
+User progression summary is stored on:
 
 `users/{uid}`
+
+Lesson-specific state is stored on:
+
+`users/{uid}/lessonProgress/{lessonId}`
 
 Important profile fields include:
 
@@ -167,156 +180,136 @@ Important profile fields include:
 - `timezone`
 - `timezoneOffsetMinutes`
 
-## Cloud Functions
+Lesson progress documents track:
 
-Cloud Functions are fully wired and are the source of truth for lesson progression writes.
+- `lessonId`
+- `courseId`
+- `chapterId`
+- `globalLessonNumber`
+- `startedAt`
+- `lastActiveAt`
+- `completedAt`
+- `isCompleted`
+- `completedCount`
 
-Function entrypoints live in `functions/index.js`.
+### Firestore Rules
 
-Implemented callable functions:
-
-- `startLesson`
-- `saveLessonProgress`
-- `pauseLessonSession`
-- `completeLesson`
-
-### What The Functions Do
-
-`startLesson`
-
-- validates auth
-- validates lesson id against the server manifest
-- checks lesson unlock state
-- creates lesson progress if missing
-- starts a lesson and also handles resume behavior for active lesson sessions
-- returns the initial step index and status flags
-
-`saveLessonProgress`
-
-- validates auth and step index
-- updates the current lesson step if the lesson is the active progression lesson
-- rolls elapsed active-session time into `totalLearningSeconds`
-- refreshes `lastActiveAt`
-
-`pauseLessonSession`
-
-- stores the current step index
-- flushes active session time into `totalLearningSeconds`
-- clears `activeSessionStartedAt`
-
-`completeLesson`
-
-- marks first completion
-- increments replay count for completed lessons
-- awards `50 XP` on first completion
-- recalculates level at `200 XP` per level
-- advances `currentLesson`
-- updates `todayLessonCount`
-- updates `dailyStreak`
-- stores learning time
-
-### Server Lesson Manifest
-
-The server keeps its own ordered manifest in `functions/lessonManifest.js`. That means lesson ids and ordering must stay aligned between:
-
-- `lib/core/lesson_manifest.dart`
-- `functions/lessonManifest.js`
-
-## Firestore Rules
-
-Rules live in `firestore.rules`.
+Firestore rules in `firestore.rules` are more than basic auth checks. They enforce a fairly opinionated profile schema and restrict what clients can do directly.
 
 Key rule behavior:
 
 - users can only read their own user document
 - users can only create their own canonical profile document
-- metadata updates are tightly scoped
+- metadata updates are scoped to approved fields
 - legacy profile schema repair is allowed under strict validation
-- users can read their own `lessonProgress` subcollection
+- users can read their own `lessonProgress` documents
 - everything else is denied by default
 
-Because lesson progression writes go through Admin SDK Cloud Functions, the client does not need direct write access to `lessonProgress`.
+Because progression writes happen through Admin SDK Cloud Functions, the client does not need direct lesson progress write access.
 
-## Main Screens
+## Main User-Facing Screens
 
 ### Home
 
 `lib/z_pages/assets/mainMenu/main_menu.dart`
 
-Shows:
+Highlights:
 
 - current lesson CTA
-- total course progress percentage
+- course progress percentage
 - lessons completed today
-- current level ring
+- level and XP context
 - weekly streak visualization
 
-### Lesson Map
+### Lessons
 
 `lib/z_pages/assets/lessonPage/lesson_page.dart`
 
-Uses `AppProgressionController` to determine whether a lesson is:
+Highlights:
 
-- locked
-- available
-- in progress
-- completed
+- ordered lesson map
+- unlocked versus locked lesson states
+- in-progress detection
+- completed lesson review state
 
 ### Profile
 
 `lib/z_pages/assets/profile/profile_page_live.dart`
 
-Shows:
+Highlights:
 
-- avatar and account identity
-- XP, streak, current lesson, lessons completed
+- account identity
+- XP and streak summary
+- current lesson and lessons completed
 - total learning time
-- profile completion prompt
-- editable profile sheet for display name and birthday
+- profile completion prompts
+- editable profile sheet
 
 ### Settings
 
 `lib/z_pages/assets/settings/settings_page_live.dart`
 
-Supports:
+Highlights:
 
-- refresh progression from Firebase
-- password reset for email/password accounts
+- progression refresh
+- password reset for email/password users
 - account info display
-- app version, timezone, last device
+- app version and timezone information
 - logout
 
-## Authentication Details
+## Project Structure
 
-Email/password auth uses Firebase Auth directly.
+```text
+lib/
+  auth/                     Auth gate, login, signup, onboarding
+  core/                     Router, manifests, progression scope, shared lesson logic
+  game/                     Flame components and mini-game systems
+  models/                   User profile and lesson progress models
+  services/                 Firebase services, progression reads, cache, auth helpers
+  z_pages/                  Home, lessons, profile, settings, lesson UIs, mini-games
 
-Google sign in:
+functions/
+  index.js                  Callable lesson lifecycle functions
+  lessonManifest.js         Server-side lesson metadata and ordering
+  progression.js            Shared progression helpers
 
-- mobile and desktop path uses `GoogleSignIn.instance.authenticate()` when supported
-- web falls back to `FirebaseAuth.instance.signInWithPopup()`
+firestore.rules             Firestore validation and access rules
+firebase.json               Firebase configuration
+```
 
-Facebook sign in uses `flutter_facebook_auth`.
+## Authentication Flow
 
-On successful login or signup, `UserProfileService.createOrUpdateUserProfile()` ensures the profile document has the canonical schema and current metadata such as:
+Authentication is handled with Firebase Auth.
 
-- provider
-- last device
+Supported paths:
+
+- email/password sign up and login
+- Google sign in
+- Facebook sign in
+
+On successful login or signup, the app ensures a canonical user profile exists with metadata such as:
+
+- auth provider
 - app version
+- last device
 - timezone
 - timezone offset
 
-## Local Setup
+This creates a cleaner base for progression, analytics-style counters, and profile completeness.
+
+## Local Development
 
 ### Prerequisites
 
 - Flutter SDK
-- Firebase project with Authentication, Firestore, and Functions
+- Node.js 20
+- Firebase CLI
+- Firebase project with Authentication, Firestore, and Functions enabled
 - Android Studio and/or Xcode for mobile targets
-- Node.js 20 for Cloud Functions work
 
 ### Required Local Config Files
 
-These files are intentionally ignored and should stay local:
+These files are intentionally ignored and should remain local:
 
 - `android/app/google-services.json`
 - `android/app/src/main/res/values/strings.xml`
@@ -324,7 +317,7 @@ These files are intentionally ignored and should stay local:
 
 `strings.xml` is used for Android Facebook values such as app id and client token.
 
-### Install
+### Install Dependencies
 
 ```bash
 flutter pub get
@@ -358,21 +351,16 @@ firebase deploy --only functions
 firebase deploy --only firestore:rules
 ```
 
-## Current Notes
+## Practical Notes
 
-- The repo now includes full callable progression wiring for lesson lifecycle events.
-- Progression reads still come from Firestore on the client side.
-- Profile and settings experiences are live and tied into progression refresh.
-- The repo contains some old lesson content under `lib/z_pages/lessons/unknown/`, but the active manifest currently exposes the 9 lessons listed above.
+- The repo currently includes the full callable progression flow for lesson lifecycle events.
+- Progression reads still happen on the client from Firestore snapshots.
+- The client and server lesson manifests must stay in sync.
+- There is still limited automated test coverage beyond the default Flutter test scaffold.
+- Some older lesson content still exists in the repo, but the active manifest currently exposes the 9 lessons listed above.
 
-## Known Gaps
+## Firebase Project Note
 
-- There is no broad automated test coverage yet beyond the default Flutter widget test scaffold.
-- The local Firebase config files are not committed, so a fresh clone still needs per-developer setup for Firebase and Facebook auth.
-- The server and client lesson manifests must be kept in sync manually.
+`.firebaserc` currently points to `ai-learning-app-42d8b`.
 
-## Repository Note
-
-Firebase project wiring in `.firebaserc` currently points at `ai-learning-app-42d8b`.
-
-If you clone this repo for a different Firebase project, update local config files and Firebase CLI project selection before deploying.
+If you use a different Firebase project, update your local Firebase config files and CLI project selection before running deploy commands.
