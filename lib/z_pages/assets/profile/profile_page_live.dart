@@ -439,16 +439,6 @@ class _ProfileHero extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       child: Stack(
         children: [
-          Positioned(
-            top: 8,
-            right: 8,
-            child: _TopIconButton(
-              icon: Icons.settings_rounded,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF6F52C8),
-              onTap: onOpenSettings,
-            ),
-          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -515,6 +505,16 @@ class _ProfileHero extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: _TopIconButton(
+              icon: Icons.settings_rounded,
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF6F52C8),
+              onTap: onOpenSettings,
+            ),
           ),
         ],
       ),
