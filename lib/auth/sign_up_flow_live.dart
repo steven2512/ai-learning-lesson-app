@@ -223,6 +223,7 @@ class _SignupFlowState extends State<SignupFlow> {
                   'How old are you?',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'This helps us tailor the app to your experience.',
@@ -235,7 +236,17 @@ class _SignupFlowState extends State<SignupFlow> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Expanded(
+                      Container(
+                        height: 220,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: const Color(0xFFE1D4FF),
+                            width: 1,
+                          ),
+                        ),
                         child: CupertinoPicker(
                           itemExtent: 48,
                           scrollController: FixedExtentScrollController(
