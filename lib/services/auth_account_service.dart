@@ -86,16 +86,70 @@ class AuthAccountService {
     return _readInt(data['cooldownSeconds'], fallback: 60);
   }
 
-  static Future<void> verifyEmailOtp(String code) async {
-    await _functions
+  static Future<int> startSignupEmailOtp(String email) async {
+    final result = await _functions
         .httpsCallable(
-          'verifyEmailOtp',
+          'startSignupEmailOtp',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 20),
           ),
         )
         .call({
+      'email': email.trim(),
+    });
+
+    final data = Map<String, dynamic>.from(result.data as Map);
+    return _readInt(data['cooldownSeconds'], fallback: 60);
+  }
+
+  static Future<void> verifyEmailOtp(String code) async {
+    await _functions
+        .httpsCallable(
+      'verifyEmailOtp',
+      options: HttpsCallableOptions(
+        timeout: const Duration(seconds: 20),
+      ),
+    )
+        .call({
       'code': code.trim(),
+    });
+
+    await FirebaseAuth.instance.currentUser?.getIdToken(true);
+    await FirebaseAuth.instance.currentUser?.reload();
+  }
+
+  static Future<String> verifySignupEmailOtp({
+    required String email,
+    required String code,
+  }) async {
+    final result = await _functions
+        .httpsCallable(
+          'verifySignupEmailOtp',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 20),
+          ),
+        )
+        .call({
+      'email': email.trim(),
+      'code': code.trim(),
+    });
+
+    final data = Map<String, dynamic>.from(result.data as Map);
+    return data['verificationToken']?.toString() ?? '';
+  }
+
+  static Future<void> claimVerifiedSignupEmail(
+    String verificationToken,
+  ) async {
+    await _functions
+        .httpsCallable(
+          'claimVerifiedSignupEmail',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 20),
+          ),
+        )
+        .call({
+      'verificationToken': verificationToken,
     });
 
     await FirebaseAuth.instance.currentUser?.getIdToken(true);

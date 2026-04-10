@@ -20,6 +20,7 @@ const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
 const OTP_MAX_VERIFY_ATTEMPTS = 5;
 const OTP_MAX_SENDS_PER_HOUR = 5;
+const SIGNUP_VERIFICATION_EXPIRY_MS = 30 * 60 * 1000;
 
 function requireAuth(request) {
   if (!request.auth?.uid) {
@@ -71,6 +72,12 @@ function activityDayDoc(uid, dateKey) {
 
 function emailOtpDoc(uid) {
   return db.collection("_emailOtpSessions").doc(uid);
+}
+
+function signupEmailOtpDoc(email) {
+  return db.collection("_signupEmailOtpSessions").doc(
+    crypto.createHash("sha256").update(email).digest("hex"),
+  );
 }
 
 function levelForXp(xp) {
@@ -246,6 +253,14 @@ function hashOtpCode(uid, code) {
     .digest("hex");
 }
 
+function generateVerificationToken() {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+function isValidEmailFormat(email) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
 function maskEmail(email) {
   const normalized = `${email ?? ""}`.trim();
   const parts = normalized.split("@");
@@ -278,6 +293,41 @@ function ensureOtpEligible(request) {
   }
 
   return email.trim().toLowerCase();
+}
+
+function requireEmailValue(data) {
+  const email = `${data?.email ?? ""}`.trim().toLowerCase();
+  if (!isValidEmailFormat(email)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Enter a valid email address.",
+    );
+  }
+
+  return email;
+}
+
+async function assertEmailAvailableForSignup(email) {
+  try {
+    await admin.auth().getUserByEmail(email);
+    throw new HttpsError(
+      "already-exists",
+      "An account with this email already exists.",
+    );
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    if (error?.code === "auth/user-not-found") {
+      return;
+    }
+
+    throw new HttpsError(
+      "internal",
+      "Unable to check that email right now.",
+    );
+  }
 }
 
 async function sendOtpEmail({ email, code }) {
@@ -315,21 +365,13 @@ async function sendOtpEmail({ email, code }) {
   }
 }
 
-exports.sendEmailOtp = onCall(async (request) => {
-  const uid = requireAuth(request);
-  requireOtpConfig();
-  const email = ensureOtpEligible(request);
-
-  if (request.auth?.token?.verified_email_otp === true ||
-      request.auth?.token?.email_verified === true) {
-    return {
-      alreadyVerified: true,
-      maskedEmail: maskEmail(email),
-      cooldownSeconds: 0,
-    };
-  }
-
-  const otpRef = emailOtpDoc(uid);
+async function sendOtpWithRateLimit({
+  otpRef,
+  subjectKey,
+  email,
+  loggerContext,
+  extraFields = {},
+}) {
   const now = new Date();
   const otpSnap = await otpRef.get();
   const otpData = otpSnap.data() ?? {};
@@ -365,17 +407,17 @@ exports.sendEmailOtp = onCall(async (request) => {
 
   await otpRef.set({
     email,
-    codeHash: hashOtpCode(uid, code),
+    codeHash: hashOtpCode(subjectKey, code),
     failedAttempts: 0,
     expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
     resendAvailableAt: new Date(now.getTime() + OTP_RESEND_COOLDOWN_MS),
     sendWindowStartedAt: hourWindowStart,
     sendsInWindow: nextSendsInWindow,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    ...extraFields,
   }, { merge: true });
 
-  logger.info("Sent email verification OTP", {
-    uid,
+  logger.info(loggerContext, {
     email,
   });
 
@@ -383,22 +425,24 @@ exports.sendEmailOtp = onCall(async (request) => {
     maskedEmail: maskEmail(email),
     cooldownSeconds: Math.floor(OTP_RESEND_COOLDOWN_MS / 1000),
   };
-});
+}
 
-exports.verifyEmailOtp = onCall(async (request) => {
-  const uid = requireAuth(request);
-  requireOtpConfig();
-  const email = ensureOtpEligible(request);
-  const code = `${request.data?.code ?? ""}`.trim();
-
+function validateOtpCode(code) {
   if (!/^\d{6}$/.test(code)) {
     throw new HttpsError(
       "invalid-argument",
       "Enter the 6-digit code from your email.",
     );
   }
+}
 
-  const otpRef = emailOtpDoc(uid);
+async function verifyOtpAttempt({
+  otpRef,
+  subjectKey,
+  expectedEmail,
+  code,
+  onSuccess,
+}) {
   const otpSnap = await otpRef.get();
   const otpData = otpSnap.data() ?? {};
 
@@ -409,10 +453,10 @@ exports.verifyEmailOtp = onCall(async (request) => {
     );
   }
 
-  if (otpData.email !== email) {
+  if (otpData.email !== expectedEmail) {
     throw new HttpsError(
       "permission-denied",
-      "This verification code does not match the signed-in account.",
+      "This verification code does not match the expected email.",
     );
   }
 
@@ -434,7 +478,7 @@ exports.verifyEmailOtp = onCall(async (request) => {
     );
   }
 
-  if (otpData.codeHash !== hashOtpCode(uid, code)) {
+  if (otpData.codeHash !== hashOtpCode(subjectKey, code)) {
     await otpRef.set(
       {
         failedAttempts: failedAttempts + 1,
@@ -448,7 +492,110 @@ exports.verifyEmailOtp = onCall(async (request) => {
     );
   }
 
+  return onSuccess(otpData);
+}
+
+exports.startSignupEmailOtp = onCall(async (request) => {
+  requireOtpConfig();
+  const email = requireEmailValue(request.data);
+  await assertEmailAvailableForSignup(email);
+
+  return sendOtpWithRateLimit({
+    otpRef: signupEmailOtpDoc(email),
+    subjectKey: email,
+    email,
+    loggerContext: "Sent signup email verification OTP",
+    extraFields: {
+      verifiedAt: null,
+      verificationTokenHash: null,
+      verificationTokenExpiresAt: null,
+    },
+  });
+});
+
+exports.verifySignupEmailOtp = onCall(async (request) => {
+  requireOtpConfig();
+  const email = requireEmailValue(request.data);
+  const code = `${request.data?.code ?? ""}`.trim();
+  validateOtpCode(code);
+
+  return verifyOtpAttempt({
+    otpRef: signupEmailOtpDoc(email),
+    subjectKey: email,
+    expectedEmail: email,
+    code,
+    onSuccess: async () => {
+      const verificationToken = generateVerificationToken();
+      await signupEmailOtpDoc(email).set({
+        verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        verificationTokenHash: hashOtpCode(email, verificationToken),
+        verificationTokenExpiresAt: new Date(
+          Date.now() + SIGNUP_VERIFICATION_EXPIRY_MS,
+        ),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      logger.info("Verified signup email OTP", {
+        email,
+      });
+
+      return {
+        verified: true,
+        maskedEmail: maskEmail(email),
+        verificationToken,
+      };
+    },
+  });
+});
+
+exports.claimVerifiedSignupEmail = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireOtpConfig();
+  const verificationToken = `${request.data?.verificationToken ?? ""}`.trim();
+
+  if (verificationToken.length < 16) {
+    throw new HttpsError(
+      "invalid-argument",
+      "A valid signup verification token is required.",
+    );
+  }
+
   const authUser = await admin.auth().getUser(uid);
+  const email = `${authUser.email ?? ""}`.trim().toLowerCase();
+  if (!isValidEmailFormat(email)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The signed-in account must have a valid email address.",
+    );
+  }
+
+  const otpRef = signupEmailOtpDoc(email);
+  const otpSnap = await otpRef.get();
+  const otpData = otpSnap.data() ?? {};
+
+  if (!otpSnap.exists || otpData.email !== email) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Verify your email before creating the account.",
+    );
+  }
+
+  const tokenExpiresAt = readTimestampDate(otpData.verificationTokenExpiresAt);
+  if (tokenExpiresAt == null || tokenExpiresAt.getTime() <= Date.now()) {
+    await otpRef.delete();
+    throw new HttpsError(
+      "deadline-exceeded",
+      "Your signup verification expired. Verify your email again.",
+    );
+  }
+
+  if (otpData.verificationTokenHash !== hashOtpCode(email, verificationToken)) {
+    throw new HttpsError(
+      "permission-denied",
+      "This signup verification token is invalid.",
+    );
+  }
+
   const existingClaims = authUser.customClaims ?? {};
   await admin.auth().setCustomUserClaims(uid, {
     ...existingClaims,
@@ -456,7 +603,7 @@ exports.verifyEmailOtp = onCall(async (request) => {
   });
   await otpRef.delete();
 
-  logger.info("Verified email OTP", {
+  logger.info("Claimed verified signup email", {
     uid,
     email,
   });
@@ -465,6 +612,62 @@ exports.verifyEmailOtp = onCall(async (request) => {
     verified: true,
     maskedEmail: maskEmail(email),
   };
+});
+
+exports.sendEmailOtp = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireOtpConfig();
+  const email = ensureOtpEligible(request);
+
+  if (request.auth?.token?.verified_email_otp === true ||
+      request.auth?.token?.email_verified === true) {
+    return {
+      alreadyVerified: true,
+      maskedEmail: maskEmail(email),
+      cooldownSeconds: 0,
+    };
+  }
+
+  return sendOtpWithRateLimit({
+    otpRef: emailOtpDoc(uid),
+    subjectKey: uid,
+    email,
+    loggerContext: "Sent email verification OTP",
+  });
+});
+
+exports.verifyEmailOtp = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireOtpConfig();
+  const email = ensureOtpEligible(request);
+  const code = `${request.data?.code ?? ""}`.trim();
+  validateOtpCode(code);
+
+  return verifyOtpAttempt({
+    otpRef: emailOtpDoc(uid),
+    subjectKey: uid,
+    expectedEmail: email,
+    code,
+    onSuccess: async () => {
+      const authUser = await admin.auth().getUser(uid);
+      const existingClaims = authUser.customClaims ?? {};
+      await admin.auth().setCustomUserClaims(uid, {
+        ...existingClaims,
+        verified_email_otp: true,
+      });
+      await emailOtpDoc(uid).delete();
+
+      logger.info("Verified email OTP", {
+        uid,
+        email,
+      });
+
+      return {
+        verified: true,
+        maskedEmail: maskEmail(email),
+      };
+    },
+  });
 });
 
 exports.markDailyActivity = onCall(async (request) => {
