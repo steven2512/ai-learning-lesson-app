@@ -40,6 +40,10 @@ class AppProgressionController extends ChangeNotifier {
   int get dailyStreak => profile?.dailyStreak ?? 0;
   int get todayLessonCount => profile?.todayLessonCount ?? 0;
   String? get lastDailyLessonDate => profile?.lastDailyLessonDate;
+  int get activityStreak => profile?.activityStreak ?? 0;
+  String? get lastActivityDateKey => profile?.lastActivityDateKey;
+  Set<String> get weeklyActivityDateKeys =>
+      _snapshot?.weeklyActivityDateKeys ?? const <String>{};
 
   int get courseProgressPercent {
     if (totalLessonCount == 0) return 0;

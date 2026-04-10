@@ -17,6 +17,8 @@ class UserProfile {
   final String? todayLessonCountDate;
   final int dailyStreak;
   final String? lastDailyLessonDate;
+  final int activityStreak;
+  final String? lastActivityDateKey;
   final DateTime? dob;
   final String? provider;
   final String? lastDevice;
@@ -40,6 +42,8 @@ class UserProfile {
     this.todayLessonCountDate,
     this.dailyStreak = 0,
     this.lastDailyLessonDate,
+    this.activityStreak = 0,
+    this.lastActivityDateKey,
     this.dob,
     this.provider,
     this.lastDevice,
@@ -65,6 +69,8 @@ class UserProfile {
       'todayLessonCountDate': todayLessonCountDate,
       'dailyStreak': dailyStreak,
       'lastDailyLessonDate': lastDailyLessonDate,
+      'activityStreak': activityStreak,
+      'lastActivityDateKey': lastActivityDateKey,
       'dob': dob != null ? Timestamp.fromDate(dob!) : null,
       'provider': provider,
       'lastDevice': lastDevice,
@@ -109,6 +115,10 @@ class UserProfile {
           ? map['dailyStreak'] ?? 0
           : int.tryParse(map['dailyStreak'].toString()) ?? 0,
       lastDailyLessonDate: map['lastDailyLessonDate'],
+      activityStreak: (map['activityStreak'] ?? 0) is int
+          ? map['activityStreak'] ?? 0
+          : int.tryParse(map['activityStreak'].toString()) ?? 0,
+      lastActivityDateKey: map['lastActivityDateKey'],
       dob: map['dob'] != null
           ? (map['dob'] is Timestamp
               ? (map['dob'] as Timestamp).toDate()

@@ -24,6 +24,8 @@ class UserProfileService {
     'todayLessonCountDate',
     'dailyStreak',
     'lastDailyLessonDate',
+    'activityStreak',
+    'lastActivityDateKey',
     'lastDevice',
     'appVersion',
     'timezone',
@@ -111,6 +113,8 @@ class UserProfileService {
         todayLessonCountDate: null,
         dailyStreak: 0,
         lastDailyLessonDate: null,
+        activityStreak: 0,
+        lastActivityDateKey: null,
         dob: resolvedDob,
         provider: resolvedProvider,
         lastDevice: resolvedLastDevice,
@@ -146,6 +150,8 @@ class UserProfileService {
         todayLessonCountDate: data['todayLessonCountDate']?.toString(),
         dailyStreak: _readLegacyInt(data['dailyStreak'], fallback: 0),
         lastDailyLessonDate: data['lastDailyLessonDate']?.toString(),
+        activityStreak: _readLegacyInt(data['activityStreak'], fallback: 0),
+        lastActivityDateKey: data['lastActivityDateKey']?.toString(),
         dob: resolvedDob,
         provider: resolvedProvider,
         lastDevice: resolvedLastDevice,
@@ -217,7 +223,8 @@ class UserProfileService {
         data['lessonsCompleted'] is int &&
         data['totalLearningSeconds'] is int &&
         data['todayLessonCount'] is int &&
-        data['dailyStreak'] is int;
+        data['dailyStreak'] is int &&
+        data['activityStreak'] is int;
   }
 
   static int _levelFromXp(int xp) {

@@ -6,7 +6,7 @@ import 'package:running_robot/services/progression_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppCacheService {
-  static const int _schemaVersion = 1;
+  static const int _schemaVersion = 2;
   static const String _snapshotPrefix = 'app_shell_snapshot_';
 
   static String _snapshotKey(String uid) => '$_snapshotPrefix$uid';
@@ -45,6 +45,9 @@ class AppCacheService {
       return ProgressionSnapshot(
         profile: UserProfile.fromMap(Map<String, dynamic>.from(profileMap)),
         lessonProgressById: lessonProgressById,
+        weeklyActivityDateKeys: _decodeWeeklyActivityDateKeys(
+          data['weeklyActivityDateKeys'],
+        ),
       );
     } catch (_) {
       return null;
@@ -65,6 +68,8 @@ class AppCacheService {
           for (final entry in snapshot.lessonProgressById.entries)
             entry.key: _encodeLessonProgress(entry.value),
         },
+        'weeklyActivityDateKeys':
+            snapshot.weeklyActivityDateKeys.toList()..sort(),
       },
     };
     await prefs.setString(_snapshotKey(uid), jsonEncode(payload));
@@ -92,6 +97,8 @@ class AppCacheService {
       'todayLessonCountDate': profile.todayLessonCountDate,
       'dailyStreak': profile.dailyStreak,
       'lastDailyLessonDate': profile.lastDailyLessonDate,
+      'activityStreak': profile.activityStreak,
+      'lastActivityDateKey': profile.lastActivityDateKey,
       'dob': profile.dob?.toIso8601String(),
       'provider': profile.provider,
       'lastDevice': profile.lastDevice,
@@ -113,5 +120,18 @@ class AppCacheService {
       'isCompleted': progress.isCompleted,
       'completedCount': progress.completedCount,
     };
+  }
+
+  static Set<String> _decodeWeeklyActivityDateKeys(dynamic raw) {
+    if (raw is! List) return <String>{};
+
+    final values = <String>{};
+    for (final entry in raw) {
+      final value = entry?.toString();
+      if (value != null && value.isNotEmpty) {
+        values.add(value);
+      }
+    }
+    return values;
   }
 }
