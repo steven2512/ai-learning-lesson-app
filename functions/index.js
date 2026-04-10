@@ -270,6 +270,25 @@ function isValidEmailFormat(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
+function senderFromAddress() {
+  const fromEmail = envValue("AUTH_EMAIL_FROM");
+  const productName = envValue("AUTH_EMAIL_PRODUCT_NAME") || "Running Robot";
+
+  if (!fromEmail) {
+    return "";
+  }
+
+  if (fromEmail.includes("<") && fromEmail.includes(">")) {
+    return fromEmail;
+  }
+
+  if (isValidEmailFormat(fromEmail)) {
+    return `${productName} <${fromEmail}>`;
+  }
+
+  return fromEmail;
+}
+
 function maskEmail(email) {
   const normalized = `${email ?? ""}`.trim();
   const parts = normalized.split("@");
@@ -342,7 +361,7 @@ async function assertEmailAvailableForSignup(email) {
 async function sendOtpEmail({ email, code }) {
   const productName = envValue("AUTH_EMAIL_PRODUCT_NAME") || "Running Robot";
   const resendApiKey = envValue("RESEND_API_KEY");
-  const fromEmail = envValue("AUTH_EMAIL_FROM");
+  const fromEmail = senderFromAddress();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -365,6 +384,36 @@ async function sendOtpEmail({ email, code }) {
 
   if (!response.ok) {
     const errorBody = await response.text();
+    let userFacingMessage = "Unable to send a verification code right now.";
+
+    try {
+      const parsed = JSON.parse(errorBody);
+      const providerMessage = parsed?.message?.toString() ?? "";
+      if (providerMessage.length > 0) {
+        if (providerMessage.includes("only send testing emails to your own email address")) {
+          userFacingMessage =
+            "Resend test mode can only send to your own verified Resend email. Use that exact inbox or verify a sending domain.";
+        } else if (providerMessage.includes("Invalid `from` field")) {
+          userFacingMessage =
+            "The email sender address is invalid. Check AUTH_EMAIL_FROM in functions/.env.";
+        } else if (providerMessage.includes("API key is invalid")) {
+          userFacingMessage =
+            "The Resend API key is invalid. Generate a new RESEND_API_KEY.";
+        } else if (providerMessage.includes("domain is not verified")) {
+          userFacingMessage =
+            "The sender domain is not verified in Resend yet.";
+        }
+      }
+    } catch (_) {
+      if (errorBody.includes("only send testing emails to your own email address")) {
+        userFacingMessage =
+          "Resend test mode can only send to your own verified Resend email. Use that exact inbox or verify a sending domain.";
+      } else if (errorBody.includes("Invalid `from` field")) {
+        userFacingMessage =
+          "The email sender address is invalid. Check AUTH_EMAIL_FROM in functions/.env.";
+      }
+    }
+
     logger.error("Failed to send verification email", {
       status: response.status,
       fromEmail,
@@ -372,8 +421,8 @@ async function sendOtpEmail({ email, code }) {
       errorBody,
     });
     throw new HttpsError(
-      "internal",
-      "Unable to send a verification code right now.",
+      "failed-precondition",
+      userFacingMessage,
     );
   }
 }
