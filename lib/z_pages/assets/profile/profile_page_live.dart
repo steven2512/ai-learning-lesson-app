@@ -467,13 +467,35 @@ class _ProfileHero extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          '- joined ${joinedYear ?? DateTime.now().year}',
-                          style: GoogleFonts.lato(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF756A94),
-                            letterSpacing: 0.2,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFFFFE7F3),
+                                Color(0xFFF4ECFF),
+                                Color(0xFFFFF0DE),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: const Color(0xFFE8D7FF),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            '- joined ${joinedYear ?? DateTime.now().year}',
+                            style: GoogleFonts.lato(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF7A5A96),
+                              letterSpacing: 0.15,
+                            ),
                           ),
                         ),
                       ],
@@ -553,12 +575,14 @@ class _AvatarBadge extends StatelessWidget {
           ),
         ],
         gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF8B5CF6),
-            Color(0xFFE879F9),
+            Color(0xFFF472B6),
+            Color(0xFF9B5CF7),
+            Color(0xFFFF8A3D),
           ],
+          stops: [0.0, 0.58, 1.0],
         ),
       ),
       child: Padding(

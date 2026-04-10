@@ -126,12 +126,14 @@ class _HeaderAvatarBadge extends StatelessWidget {
               ),
             ],
             gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF8B5CF6),
-                Color(0xFFE879F9),
+                Color(0xFFF472B6),
+                Color(0xFF9B5CF7),
+                Color(0xFFFF8A3D),
               ],
+              stops: [0.0, 0.58, 1.0],
             ),
           ),
           child: Padding(
