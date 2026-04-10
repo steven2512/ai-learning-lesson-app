@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:running_robot/auth/start_button.dart';
 import 'package:running_robot/services/auth_account_service.dart';
 
 class EmailOtpVerificationPage extends StatefulWidget {
@@ -46,25 +47,45 @@ class EmailOtpVerificationPage extends StatefulWidget {
 
 class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
   final TextEditingController _codeController = TextEditingController();
+  final FocusNode _codeFocusNode = FocusNode();
   bool _isSending = false;
   bool _isVerifying = false;
+  bool _verificationCompleted = false;
   int _cooldownSeconds = 0;
+  String _lastAttemptedCode = '';
 
   @override
   void initState() {
     super.initState();
+    _codeController.addListener(_handleCodeChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sendCode(showSuccessMessage: false);
+      _codeFocusNode.requestFocus();
+      _sendCode();
     });
   }
 
   @override
   void dispose() {
+    _codeController.removeListener(_handleCodeChanged);
     _codeController.dispose();
+    _codeFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _sendCode({required bool showSuccessMessage}) async {
+  void _handleCodeChanged() {
+    if (!mounted) return;
+    setState(() {});
+
+    final code = _codeController.text.trim();
+    if (code.length == 6 &&
+        code != _lastAttemptedCode &&
+        !_isVerifying &&
+        !_verificationCompleted) {
+      _verifyCode(autoTriggered: true);
+    }
+  }
+
+  Future<void> _sendCode() async {
     if (_isSending || _cooldownSeconds > 0) return;
 
     setState(() => _isSending = true);
@@ -73,15 +94,6 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
           ? await AuthAccountService.startSignupEmailOtp(widget.email)
           : await AuthAccountService.sendEmailOtp();
       _startCooldown(cooldownSeconds);
-      if (showSuccessMessage && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Verification code sent to ${AuthAccountService.maskEmail(widget.email)}.',
-            ),
-          ),
-        );
-      }
     } on FirebaseFunctionsException catch (error) {
       _showSnackBar(error.message ?? 'Unable to send a verification code.');
     } catch (_) {
@@ -93,18 +105,22 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
     }
   }
 
-  Future<void> _verifyCode() async {
-    if (_isVerifying) return;
+  Future<void> _verifyCode({bool autoTriggered = false}) async {
+    if (_isVerifying || _verificationCompleted) return;
 
     final code = _codeController.text.trim();
     if (!RegExp(r'^\d{6}$').hasMatch(code)) {
-      _showSnackBar('Enter the 6-digit code from your email.');
+      if (!autoTriggered) {
+        _showSnackBar('Enter the 6-digit code from your email.');
+      }
       return;
     }
 
+    _lastAttemptedCode = code;
     setState(() => _isVerifying = true);
+
+    String? verificationToken;
     try {
-      String? verificationToken;
       if (widget.isSignupFlow) {
         verificationToken = await AuthAccountService.verifySignupEmailOtp(
           email: widget.email,
@@ -113,17 +129,30 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
       } else {
         await AuthAccountService.verifyEmailOtp(code);
       }
-
-      await widget.handleVerified(verificationToken);
     } on FirebaseFunctionsException catch (error) {
-      _showSnackBar(error.message ?? 'Unable to verify that code.');
-    } catch (_) {
-      _showSnackBar('Unable to verify that code.');
-    } finally {
+      if (mounted) {
+        _showSnackBar(error.message ?? 'Unable to verify that code.');
+      }
       if (mounted) {
         setState(() => _isVerifying = false);
       }
+      return;
+    } catch (_) {
+      if (mounted) {
+        _showSnackBar('Unable to verify that code.');
+      }
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
+      return;
     }
+
+    _verificationCompleted = true;
+    if (mounted) {
+      setState(() => _isVerifying = false);
+    }
+
+    await widget.handleVerified(verificationToken);
   }
 
   void _startCooldown(int seconds) {
@@ -152,171 +181,162 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
   Widget build(BuildContext context) {
     const brandPurple = Color(0xFF7F56D9);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F5FF),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x120F172A),
-                      blurRadius: 24,
-                      offset: Offset(0, 12),
-                    ),
-                  ],
-                ),
+    return GestureDetector(
+      onTap: () => _codeFocusNode.requestFocus(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F5FF),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3EDFF),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: const Icon(
-                        Icons.mark_email_read_rounded,
-                        color: brandPurple,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 40),
                     Text(
-                      'Verify your email',
+                      'Check your email',
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.lato(
-                        fontSize: 28,
+                        fontSize: 34,
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF14213D),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 14),
                     Text(
-                      'Enter the 6-digit code we sent to ${AuthAccountService.maskEmail(widget.email)} before using the app.',
+                      'We have sent you a code to ${AuthAccountService.maskEmail(widget.email)}',
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.lato(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF64748B),
-                        height: 1.4,
+                        height: 1.45,
                       ),
                     ),
-                    const SizedBox(height: 22),
-                    TextField(
-                      controller: _codeController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      decoration: InputDecoration(
-                        counterText: '',
-                        hintText: '6-digit code',
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 18,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: brandPurple,
-                            width: 1.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 28),
                     SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isVerifying ? null : _verifyCode,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandPurple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                      height: 60,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: 0.01,
+                              child: TextField(
+                                controller: _codeController,
+                                focusNode: _codeFocusNode,
+                                autofocus: true,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                style: const TextStyle(
+                                  color: Colors.transparent,
+                                ),
+                                cursorColor: Colors.transparent,
+                                decoration: const InputDecoration(
+                                  counterText: '',
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: Text(
-                          _isVerifying ? 'Verifying...' : 'Verify and continue',
-                          style: GoogleFonts.lato(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(6, (index) {
+                              final hasValue =
+                                  index < _codeController.text.length;
+                              final digit =
+                                  hasValue ? _codeController.text[index] : '';
+                              final isActive = !_verificationCompleted &&
+                                  (index == _codeController.text.length ||
+                                      (_codeController.text.length == 6 &&
+                                          index == 5));
+
+                              return _OtpDigitCell(
+                                digit: digit,
+                                isActive: isActive,
+                              );
+                            }),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: (_isSending || _cooldownSeconds > 0)
-                                ? null
-                                : () => _sendCode(showSuccessMessage: true),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFD8DCE8)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                            ),
-                            child: Text(
-                              _cooldownSeconds > 0
-                                  ? 'Resend in ${_cooldownSeconds}s'
-                                  : (_isSending ? 'Sending...' : 'Resend code'),
-                              style: GoogleFonts.lato(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF334155),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        TextButton(
-                          onPressed: () async {
-                            await AuthAccountService.signOut();
-                          },
-                          child: Text(
-                            'Sign out',
-                            style: GoogleFonts.lato(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF7F56D9),
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 14),
+                    Text(
+                      _isSending ? 'Sending your code...' : 'Code expires in 10 minutes.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lato(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF7B8799),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    PillCta(
+                      label: _isVerifying ? 'Verifying...' : 'Continue',
+                      color: brandPurple,
+                      expand: true,
+                      fontSize: 20,
+                      onTap: () {
+                        if (_isVerifying) return;
+                        _verifyCode();
+                      },
                     ),
                   ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OtpDigitCell extends StatelessWidget {
+  final String digit;
+  final bool isActive;
+
+  const _OtpDigitCell({
+    required this.digit,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      width: 48,
+      height: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isActive
+              ? const Color(0xFF7F56D9)
+              : const Color(0xFFE3E8F1),
+          width: isActive ? 1.8 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF7F56D9).withValues(alpha: isActive ? 0.10 : 0),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Text(
+        digit,
+        style: GoogleFonts.lato(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF14213D),
         ),
       ),
     );
