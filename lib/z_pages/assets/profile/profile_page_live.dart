@@ -295,14 +295,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         joinedYear: profile?.joinedAt.year,
                         photoUrl: profile?.photoUrl,
                         xp: xp,
-                        streak: progression.dailyStreak,
+                        streak: progression.activityStreak,
                         completedLessons: completedLessons,
                         currentLesson: progression.currentLessonNumber,
                         onOpenSettings: _openSettings,
                       ),
                       const SizedBox(height: 18),
                       _WeeklyStreakHeatCard(
-                        dailyStreak: progression.dailyStreak,
+                        activityStreak: progression.activityStreak,
+                        activeDateKeys: progression.weeklyActivityDateKeys,
                       ),
                       const SizedBox(height: 14),
                       Row(
@@ -677,10 +678,12 @@ class _HeroStatPill extends StatelessWidget {
 }
 
 class _WeeklyStreakHeatCard extends StatelessWidget {
-  final int dailyStreak;
+  final int activityStreak;
+  final Set<String> activeDateKeys;
 
   const _WeeklyStreakHeatCard({
-    required this.dailyStreak,
+    required this.activityStreak,
+    required this.activeDateKeys,
   });
 
   static const List<String> _dayLabels = [
@@ -715,12 +718,17 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final todayIndex = DateTime.now().weekday - 1;
+    final now = DateTime.now();
+    final todayIndex = now.weekday - 1;
+    final monday = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
     final activeDayIndexes = <int>{};
-    final cappedStreak = dailyStreak.clamp(0, 7);
 
-    for (var offset = 0; offset < cappedStreak; offset++) {
-      activeDayIndexes.add((todayIndex - offset + 7) % 7);
+    for (var index = 0; index < _dayLabels.length; index++) {
+      final day = monday.add(Duration(days: index));
+      if (activeDateKeys.contains(_dateKey(day))) {
+        activeDayIndexes.add(index);
+      }
     }
 
     return Container(
@@ -779,7 +787,7 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                dailyStreak == 1 ? '1 day' : '$dailyStreak days',
+                activityStreak == 1 ? '1 day' : '$activityStreak days',
                 style: GoogleFonts.lato(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -816,6 +824,12 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _dateKey(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }
 

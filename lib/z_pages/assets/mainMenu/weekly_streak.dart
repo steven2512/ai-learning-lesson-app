@@ -10,30 +10,18 @@ import 'package:google_fonts/google_fonts.dart';
 enum StreakDayState { done, missed, todayPending }
 
 List<StreakDayState> buildWeeklyStreakStates({
-  required int dailyStreak,
-  required String? lastDailyLessonDate,
+  required Set<String> activeDateKeys,
   DateTime? now,
 }) {
   final today = now ?? DateTime.now();
   final monday = today.subtract(Duration(days: today.weekday - 1));
-  final lastDate = lastDailyLessonDate != null
-      ? DateTime.tryParse(lastDailyLessonDate)
-      : null;
-
-  final completedDays = <String>{};
-  if (lastDate != null && dailyStreak > 0) {
-    for (var i = 0; i < dailyStreak; i++) {
-      final day = lastDate.subtract(Duration(days: i));
-      completedDays.add(_dateKey(day));
-    }
-  }
 
   return List<StreakDayState>.generate(7, (index) {
     final date = monday.add(Duration(days: index));
     final key = _dateKey(date);
     final todayKey = _dateKey(today);
 
-    if (completedDays.contains(key)) {
+    if (activeDateKeys.contains(key)) {
       return StreakDayState.done;
     }
     if (key == todayKey) {

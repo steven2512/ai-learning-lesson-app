@@ -45,8 +45,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             globalLessonNumber: currentLessonNumber,
           );
     final streakStates = buildWeeklyStreakStates(
-      dailyStreak: progression.dailyStreak,
-      lastDailyLessonDate: progression.lastDailyLessonDate,
+      activeDateKeys: progression.weeklyActivityDateKeys,
     );
 
     // ✅ ScreenSize already initialized in MyApp.build
@@ -173,7 +172,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             WeeklyStreak(
-              streakCount: progression.dailyStreak,
+              streakCount: progression.activityStreak,
               states: streakStates,
               startOnMonday: true,
             ),
