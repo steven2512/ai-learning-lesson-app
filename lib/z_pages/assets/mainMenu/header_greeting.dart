@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // ✅ for local caching
 import 'package:running_robot/core/progression_scope.dart';
-import 'package:running_robot/z_pages/assets/mainMenu/avatar.dart';
 import 'package:running_robot/z_pages/assets/mainMenu/bell.dart';
 
 class HeaderGreeting extends StatelessWidget {
@@ -40,24 +39,11 @@ class HeaderGreeting extends StatelessWidget {
         Positioned(
           left: 19,
           top: topOffset,
-          child: ProfileAvatar(
+          child: _HeaderAvatarBadge(
             size: 55,
             image: avatarProvider,
-            placeholder: Container(
-              color: const Color(0xFFF1EBFF),
-              alignment: Alignment.center,
-              child: Text(
-                initial,
-                style: GoogleFonts.lato(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF41356F),
-                ),
-              ),
-            ),
-            imageScale: 1.2,
+            initial: initial,
             onPressed: () => debugPrint("Avatar tapped!"),
-            fillColor: const Color.fromARGB(255, 228, 228, 228),
           ),
         ),
         Positioned(
@@ -102,6 +88,83 @@ class HeaderGreeting extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HeaderAvatarBadge extends StatelessWidget {
+  final double size;
+  final ImageProvider<Object>? image;
+  final String initial;
+  final VoidCallback onPressed;
+
+  const _HeaderAvatarBadge({
+    required this.size,
+    required this.image,
+    required this.initial,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF8B5CF6),
+                Color(0xFF5B8DEF),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: ClipOval(
+              child: image != null
+                  ? Image(
+                      image: image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _fallback(),
+                    )
+                  : _fallback(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fallback() {
+    return Container(
+      color: const Color(0xFFF1EBFF),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: GoogleFonts.lato(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF41356F),
+        ),
+      ),
     );
   }
 }
