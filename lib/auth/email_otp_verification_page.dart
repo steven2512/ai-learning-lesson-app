@@ -10,19 +10,24 @@ class EmailOtpVerificationPage extends StatefulWidget {
   final Future<void> Function()? onVerified;
   final Future<void> Function(String verificationToken)? onSignupVerified;
   final bool isSignupFlow;
+  final bool sendCodeOnLoad;
+  final int initialCooldownSeconds;
 
   const EmailOtpVerificationPage({
     super.key,
     required this.email,
-    required Future<void> Function() onVerified,
+    required this.onVerified,
+    this.sendCodeOnLoad = true,
+    this.initialCooldownSeconds = 0,
   })  : onSignupVerified = null,
-        onVerified = onVerified,
         isSignupFlow = false;
 
   const EmailOtpVerificationPage.forSignup({
     super.key,
     required this.email,
     required Future<void> Function(String verificationToken) onVerified,
+    this.sendCodeOnLoad = true,
+    this.initialCooldownSeconds = 0,
   })  : onSignupVerified = onVerified,
         onVerified = null,
         isSignupFlow = true;
@@ -60,7 +65,12 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
     _codeController.addListener(_handleCodeChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _codeFocusNode.requestFocus();
-      _sendCode();
+      if (widget.initialCooldownSeconds > 0) {
+        _startCooldown(widget.initialCooldownSeconds);
+      }
+      if (widget.sendCodeOnLoad) {
+        _sendCode();
+      }
     });
   }
 
@@ -157,6 +167,8 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
 
   void _startCooldown(int seconds) {
     if (!mounted) return;
+
+    if (_cooldownSeconds == seconds) return;
 
     setState(() => _cooldownSeconds = seconds);
     Future.doWhile(() async {
@@ -267,7 +279,9 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      _isSending ? 'Sending your code...' : 'Code expires in 10 minutes.',
+                      _isSending
+                          ? 'Sending your code...'
+                          : 'Code expires in 10 minutes.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.lato(
                         fontSize: 13,
@@ -318,14 +332,13 @@ class _OtpDigitCell extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isActive
-              ? const Color(0xFF7F56D9)
-              : const Color(0xFFE3E8F1),
+          color: isActive ? const Color(0xFF7F56D9) : const Color(0xFFE3E8F1),
           width: isActive ? 1.8 : 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7F56D9).withValues(alpha: isActive ? 0.10 : 0),
+            color:
+                const Color(0xFF7F56D9).withValues(alpha: isActive ? 0.10 : 0),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),

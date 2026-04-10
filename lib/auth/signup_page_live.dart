@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,11 +31,16 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _openSignupVerification(String email) {
+  void _openSignupVerification(
+    String email, {
+    required int initialCooldownSeconds,
+  }) {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => EmailOtpVerificationPage.forSignup(
           email: email,
+          sendCodeOnLoad: false,
+          initialCooldownSeconds: initialCooldownSeconds,
           onVerified: (verificationToken) async {
             if (!mounted) return;
             Navigator.of(context).pushReplacement(
@@ -62,8 +68,8 @@ class _SignupPageState extends State<SignupPage> {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOut;
-          final tween = Tween(begin: begin, end: end)
-              .chain(CurveTween(curve: curve));
+          final tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -317,9 +323,7 @@ class _SignupPageState extends State<SignupPage> {
                         color: kBrandPurple,
                         expand: true,
                         fontSize: 20,
-                        onTap: () {
-                          if (_isSubmitting) return;
-
+                        onTap: () async {
                           final email = _emailController.text.trim();
                           if (email.isEmpty ||
                               !AuthAccountService.isValidEmailFormat(email)) {
@@ -328,7 +332,29 @@ class _SignupPageState extends State<SignupPage> {
                             });
                             return;
                           }
-                          _openSignupVerification(email);
+
+                          await _runAuthAction(() async {
+                            try {
+                              final cooldownSeconds =
+                                  await AuthAccountService.startSignupEmailOtp(
+                                email,
+                              );
+                              if (!mounted) return;
+                              _openSignupVerification(
+                                email,
+                                initialCooldownSeconds: cooldownSeconds,
+                              );
+                            } on FirebaseFunctionsException catch (error) {
+                              _showSnackBar(
+                                error.message ??
+                                    'Unable to continue with this email.',
+                              );
+                            } catch (_) {
+                              _showSnackBar(
+                                'Unable to continue with this email.',
+                              );
+                            }
+                          });
                         },
                       ),
                       if (_emailError != null) ...[
