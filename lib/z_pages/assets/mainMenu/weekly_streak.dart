@@ -12,7 +12,6 @@ enum StreakDayState { done, missed, todayPending }
 List<StreakDayState> buildWeeklyStreakStates({
   required int dailyStreak,
   required String? lastDailyLessonDate,
-  Set<String> completedDateKeys = const <String>{},
   DateTime? now,
 }) {
   final today = now ?? DateTime.now();
@@ -21,7 +20,7 @@ List<StreakDayState> buildWeeklyStreakStates({
       ? DateTime.tryParse(lastDailyLessonDate)
       : null;
 
-  final completedDays = <String>{...completedDateKeys};
+  final completedDays = <String>{};
   if (lastDate != null && dailyStreak > 0) {
     for (var i = 0; i < dailyStreak; i++) {
       final day = lastDate.subtract(Duration(days: i));
