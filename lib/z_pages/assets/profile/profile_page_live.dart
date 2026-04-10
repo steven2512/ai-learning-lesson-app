@@ -468,7 +468,7 @@ class _ProfileHero extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'joined ${joinedYear ?? DateTime.now().year}',
+                          '- joined ${joinedYear ?? DateTime.now().year}',
                           style: GoogleFonts.lato(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
@@ -557,7 +557,7 @@ class _AvatarBadge extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFF8B5CF6),
-            Color(0xFF5B8DEF),
+            Color(0xFFE879F9),
           ],
         ),
       ),
@@ -665,13 +665,13 @@ class _HeroStatPill extends StatelessWidget {
         children: [
           Icon(icon, color: iconColor, size: 18),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.lato(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF334155),
-            ),
+            Text(
+              label,
+              style: GoogleFonts.lato(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF334155),
+              ),
           ),
         ],
       ),
@@ -779,7 +779,7 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
                     Text(
                       'Streak flow',
                       style: GoogleFonts.lato(
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF22304A),
                       ),
@@ -791,7 +791,7 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
               Text(
                 activityStreak == 1 ? '1 day' : '$activityStreak days',
                 style: GoogleFonts.lato(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFF6F52C8),
                 ),
@@ -802,7 +802,7 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
           Text(
             'A quick look at your weekly rhythm.',
             style: GoogleFonts.lato(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF64748B),
             ),
@@ -916,7 +916,7 @@ class _StreakBarDay extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.lato(
-            fontSize: 12,
+            fontSize: 13.8,
             fontWeight: FontWeight.w900,
             color: isToday ? const Color(0xFF1F2937) : const Color(0xFF7B8799),
           ),

@@ -130,12 +130,12 @@ class _HeaderAvatarBadge extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 Color(0xFF8B5CF6),
-                Color(0xFF5B8DEF),
-                ],
-              ),
+                Color(0xFFE879F9),
+              ],
             ),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(3.6),
             child: ClipOval(
               child: image != null
                   ? Image(
