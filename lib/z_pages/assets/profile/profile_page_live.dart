@@ -458,12 +458,22 @@ class _ProfileHero extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '$handle - joined ${joinedYear ?? DateTime.now().year}',
+                          handle,
                           style: GoogleFonts.lato(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF756A94),
                             letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'joined ${joinedYear ?? DateTime.now().year}',
+                          style: GoogleFonts.lato(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF756A94),
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ],
@@ -530,16 +540,14 @@ class _AvatarBadge extends StatelessWidget {
     final initial =
         displayName.trim().isEmpty ? 'P' : displayName.trim()[0].toUpperCase();
 
-    return Container(
-      width: 94,
-      height: 94,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: Colors.white, width: 5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
+      return Container(
+        width: 94,
+        height: 94,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
             blurRadius: 18,
             offset: Offset(0, 8),
           ),

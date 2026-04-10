@@ -135,7 +135,7 @@ class _HeaderAvatarBadge extends StatelessWidget {
               ),
             ),
           child: Padding(
-            padding: const EdgeInsets.all(3),
+            padding: const EdgeInsets.all(4),
             child: ClipOval(
               child: image != null
                   ? Image(
