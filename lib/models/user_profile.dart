@@ -13,6 +13,7 @@ class UserProfile {
   final int level;
   final int lessonsCompleted;
   final int totalLearningSeconds;
+  final int totalSessionSeconds;
   final int todayLessonCount;
   final String? todayLessonCountDate;
   final int dailyStreak;
@@ -38,6 +39,7 @@ class UserProfile {
     this.level = 1,
     this.lessonsCompleted = 0,
     this.totalLearningSeconds = 0,
+    this.totalSessionSeconds = 0,
     this.todayLessonCount = 0,
     this.todayLessonCountDate,
     this.dailyStreak = 0,
@@ -65,6 +67,7 @@ class UserProfile {
       'level': level,
       'lessonsCompleted': lessonsCompleted,
       'totalLearningSeconds': totalLearningSeconds,
+      'totalSessionSeconds': totalSessionSeconds,
       'todayLessonCount': todayLessonCount,
       'todayLessonCountDate': todayLessonCountDate,
       'dailyStreak': dailyStreak,
@@ -107,6 +110,9 @@ class UserProfile {
       totalLearningSeconds: (map['totalLearningSeconds'] ?? 0) is int
           ? map['totalLearningSeconds'] ?? 0
           : int.tryParse(map['totalLearningSeconds'].toString()) ?? 0,
+      totalSessionSeconds: (map['totalSessionSeconds'] ?? 0) is int
+          ? map['totalSessionSeconds'] ?? 0
+          : int.tryParse(map['totalSessionSeconds'].toString()) ?? 0,
       todayLessonCount: (map['todayLessonCount'] ?? 0) is int
           ? map['todayLessonCount'] ?? 0
           : int.tryParse(map['todayLessonCount'].toString()) ?? 0,

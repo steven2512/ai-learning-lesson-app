@@ -20,6 +20,7 @@ class UserProfileService {
     'level',
     'lessonsCompleted',
     'totalLearningSeconds',
+    'totalSessionSeconds',
     'todayLessonCount',
     'todayLessonCountDate',
     'dailyStreak',
@@ -104,6 +105,7 @@ class UserProfileService {
         level: 1,
         lessonsCompleted: 0,
         totalLearningSeconds: 0,
+        totalSessionSeconds: 0,
         todayLessonCount: 0,
         todayLessonCountDate: null,
         dailyStreak: 0,
@@ -141,6 +143,8 @@ class UserProfileService {
         lessonsCompleted: _readLegacyInt(data['lessonsCompleted'], fallback: 0),
         totalLearningSeconds:
             _readLegacyInt(data['totalLearningSeconds'], fallback: 0),
+        totalSessionSeconds:
+            _readLegacyInt(data['totalSessionSeconds'], fallback: 0),
         todayLessonCount: _readLegacyInt(data['todayLessonCount'], fallback: 0),
         todayLessonCountDate: data['todayLessonCountDate']?.toString(),
         dailyStreak: _readLegacyInt(data['dailyStreak'], fallback: 0),
@@ -219,6 +223,7 @@ class UserProfileService {
         data['level'] is int &&
         data['lessonsCompleted'] is int &&
         data['totalLearningSeconds'] is int &&
+        data['totalSessionSeconds'] is int &&
         data['todayLessonCount'] is int &&
         data['dailyStreak'] is int &&
         data['activityStreak'] is int &&
