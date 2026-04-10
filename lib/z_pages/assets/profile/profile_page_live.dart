@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/loading_skeleton.dart';
@@ -505,7 +506,7 @@ class _ProfileHero extends StatelessWidget {
             child: _TopIconButton(
               icon: Icons.settings_rounded,
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF6F52C8),
+              foregroundColor: const Color(0xFF1F2937),
               onTap: onOpenSettings,
             ),
           ),
@@ -921,25 +922,19 @@ class _ProfileStatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final Color badgeColor;
-  final Color badgeTextColor;
   final String title;
   final String value;
   final String subtitle;
   final List<Color> gradient;
-  final Color valueColor;
-  final Color subtitleColor;
 
   const _ProfileStatCard({
     required this.icon,
     required this.iconColor,
     required this.badgeColor,
-    this.badgeTextColor = const Color(0xFF24324A),
     required this.title,
     required this.value,
     required this.subtitle,
     required this.gradient,
-    this.valueColor = const Color(0xFF0F172A),
-    this.subtitleColor = const Color(0xFF758296),
   });
 
   @override
@@ -980,7 +975,7 @@ class _ProfileStatCard extends StatelessWidget {
                   style: GoogleFonts.lato(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w900,
-                    color: badgeTextColor,
+                    color: const Color(0xFF24324A),
                   ),
                 ),
               ],
@@ -992,7 +987,7 @@ class _ProfileStatCard extends StatelessWidget {
             style: GoogleFonts.lato(
               fontSize: 32,
               fontWeight: FontWeight.w900,
-              color: valueColor,
+              color: const Color(0xFF0F172A),
               height: 1,
             ),
           ),
@@ -1002,7 +997,7 @@ class _ProfileStatCard extends StatelessWidget {
             style: GoogleFonts.lato(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: subtitleColor,
+              color: const Color(0xFF758296),
             ),
           ),
         ],

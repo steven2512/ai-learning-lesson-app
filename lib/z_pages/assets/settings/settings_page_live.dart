@@ -70,11 +70,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  String _displayDate(DateTime? value) {
-    if (value == null) return 'Not set';
-    final month = value.month.toString().padLeft(2, '0');
-    final day = value.day.toString().padLeft(2, '0');
-    return '${value.year}-$month-$day';
+  String _displayAge(int? value) {
+    if (value == null || value <= 0) return 'Not set';
+    return '$value years old';
   }
 
   @override
@@ -132,8 +130,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       _InfoTile(
                         icon: Icons.cake_outlined,
-                        title: 'Date of Birth',
-                        value: _displayDate(profile?.dob),
+                        title: 'Age',
+                        value: _displayAge(profile?.age),
                       ),
                     ],
                   ),
@@ -174,18 +172,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         value: profile?.appVersion ??
                             AuthAccountService.appVersion,
                       ),
-                      _InfoTile(
-                        icon: Icons.public_rounded,
-                        title: 'Timezone',
-                        value: profile?.timezone ?? 'Unknown',
-                      ),
-                      _InfoTile(
-                        icon: Icons.phone_android_rounded,
-                        title: 'Last Device',
-                        value: profile?.lastDevice ?? 'Unknown',
-                      ),
-                    ],
-                  ),
+                        _InfoTile(
+                          icon: Icons.public_rounded,
+                          title: 'Timezone',
+                          value: profile?.timezone ?? 'Unknown',
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 22),
                   SizedBox(
                     width: double.infinity,

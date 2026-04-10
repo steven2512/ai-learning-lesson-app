@@ -40,7 +40,7 @@ class HeaderGreeting extends StatelessWidget {
           left: 19,
           top: topOffset,
           child: _HeaderAvatarBadge(
-            size: 55,
+            size: 60,
             image: avatarProvider,
             initial: initial,
             onPressed: () => debugPrint("Avatar tapped!"),
@@ -118,8 +118,6 @@ class _HeaderAvatarBadge extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
-            border: Border.all(color: Colors.white, width: 3),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x14000000),
@@ -136,17 +134,14 @@ class _HeaderAvatarBadge extends StatelessWidget {
               ],
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(3),
-            child: ClipOval(
-              child: image != null
-                  ? Image(
-                      image: image!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _fallback(),
-                    )
-                  : _fallback(),
-            ),
+          child: ClipOval(
+            child: image != null
+                ? Image(
+                    image: image!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _fallback(),
+                  )
+                : _fallback(),
           ),
         ),
       ),
