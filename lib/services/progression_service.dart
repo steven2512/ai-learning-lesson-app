@@ -5,6 +5,16 @@ import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/services/user_profile_service.dart';
 
+class _WeekBounds {
+  final String startKey;
+  final String endKey;
+
+  const _WeekBounds({
+    required this.startKey,
+    required this.endKey,
+  });
+}
+
 class ProgressionSnapshot {
   final UserProfile profile;
   final Map<String, LessonProgress> lessonProgressById;
@@ -45,12 +55,8 @@ class ProgressionService {
         .orderBy('dateKey')
         .get();
 
-    final results = await Future.wait([
-      lessonSnapshotsFuture,
-      activitySnapshotsFuture,
-    ]);
-    final lessonSnapshots = results[0] as QuerySnapshot<Map<String, dynamic>>;
-    final activitySnapshots = results[1] as QuerySnapshot<Map<String, dynamic>>;
+    final lessonSnapshots = await lessonSnapshotsFuture;
+    final activitySnapshots = await activitySnapshotsFuture;
 
     final lessonProgressById = <String, LessonProgress>{};
     for (final doc in lessonSnapshots.docs) {
@@ -86,12 +92,12 @@ class ProgressionService {
     }
   }
 
-  static ({String startKey, String endKey}) _currentWeekBounds() {
+  static _WeekBounds _currentWeekBounds() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final monday = today.subtract(Duration(days: today.weekday - 1));
     final sunday = monday.add(const Duration(days: 6));
-    return (
+    return _WeekBounds(
       startKey: _dateKey(monday),
       endKey: _dateKey(sunday),
     );
