@@ -24,12 +24,15 @@ class HeaderGreeting extends StatelessWidget {
     final photoUrl = (profile?.photoUrl?.trim().isNotEmpty ?? false)
         ? profile!.photoUrl!.trim()
         : user?.photoURL;
+    final initial = displayName.trim().isEmpty
+        ? 'U'
+        : displayName.trim()[0].toUpperCase();
 
-    ImageProvider<Object> avatarProvider;
+    ImageProvider<Object>? avatarProvider;
     if (photoUrl != null && photoUrl.isNotEmpty) {
       avatarProvider = CachedNetworkImageProvider(photoUrl);
     } else {
-      avatarProvider = const AssetImage("assets/images/robot_family1.jpg");
+      avatarProvider = null;
     }
 
     return Stack(
@@ -40,6 +43,18 @@ class HeaderGreeting extends StatelessWidget {
           child: ProfileAvatar(
             size: 55,
             image: avatarProvider,
+            placeholder: Container(
+              color: const Color(0xFFF1EBFF),
+              alignment: Alignment.center,
+              child: Text(
+                initial,
+                style: GoogleFonts.lato(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF41356F),
+                ),
+              ),
+            ),
             imageScale: 1.2,
             onPressed: () => debugPrint("Avatar tapped!"),
             fillColor: const Color.fromARGB(255, 228, 228, 228),
