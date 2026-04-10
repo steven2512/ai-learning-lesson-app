@@ -35,6 +35,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   Widget build(BuildContext context) {
     final progression = ProgressionScope.watch(context);
     final showSkeleton = !progression.hasSnapshot;
+    final weekActivityDateKeys = _buildWeekActivityDateKeys(progression);
     final currentLesson = progression.currentLessonMeta;
     final currentLessonNumber = progression.currentLessonNumber;
     final currentLessonId = currentLesson?.id;
@@ -47,6 +48,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
     final streakStates = buildWeeklyStreakStates(
       dailyStreak: progression.dailyStreak,
       lastDailyLessonDate: progression.lastDailyLessonDate,
+      completedDateKeys: weekActivityDateKeys,
     );
 
     // ✅ ScreenSize already initialized in MyApp.build
@@ -101,6 +103,40 @@ class _MainMenuPageState extends State<MainMenuPage> {
   Widget _buildBackground() => const Positioned.fill(
         child: ColoredBox(color: Colors.white),
       );
+
+  Set<String> _buildWeekActivityDateKeys(AppProgressionController progression) {
+    final now = DateTime.now();
+    final monday = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final sunday = monday.add(const Duration(days: 6));
+    final activityKeys = <String>{};
+
+    void addIfInCurrentWeek(DateTime? value) {
+      if (value == null) return;
+
+      final localDate = DateTime(value.year, value.month, value.day);
+      if (localDate.isBefore(monday) || localDate.isAfter(sunday)) {
+        return;
+      }
+
+      final month = localDate.month.toString().padLeft(2, '0');
+      final day = localDate.day.toString().padLeft(2, '0');
+      activityKeys.add('${localDate.year}-$month-$day');
+    }
+
+    for (final progress in progression.lessonProgressById.values) {
+      addIfInCurrentWeek(progress.startedAt);
+      addIfInCurrentWeek(progress.lastActiveAt);
+      addIfInCurrentWeek(progress.completedAt);
+    }
+
+    final lastDailyLessonDate = progression.lastDailyLessonDate;
+    if (lastDailyLessonDate != null && lastDailyLessonDate.isNotEmpty) {
+      addIfInCurrentWeek(DateTime.tryParse(lastDailyLessonDate));
+    }
+
+    return activityKeys;
+  }
 
   Widget _buildSkeletonContent({
     required double boxHeight1,
