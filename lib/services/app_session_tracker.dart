@@ -67,11 +67,11 @@ class AppSessionTracker with WidgetsBindingObserver {
     try {
       await _functions
           .httpsCallable(
-            'flushAppSession',
-            options: HttpsCallableOptions(
-              timeout: const Duration(seconds: 20),
-            ),
-          )
+        'flushAppSession',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 20),
+        ),
+      )
           .call({
         'sessionSeconds': elapsedSeconds,
       });

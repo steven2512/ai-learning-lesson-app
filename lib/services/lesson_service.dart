@@ -130,8 +130,7 @@ class LessonService {
 
     return LessonSessionSyncResult(
       savedStepIndex: _readInt(data['savedStepIndex'], fallback: safeStepIndex),
-      totalLearningSeconds:
-          _readInt(data['totalLearningSeconds'], fallback: 0),
+      totalLearningSeconds: _readInt(data['totalLearningSeconds'], fallback: 0),
       todayKey: data['todayKey']?.toString(),
       dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
       dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
@@ -155,8 +154,7 @@ class LessonService {
 
     return LessonSessionSyncResult(
       savedStepIndex: _readInt(data['savedStepIndex'], fallback: safeStepIndex),
-      totalLearningSeconds:
-          _readInt(data['totalLearningSeconds'], fallback: 0),
+      totalLearningSeconds: _readInt(data['totalLearningSeconds'], fallback: 0),
       todayKey: data['todayKey']?.toString(),
       dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
       dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
@@ -195,8 +193,7 @@ class LessonService {
       todayLessonCount: _readInt(data['todayLessonCount'], fallback: 0),
       dailyStreak: _readInt(data['dailyStreak'], fallback: 0),
       level: _readInt(data['level'], fallback: 1),
-      totalLearningSeconds:
-          _readInt(data['totalLearningSeconds'], fallback: 0),
+      totalLearningSeconds: _readInt(data['totalLearningSeconds'], fallback: 0),
       todayKey: data['todayKey']?.toString(),
       dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
       dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
