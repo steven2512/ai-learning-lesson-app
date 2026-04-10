@@ -45,7 +45,7 @@ class _SignupFlowState extends State<SignupFlow> {
     await UserProfileService.createOrUpdateUserProfile(
       user,
       name: _nameController.text.trim(),
-      dob: _selectedDob,
+      age: _selectedAge,
       lastDevice: _detectPlatform(),
       appVersion: AuthAccountService.appVersion,
       provider: 'password',
@@ -98,6 +98,7 @@ class _SignupFlowState extends State<SignupFlow> {
       await AuthAccountService.claimVerifiedSignupEmail(
         widget.signupVerificationToken,
       );
+      await _waitForVerifiedSignupClaim();
       await cred.user!.updateDisplayName(name);
       await cred.user!.reload();
       await _onSignupSuccess(FirebaseAuth.instance.currentUser ?? cred.user!);
@@ -115,6 +116,23 @@ class _SignupFlowState extends State<SignupFlow> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<void> _waitForVerifiedSignupClaim() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final status = await AuthAccountService.loadVerificationStatus(
+        user,
+        forceRefresh: true,
+      );
+      if (status.isVerified) {
+        return;
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+    }
   }
 
   void _nextPage() {
@@ -203,29 +221,45 @@ class _SignupFlowState extends State<SignupFlow> {
                 ),
                 _pageContent(
                   'How old are you?',
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 48,
-                      scrollController: FixedExtentScrollController(
-                        initialItem: _selectedAge - 13,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'This helps us tailor the app to your experience.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.lato(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                          height: 1.4,
+                        ),
                       ),
-                      onSelectedItemChanged: (index) {
-                        setState(() => _selectedAge = index + 13);
-                      },
-                      children: List.generate(
-                        88,
-                        (index) => Center(
-                          child: Text(
-                            '${index + 13}',
-                            style: GoogleFonts.lato(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: CupertinoPicker(
+                          itemExtent: 48,
+                          scrollController: FixedExtentScrollController(
+                            initialItem: _selectedAge - 13,
+                          ),
+                          onSelectedItemChanged: (index) {
+                            setState(() => _selectedAge = index + 13);
+                          },
+                          children: List.generate(
+                            88,
+                            (index) => Center(
+                              child: Text(
+                                '${index + 13}',
+                                style: GoogleFonts.lato(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                   'Continue',
                 ),
@@ -301,11 +335,5 @@ class _SignupFlowState extends State<SignupFlow> {
         ],
       ),
     );
-  }
-
-  DateTime? get _selectedDob {
-    final now = DateTime.now();
-    final birthYear = now.year - _selectedAge;
-    return DateTime(birthYear, 1, 1);
   }
 }

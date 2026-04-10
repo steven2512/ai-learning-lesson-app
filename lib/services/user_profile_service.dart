@@ -13,7 +13,7 @@ class UserProfileService {
     'joinedAt',
     'lastLogin',
     'provider',
-    'dob',
+    'age',
     'currentLesson',
     'currentLessonStepIndex',
     'xp',
@@ -50,7 +50,7 @@ class UserProfileService {
   static Future<void> createOrUpdateUserProfile(
     User user, {
     String? name,
-    DateTime? dob,
+    int? age,
     String? provider,
     String? lastDevice,
     String? appVersion,
@@ -78,18 +78,13 @@ class UserProfileService {
     final resolvedPhotoUrl = user.photoURL ?? data?['photoUrl']?.toString();
     final resolvedLastDevice = lastDevice ?? data?['lastDevice']?.toString();
     final resolvedAppVersion = appVersion ?? data?['appVersion']?.toString();
-    final resolvedDob = dob ??
-        (data != null && data['dob'] != null
-            ? (data['dob'] is Timestamp
-                ? (data['dob'] as Timestamp).toDate()
-                : DateTime.tryParse(data['dob'].toString()))
-            : null);
+    final resolvedAge = age ?? _readLegacyAge(data);
 
     final metadata = _profileMetadataMap(
       user: user,
       name: name ?? user.displayName ?? data?['name']?.toString(),
       photoUrl: resolvedPhotoUrl,
-      dob: resolvedDob,
+      age: resolvedAge,
       provider: resolvedProvider,
       lastDevice: resolvedLastDevice,
       appVersion: resolvedAppVersion,
@@ -115,7 +110,7 @@ class UserProfileService {
         lastDailyLessonDate: null,
         activityStreak: 0,
         lastActivityDateKey: null,
-        dob: resolvedDob,
+        age: resolvedAge,
         provider: resolvedProvider,
         lastDevice: resolvedLastDevice,
         appVersion: resolvedAppVersion,
@@ -152,7 +147,7 @@ class UserProfileService {
         lastDailyLessonDate: data['lastDailyLessonDate']?.toString(),
         activityStreak: _readLegacyInt(data['activityStreak'], fallback: 0),
         lastActivityDateKey: data['lastActivityDateKey']?.toString(),
-        dob: resolvedDob,
+        age: resolvedAge,
         provider: resolvedProvider,
         lastDevice: resolvedLastDevice,
         appVersion: resolvedAppVersion,
@@ -170,6 +165,7 @@ class UserProfileService {
 
     await doc.set({
       ...metadata,
+      'dob': FieldValue.delete(),
       'lastLogin': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -177,14 +173,15 @@ class UserProfileService {
 
   static Future<void> updateEditableProfile({
     required String? name,
-    required DateTime? dob,
+    required int? age,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     await userDoc(user.uid).set({
       'name': name?.trim().isNotEmpty == true ? name!.trim() : null,
-      'dob': dob != null ? Timestamp.fromDate(dob) : null,
+      'age': age,
+      'dob': FieldValue.delete(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -193,7 +190,7 @@ class UserProfileService {
     required User user,
     required String? name,
     required String? photoUrl,
-    required DateTime? dob,
+    required int? age,
     required String? provider,
     required String? lastDevice,
     required String? appVersion,
@@ -205,7 +202,7 @@ class UserProfileService {
       'name': name,
       'photoUrl': photoUrl,
       'provider': provider,
-      'dob': dob != null ? Timestamp.fromDate(dob) : null,
+      'age': age,
       'lastDevice': lastDevice,
       'appVersion': appVersion,
       'timezone': timezoneNow.timeZoneName,
@@ -224,7 +221,8 @@ class UserProfileService {
         data['totalLearningSeconds'] is int &&
         data['todayLessonCount'] is int &&
         data['dailyStreak'] is int &&
-        data['activityStreak'] is int;
+        data['activityStreak'] is int &&
+        (data['age'] == null || data['age'] is int);
   }
 
   static int _levelFromXp(int xp) {
@@ -235,5 +233,31 @@ class UserProfileService {
   static int _readLegacyInt(dynamic value, {required int fallback}) {
     if (value is int) return value;
     return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  static int? _readLegacyAge(Map<String, dynamic>? data) {
+    if (data == null) return null;
+
+    final ageValue = data['age'];
+    if (ageValue is int) return ageValue;
+
+    final parsedAge = int.tryParse(ageValue?.toString() ?? '');
+    if (parsedAge != null) return parsedAge;
+
+    final rawDob = data['dob'];
+    final dob = rawDob is Timestamp
+        ? rawDob.toDate()
+        : DateTime.tryParse(rawDob?.toString() ?? '');
+    if (dob == null) return null;
+
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    final birthdayPassed =
+        now.month > dob.month || (now.month == dob.month && now.day >= dob.day);
+    if (!birthdayPassed) {
+      age -= 1;
+    }
+
+    return age < 0 ? null : age;
   }
 }

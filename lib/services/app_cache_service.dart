@@ -68,8 +68,8 @@ class AppCacheService {
           for (final entry in snapshot.lessonProgressById.entries)
             entry.key: _encodeLessonProgress(entry.value),
         },
-        'weeklyActivityDateKeys':
-            snapshot.weeklyActivityDateKeys.toList()..sort(),
+        'weeklyActivityDateKeys': snapshot.weeklyActivityDateKeys.toList()
+          ..sort(),
       },
     };
     await prefs.setString(_snapshotKey(uid), jsonEncode(payload));
@@ -99,7 +99,7 @@ class AppCacheService {
       'lastDailyLessonDate': profile.lastDailyLessonDate,
       'activityStreak': profile.activityStreak,
       'lastActivityDateKey': profile.lastActivityDateKey,
-      'dob': profile.dob?.toIso8601String(),
+      'age': profile.age,
       'provider': profile.provider,
       'lastDevice': profile.lastDevice,
       'appVersion': profile.appVersion,

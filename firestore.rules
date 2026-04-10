@@ -51,7 +51,7 @@ service cloud.firestore {
         'joinedAt',
         'lastLogin',
         'provider',
-        'dob',
+        'age',
         'currentLesson',
         'currentLessonStepIndex',
         'xp',
@@ -92,7 +92,7 @@ service cloud.firestore {
         'email',
         'photoUrl',
         'provider',
-        'dob',
+        'age',
         'lastDevice',
         'appVersion',
         'timezone',
@@ -227,7 +227,7 @@ service cloud.firestore {
           request.resource.data.activityStreak is int &&
           request.resource.data.activityStreak >= 0 &&
           optionalString(request.resource.data.lastActivityDateKey) &&
-          optionalTimestamp(request.resource.data.dob) &&
+          optionalInt(request.resource.data.age) &&
           optionalString(request.resource.data.provider) &&
           optionalString(request.resource.data.lastDevice) &&
           optionalString(request.resource.data.appVersion) &&
@@ -250,7 +250,8 @@ service cloud.firestore {
           request.resource.data.dailyStreak == 0 &&
           request.resource.data.lastDailyLessonDate == null &&
           request.resource.data.activityStreak == 0 &&
-          request.resource.data.lastActivityDateKey == null;
+          request.resource.data.lastActivityDateKey == null &&
+          request.resource.data.age is int;
     }
 
     function validMetadataUpdate() {
@@ -300,6 +301,10 @@ service cloud.firestore {
             request.resource.data.lastActivityDateKey ==
                 existingStringOrDefault('lastActivityDateKey', null) ||
             request.resource.data.lastActivityDateKey == null
+          ) &&
+          (
+            request.resource.data.age is int ||
+            request.resource.data.age == null
           );
     }
 
@@ -337,7 +342,7 @@ service cloud.firestore {
           sameValue('email') &&
           sameValue('photoUrl') &&
           sameValue('provider') &&
-          sameValue('dob') &&
+          sameValue('age') &&
           sameValue('lastDevice') &&
           sameValue('appVersion') &&
           sameValue('timezone') &&

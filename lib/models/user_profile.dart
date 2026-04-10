@@ -19,7 +19,7 @@ class UserProfile {
   final String? lastDailyLessonDate;
   final int activityStreak;
   final String? lastActivityDateKey;
-  final DateTime? dob;
+  final int? age;
   final String? provider;
   final String? lastDevice;
   final String? appVersion;
@@ -44,7 +44,7 @@ class UserProfile {
     this.lastDailyLessonDate,
     this.activityStreak = 0,
     this.lastActivityDateKey,
-    this.dob,
+    this.age,
     this.provider,
     this.lastDevice,
     this.appVersion,
@@ -71,7 +71,7 @@ class UserProfile {
       'lastDailyLessonDate': lastDailyLessonDate,
       'activityStreak': activityStreak,
       'lastActivityDateKey': lastActivityDateKey,
-      'dob': dob != null ? Timestamp.fromDate(dob!) : null,
+      'age': age,
       'provider': provider,
       'lastDevice': lastDevice,
       'appVersion': appVersion,
@@ -119,11 +119,7 @@ class UserProfile {
           ? map['activityStreak'] ?? 0
           : int.tryParse(map['activityStreak'].toString()) ?? 0,
       lastActivityDateKey: map['lastActivityDateKey'],
-      dob: map['dob'] != null
-          ? (map['dob'] is Timestamp
-              ? (map['dob'] as Timestamp).toDate()
-              : DateTime.tryParse(map['dob'].toString()))
-          : null,
+      age: _readAge(map),
       provider: map['provider'],
       lastDevice: map['lastDevice'],
       appVersion: map['appVersion'],
@@ -139,5 +135,28 @@ class UserProfile {
         (rawXp is int) ? rawXp : int.tryParse(rawXp?.toString() ?? '') ?? 0;
     final normalizedXp = xp < 0 ? 0 : xp;
     return (normalizedXp ~/ 200) + 1;
+  }
+
+  static int? _readAge(Map<String, dynamic> map) {
+    final rawAge = map['age'];
+    if (rawAge is int) return rawAge;
+
+    final parsedAge = int.tryParse(rawAge?.toString() ?? '');
+    if (parsedAge != null) return parsedAge;
+
+    final rawDob = map['dob'];
+    final dob = rawDob is Timestamp
+        ? rawDob.toDate()
+        : DateTime.tryParse(rawDob?.toString() ?? '');
+    if (dob == null) return null;
+
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    final birthdayPassed =
+        now.month > dob.month || (now.month == dob.month && now.day >= dob.day);
+    if (!birthdayPassed) {
+      age -= 1;
+    }
+    return age < 0 ? null : age;
   }
 }

@@ -49,7 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (profile == null) return;
 
     final nameController = TextEditingController(text: profile.name ?? '');
-    DateTime? selectedDob = profile.dob;
+    int selectedAge = profile.age ?? 18;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -121,71 +121,71 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDob ?? DateTime(2000, 1, 1),
-                            firstDate: DateTime(1950, 1, 1),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) {
-                            setSheetState(() => selectedDob = picked);
-                          }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: const Color(0xFFE2E8F0),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.cake_rounded,
+                              color: Color(0xFF7C3AED),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.cake_rounded,
-                                color: Color(0xFF7C3AED),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Birthday',
-                                      style: GoogleFonts.lato(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF64748B),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Age',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  SizedBox(
+                                    height: 120,
+                                    child: CupertinoPicker(
+                                      itemExtent: 36,
+                                      scrollController:
+                                          FixedExtentScrollController(
+                                        initialItem: selectedAge - 13,
+                                      ),
+                                      onSelectedItemChanged: (index) {
+                                        setSheetState(
+                                          () => selectedAge = index + 13,
+                                        );
+                                      },
+                                      children: List.generate(
+                                        88,
+                                        (index) => Center(
+                                          child: Text(
+                                            '${index + 13}',
+                                            style: GoogleFonts.lato(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      selectedDob == null
-                                          ? 'Tap to choose a date'
-                                          : _formatDate(selectedDob),
-                                      style: GoogleFonts.lato(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                color: Color(0xFF94A3B8),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -205,7 +205,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     await UserProfileService
                                         .updateEditableProfile(
                                       name: nameController.text,
-                                      dob: selectedDob,
+                                      age: selectedAge,
                                     );
                                     await progressionController.refresh();
                                     if (!mounted) return;
@@ -261,7 +261,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final totalLearningSeconds = progression.totalLearningSeconds;
     final completionStepsLeft = [
       if ((profile?.name ?? '').trim().isEmpty) 'name',
-      if (profile?.dob == null) 'birthday',
+      if (profile?.age == null) 'age',
     ].length;
 
     return Scaffold(
@@ -329,7 +329,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: _ProfileStatCard(
                               icon: Icons.flag_rounded,
                               iconColor: const Color(0xFFF59A23),
-                              badgeColor: const Color(0xFFFFF1DF),
+                              badgeColor: const Color(0xFFFFE7C9),
                               title: 'Total lessons',
                               value: completedLessons.toString(),
                               subtitle: 'completed',
@@ -373,13 +373,6 @@ class _ProfilePageState extends State<ProfilePage> {
       return '@${email.split('@').first.toUpperCase()}';
     }
     return '@LEARNER';
-  }
-
-  static String _formatDate(DateTime? date) {
-    if (date == null) return 'Not set';
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '${date.year}-$month-$day';
   }
 
   static String _formatDurationLabel(int totalSeconds) {
