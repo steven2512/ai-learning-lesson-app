@@ -65,13 +65,14 @@ class _SignupFlowState extends State<SignupFlow> {
     final confirmPassword = _confirmPasswordController.text.trim();
     final name = _nameController.text.trim();
 
-    if (name.isEmpty) {
+    if (name.length < 2) {
       _showSnackBar('Enter your name first.');
       return;
     }
 
-    if (password.length < 6) {
-      _showSnackBar('Password must be at least 6 characters.');
+    final passwordError = AuthAccountService.validatePassword(password);
+    if (passwordError != null) {
+      _showSnackBar(passwordError);
       return;
     }
 
@@ -209,6 +210,7 @@ class _SignupFlowState extends State<SignupFlow> {
                 _pageContent(
                   'Set your password',
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextField(
                         controller: _passwordController,
@@ -220,6 +222,16 @@ class _SignupFlowState extends State<SignupFlow> {
                         controller: _confirmPasswordController,
                         obscureText: true,
                         decoration: _inputDecoration('Repeat password'),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Use 8+ characters with an uppercase letter, lowercase letter, and number.',
+                        style: GoogleFonts.lato(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                          height: 1.35,
+                        ),
                       ),
                     ],
                   ),

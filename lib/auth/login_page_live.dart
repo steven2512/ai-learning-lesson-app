@@ -86,6 +86,11 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    if (!AuthAccountService.isValidEmailFormat(email)) {
+      _showSnackBar('Enter a valid email address.');
+      return;
+    }
+
     await _runAuthAction(() async {
       try {
         final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -180,6 +185,15 @@ class _LoginPageState extends State<LoginPage> {
               if (email.isEmpty) {
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
                   const SnackBar(content: Text('Enter your email first.')),
+                );
+                return;
+              }
+
+              if (!AuthAccountService.isValidEmailFormat(email)) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(
+                    content: Text('Enter a valid email address.'),
+                  ),
                 );
                 return;
               }

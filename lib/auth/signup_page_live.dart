@@ -29,10 +29,6 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
-  }
-
   Future<void> _runAuthAction(Future<void> Function() action) async {
     if (_isSubmitting) return;
 
@@ -265,7 +261,8 @@ class _SignupPageState extends State<SignupPage> {
                         controller: _emailController,
                         onChanged: (value) {
                           setState(() {
-                            _emailError = value.isEmpty || _isValidEmail(value)
+                            _emailError = value.isEmpty ||
+                                    AuthAccountService.isValidEmailFormat(value)
                                 ? null
                                 : 'Invalid email format';
                           });
@@ -283,7 +280,8 @@ class _SignupPageState extends State<SignupPage> {
                           if (_isSubmitting) return;
 
                           final email = _emailController.text.trim();
-                          if (email.isEmpty || !_isValidEmail(email)) {
+                          if (email.isEmpty ||
+                              !AuthAccountService.isValidEmailFormat(email)) {
                             setState(() {
                               _emailError = 'Invalid email format';
                             });

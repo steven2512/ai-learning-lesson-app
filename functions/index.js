@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const logger = require("firebase-functions/logger");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getLessonOrThrow, TOTAL_LESSON_COUNT } = require("./lessonManifest");
@@ -14,6 +15,11 @@ const db = admin.firestore();
 const LESSON_XP_REWARD = 50;
 const XP_PER_LEVEL = 200;
 const MAX_SESSION_SECONDS_PER_FLUSH = 60 * 60 * 4;
+const OTP_LENGTH = 6;
+const OTP_EXPIRY_MS = 10 * 60 * 1000;
+const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;
+const OTP_MAX_SENDS_PER_HOUR = 5;
 
 function requireAuth(request) {
   if (!request.auth?.uid) {
@@ -61,6 +67,10 @@ function lessonDoc(uid, lessonId) {
 
 function activityDayDoc(uid, dateKey) {
   return userDoc(uid).collection("activityDays").doc(dateKey);
+}
+
+function emailOtpDoc(uid) {
+  return db.collection("_emailOtpSessions").doc(uid);
 }
 
 function levelForXp(xp) {
@@ -171,8 +181,295 @@ function ensureUnlocked(currentLesson, lesson) {
   }
 }
 
+function signInProviderFor(request) {
+  return request.auth?.token?.firebase?.sign_in_provider ?? null;
+}
+
+function isPasswordSignIn(request) {
+  return signInProviderFor(request) === "password";
+}
+
+function isVerifiedPasswordUser(request) {
+  if (!isPasswordSignIn(request)) {
+    return true;
+  }
+
+  return request.auth?.token?.email_verified === true ||
+    request.auth?.token?.verified_email_otp === true;
+}
+
+function requireVerifiedAccount(request) {
+  if (!isVerifiedPasswordUser(request)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Verify your email before continuing.",
+    );
+  }
+}
+
+function requireOtpConfig() {
+  if (!process.env.AUTH_OTP_SECRET || !process.env.AUTH_EMAIL_FROM) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Email OTP is not configured on the server.",
+    );
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The email delivery provider is not configured on the server.",
+    );
+  }
+}
+
+function readTimestampDate(value) {
+  if (value && typeof value.toDate === "function") {
+    return value.toDate();
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  return null;
+}
+
+function generateOtpCode() {
+  return `${crypto.randomInt(0, 10 ** OTP_LENGTH)}`.padStart(OTP_LENGTH, "0");
+}
+
+function hashOtpCode(uid, code) {
+  return crypto
+    .createHmac("sha256", process.env.AUTH_OTP_SECRET)
+    .update(`${uid}:${code}`)
+    .digest("hex");
+}
+
+function maskEmail(email) {
+  const normalized = `${email ?? ""}`.trim();
+  const parts = normalized.split("@");
+  if (parts.length !== 2) {
+    return normalized;
+  }
+
+  const [localPart, domainPart] = parts;
+  if (localPart.length <= 2) {
+    return `${localPart[0] ?? "*"}***@${domainPart}`;
+  }
+
+  return `${localPart[0]}***${localPart[localPart.length - 1]}@${domainPart}`;
+}
+
+function ensureOtpEligible(request) {
+  if (!isPasswordSignIn(request)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Email OTP is only available for email and password accounts.",
+    );
+  }
+
+  const email = request.auth?.token?.email;
+  if (typeof email !== "string" || email.trim().length === 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      "An email address is required for verification.",
+    );
+  }
+
+  return email.trim().toLowerCase();
+}
+
+async function sendOtpEmail({ email, code }) {
+  const productName = process.env.AUTH_EMAIL_PRODUCT_NAME || "Running Robot";
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.AUTH_EMAIL_FROM,
+      to: [email],
+      subject: `${productName} verification code`,
+      text:
+        `Your ${productName} verification code is ${code}. ` +
+        "It expires in 10 minutes.",
+      html:
+        `<p>Your <strong>${productName}</strong> verification code is:</p>` +
+        `<p style="font-size:28px;font-weight:700;letter-spacing:6px;">${code}</p>` +
+        "<p>This code expires in 10 minutes.</p>",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    logger.error("Failed to send verification email", {
+      status: response.status,
+      errorBody,
+    });
+    throw new HttpsError(
+      "internal",
+      "Unable to send a verification code right now.",
+    );
+  }
+}
+
+exports.sendEmailOtp = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireOtpConfig();
+  const email = ensureOtpEligible(request);
+
+  if (request.auth?.token?.verified_email_otp === true ||
+      request.auth?.token?.email_verified === true) {
+    return {
+      alreadyVerified: true,
+      maskedEmail: maskEmail(email),
+      cooldownSeconds: 0,
+    };
+  }
+
+  const otpRef = emailOtpDoc(uid);
+  const now = new Date();
+  const otpSnap = await otpRef.get();
+  const otpData = otpSnap.data() ?? {};
+  const resendAvailableAt = readTimestampDate(otpData.resendAvailableAt);
+  const sendWindowStartedAt = readTimestampDate(otpData.sendWindowStartedAt);
+  const sendsInWindow = readInt(otpData.sendsInWindow, 0);
+
+  if (resendAvailableAt != null && resendAvailableAt.getTime() > now.getTime()) {
+    const retryAfterSeconds = Math.ceil(
+      (resendAvailableAt.getTime() - now.getTime()) / 1000,
+    );
+    throw new HttpsError(
+      "resource-exhausted",
+      `Please wait ${retryAfterSeconds} seconds before requesting another code.`,
+    );
+  }
+
+  const hourWindowStart = sendWindowStartedAt != null &&
+      now.getTime() - sendWindowStartedAt.getTime() < 60 * 60 * 1000
+    ? sendWindowStartedAt
+    : now;
+  const nextSendsInWindow = hourWindowStart === now ? 1 : sendsInWindow + 1;
+
+  if (nextSendsInWindow > OTP_MAX_SENDS_PER_HOUR) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Too many verification emails requested. Please try again later.",
+    );
+  }
+
+  const code = generateOtpCode();
+  await sendOtpEmail({ email, code });
+
+  await otpRef.set({
+    email,
+    codeHash: hashOtpCode(uid, code),
+    failedAttempts: 0,
+    expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
+    resendAvailableAt: new Date(now.getTime() + OTP_RESEND_COOLDOWN_MS),
+    sendWindowStartedAt: hourWindowStart,
+    sendsInWindow: nextSendsInWindow,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  logger.info("Sent email verification OTP", {
+    uid,
+    email,
+  });
+
+  return {
+    maskedEmail: maskEmail(email),
+    cooldownSeconds: Math.floor(OTP_RESEND_COOLDOWN_MS / 1000),
+  };
+});
+
+exports.verifyEmailOtp = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireOtpConfig();
+  const email = ensureOtpEligible(request);
+  const code = `${request.data?.code ?? ""}`.trim();
+
+  if (!/^\d{6}$/.test(code)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Enter the 6-digit code from your email.",
+    );
+  }
+
+  const otpRef = emailOtpDoc(uid);
+  const otpSnap = await otpRef.get();
+  const otpData = otpSnap.data() ?? {};
+
+  if (!otpSnap.exists) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Request a verification code first.",
+    );
+  }
+
+  if (otpData.email !== email) {
+    throw new HttpsError(
+      "permission-denied",
+      "This verification code does not match the signed-in account.",
+    );
+  }
+
+  const expiresAt = readTimestampDate(otpData.expiresAt);
+  if (expiresAt == null || expiresAt.getTime() <= Date.now()) {
+    await otpRef.delete();
+    throw new HttpsError(
+      "deadline-exceeded",
+      "This verification code has expired. Request a new one.",
+    );
+  }
+
+  const failedAttempts = readInt(otpData.failedAttempts, 0);
+  if (failedAttempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+    await otpRef.delete();
+    throw new HttpsError(
+      "resource-exhausted",
+      "Too many incorrect codes. Request a new one.",
+    );
+  }
+
+  if (otpData.codeHash !== hashOtpCode(uid, code)) {
+    await otpRef.set(
+      {
+        failedAttempts: failedAttempts + 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+    throw new HttpsError(
+      "permission-denied",
+      "That verification code is incorrect.",
+    );
+  }
+
+  const authUser = await admin.auth().getUser(uid);
+  const existingClaims = authUser.customClaims ?? {};
+  await admin.auth().setCustomUserClaims(uid, {
+    ...existingClaims,
+    verified_email_otp: true,
+  });
+  await otpRef.delete();
+
+  logger.info("Verified email OTP", {
+    uid,
+    email,
+  });
+
+  return {
+    verified: true,
+    maskedEmail: maskEmail(email),
+  };
+});
+
 exports.markDailyActivity = onCall(async (request) => {
   const uid = requireAuth(request);
+  requireVerifiedAccount(request);
 
   const response = await db.runTransaction(async (transaction) => {
     const userRef = userDoc(uid);
@@ -237,6 +534,7 @@ exports.markDailyActivity = onCall(async (request) => {
 
 exports.startLesson = onCall(async (request) => {
   const uid = requireAuth(request);
+  requireVerifiedAccount(request);
   const lesson = requireLesson(request.data);
 
   const response = await db.runTransaction(async (transaction) => {
@@ -289,6 +587,7 @@ exports.startLesson = onCall(async (request) => {
 
 exports.saveLessonProgress = onCall(async (request) => {
   const uid = requireAuth(request);
+  requireVerifiedAccount(request);
   const lesson = requireLesson(request.data);
   const stepIndex = requireStepIndex(request.data);
 
@@ -354,6 +653,7 @@ exports.saveLessonProgress = onCall(async (request) => {
 
 exports.pauseLessonSession = onCall(async (request) => {
   const uid = requireAuth(request);
+  requireVerifiedAccount(request);
   const lesson = requireLesson(request.data);
   const stepIndex = requireStepIndex(request.data);
 
@@ -418,6 +718,7 @@ exports.pauseLessonSession = onCall(async (request) => {
 
 exports.completeLesson = onCall(async (request) => {
   const uid = requireAuth(request);
+  requireVerifiedAccount(request);
   const lesson = requireLesson(request.data);
 
   const response = await db.runTransaction(async (transaction) => {
