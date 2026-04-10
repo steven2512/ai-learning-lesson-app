@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:running_robot/core/loading_skeleton.dart';
 import 'package:running_robot/models/user_profile.dart';
+import 'package:running_robot/models/activity_day_metrics.dart';
 import 'package:running_robot/core/progression_scope.dart';
 import 'package:running_robot/services/user_profile_service.dart';
 import 'package:running_robot/z_pages/assets/settings/settings_page_live.dart';
@@ -304,7 +305,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 18),
                       _WeeklyStreakHeatCard(
                         activityStreak: progression.activityStreak,
-                        activeDateKeys: progression.weeklyActivityDateKeys,
+                        activityByDateKey: progression.weeklyActivityByDateKey,
                       ),
                       const SizedBox(height: 14),
                       Row(
@@ -562,21 +563,21 @@ class _AvatarBadge extends StatelessWidget {
     final initial =
         displayName.trim().isEmpty ? 'P' : displayName.trim()[0].toUpperCase();
 
-      return Container(
-        width: 94,
-        height: 94,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x14000000),
+    return Container(
+      width: 94,
+      height: 94,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
             blurRadius: 18,
             offset: Offset(0, 8),
           ),
         ],
         gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
             Color(0xFF8B5CF6),
             Color(0xFFF472B6),
@@ -688,13 +689,13 @@ class _HeroStatPill extends StatelessWidget {
         children: [
           Icon(icon, color: iconColor, size: 18),
           const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.lato(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF334155),
-              ),
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF334155),
+            ),
           ),
         ],
       ),
@@ -702,14 +703,21 @@ class _HeroStatPill extends StatelessWidget {
   }
 }
 
-class _WeeklyStreakHeatCard extends StatelessWidget {
+class _WeeklyStreakHeatCard extends StatefulWidget {
   final int activityStreak;
-  final Set<String> activeDateKeys;
+  final Map<String, ActivityDayMetrics> activityByDateKey;
 
   const _WeeklyStreakHeatCard({
     required this.activityStreak,
-    required this.activeDateKeys,
+    required this.activityByDateKey,
   });
+
+  @override
+  State<_WeeklyStreakHeatCard> createState() => _WeeklyStreakHeatCardState();
+}
+
+class _WeeklyStreakHeatCardState extends State<_WeeklyStreakHeatCard> {
+  int? _selectedIndex;
 
   static const List<String> _dayLabels = [
     'Mon',
@@ -719,16 +727,6 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
     'Fri',
     'Sat',
     'Sun',
-  ];
-
-  static const List<double> _barHeights = [
-    52,
-    82,
-    62,
-    44,
-    76,
-    56,
-    68,
   ];
 
   static const List<Color> _dayColors = [
@@ -747,14 +745,20 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
     final todayIndex = now.weekday - 1;
     final monday = DateTime(now.year, now.month, now.day)
         .subtract(Duration(days: now.weekday - 1));
-    final activeDayIndexes = <int>{};
-
-    for (var index = 0; index < _dayLabels.length; index++) {
-      final day = monday.add(Duration(days: index));
-      if (activeDateKeys.contains(_dateKey(day))) {
-        activeDayIndexes.add(index);
-      }
-    }
+    final weekDays = List.generate(_dayLabels.length, (index) {
+      final date = monday.add(Duration(days: index));
+      final dateKey = _dateKey(date);
+      return widget.activityByDateKey[dateKey] ??
+          ActivityDayMetrics(dateKey: dateKey);
+    });
+    final maxLearningSeconds = weekDays.fold<int>(
+      0,
+      (currentMax, day) =>
+          day.learningSeconds > currentMax ? day.learningSeconds : currentMax,
+    );
+    final selectedIndex = _selectedIndex;
+    final selectedDay =
+        selectedIndex == null ? null : weekDays[selectedIndex.clamp(0, 6)];
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -812,7 +816,9 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                activityStreak == 1 ? '1 day' : '$activityStreak days',
+                widget.activityStreak == 1
+                    ? '1 day'
+                    : '${widget.activityStreak} days',
                 style: GoogleFonts.lato(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -830,19 +836,48 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
               color: const Color(0xFF64748B),
             ),
           ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: selectedDay == null
+                ? const SizedBox(height: 18)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _DayMetricsPopover(
+                      key: ValueKey(selectedDay.dateKey),
+                      label: _dayLabels[selectedIndex!],
+                      learningSeconds: selectedDay.learningSeconds,
+                      lessonsCompleted: selectedDay.lessonsCompleted,
+                    ),
+                  ),
+          ),
           const SizedBox(height: 18),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(_dayLabels.length, (index) {
               final isToday = index == todayIndex;
-              final isActive = activeDayIndexes.contains(index);
-              return _StreakBarDay(
-                label: _dayLabels[index],
-                height: _barHeights[index],
-                color: _dayColors[index],
-                isToday: isToday,
-                isActive: isActive,
+              final day = weekDays[index];
+              final learningSeconds = day.learningSeconds;
+              final isSelected = selectedIndex == index;
+              return Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _StreakBarDay(
+                    label: _dayLabels[index],
+                    height: _visualHeightFor(
+                      learningSeconds: learningSeconds,
+                      maxLearningSeconds: maxLearningSeconds,
+                    ),
+                    color: _dayColors[index],
+                    isToday: isToday,
+                    isActive: learningSeconds > 0,
+                    isSelected: isSelected,
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = isSelected ? null : index;
+                      });
+                    },
+                  ),
+                ),
               );
             }),
           ),
@@ -856,6 +891,26 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
     final day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
   }
+
+  static double _visualHeightFor({
+    required int learningSeconds,
+    required int maxLearningSeconds,
+  }) {
+    const zeroHeight = 10.0;
+    const minActiveHeight = 28.0;
+    const maxHeight = 82.0;
+
+    if (learningSeconds <= 0 || maxLearningSeconds <= 0) {
+      return zeroHeight;
+    }
+
+    if (maxLearningSeconds == learningSeconds) {
+      return maxHeight;
+    }
+
+    final ratio = learningSeconds / maxLearningSeconds;
+    return minActiveHeight + ((maxHeight - minActiveHeight) * ratio);
+  }
 }
 
 class _StreakBarDay extends StatelessWidget {
@@ -864,6 +919,8 @@ class _StreakBarDay extends StatelessWidget {
   final Color color;
   final bool isToday;
   final bool isActive;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _StreakBarDay({
     required this.label,
@@ -871,6 +928,8 @@ class _StreakBarDay extends StatelessWidget {
     required this.color,
     required this.isToday,
     required this.isActive,
+    required this.isSelected,
+    required this.onTap,
   });
 
   @override
@@ -879,73 +938,162 @@ class _StreakBarDay extends StatelessWidget {
         ? color.withValues(alpha: isActive ? 0.30 : 0.14)
         : Colors.transparent;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 38,
-          height: 92,
-          alignment: Alignment.bottomCenter,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutCubic,
-            width: 30,
-            height: height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: isToday
-                    ? color.withValues(alpha: 0.95)
-                    : isActive
-                        ? Colors.transparent
-                        : const Color(0xFFD9E2F2),
-                width: isToday ? 2.0 : 1.2,
-              ),
-              gradient: isActive
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        color.withValues(alpha: isToday ? 1.0 : 0.92),
-                        color.withValues(alpha: isToday ? 0.78 : 0.68),
-                      ],
-                    )
-                  : LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: isToday
-                          ? [
-                              const Color(0xFFEAE3FF),
-                              const Color(0xFFF5F1FF),
-                            ]
-                          : [
-                              const Color(0xFFF6F8FC),
-                              const Color(0xFFEDF2F8),
-                            ],
-                    ),
-              boxShadow: outerGlow == Colors.transparent
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: outerGlow,
-                        blurRadius: 14,
-                        offset: const Offset(0, 8),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 38,
+            height: 92,
+            alignment: Alignment.bottomCenter,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              width: 30,
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: isSelected
+                      ? color.withValues(alpha: 1.0)
+                      : isToday
+                          ? color.withValues(alpha: 0.95)
+                          : isActive
+                              ? Colors.transparent
+                              : const Color(0xFFD9E2F2),
+                  width: isSelected ? 2.2 : (isToday ? 2.0 : 1.2),
+                ),
+                gradient: isActive
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          color.withValues(alpha: isToday ? 1.0 : 0.92),
+                          color.withValues(alpha: isToday ? 0.78 : 0.68),
+                        ],
+                      )
+                    : LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: isToday
+                            ? [
+                                const Color(0xFFEAE3FF),
+                                const Color(0xFFF5F1FF),
+                              ]
+                            : [
+                                const Color(0xFFF6F8FC),
+                                const Color(0xFFEDF2F8),
+                              ],
                       ),
-                    ],
+                boxShadow: (outerGlow == Colors.transparent && !isSelected)
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: isSelected
+                              ? color.withValues(alpha: 0.28)
+                              : outerGlow,
+                          blurRadius: isSelected ? 16 : 14,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          label,
-          style: GoogleFonts.lato(
-            fontSize: 13.8,
-            fontWeight: FontWeight.w900,
-            color: isToday ? const Color(0xFF1F2937) : const Color(0xFF7B8799),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              fontSize: 13.8,
+              fontWeight: FontWeight.w900,
+              color:
+                  isToday ? const Color(0xFF1F2937) : const Color(0xFF7B8799),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+}
+
+class _DayMetricsPopover extends StatelessWidget {
+  final String label;
+  final int learningSeconds;
+  final int lessonsCompleted;
+
+  const _DayMetricsPopover({
+    super.key,
+    required this.label,
+    required this.learningSeconds,
+    required this.lessonsCompleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x120F172A),
+            blurRadius: 18,
+            offset: Offset(0, 10),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFFE7ECF4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF6F52C8),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Time: ${_formatDuration(learningSeconds)}',
+              style: GoogleFonts.lato(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF24324A),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Lessons: $lessonsCompleted',
+              textAlign: TextAlign.right,
+              style: GoogleFonts.lato(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF24324A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatDuration(int totalSeconds) {
+    if (totalSeconds <= 0) return '0m';
+
+    final totalMinutes = (totalSeconds / 60).ceil();
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (hours == 0) return '${totalMinutes}m';
+    if (minutes == 0) return '${hours}h';
+    return '${hours}h ${minutes}m';
   }
 }
 
