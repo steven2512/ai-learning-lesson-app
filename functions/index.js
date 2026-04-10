@@ -22,6 +22,15 @@ const OTP_MAX_VERIFY_ATTEMPTS = 5;
 const OTP_MAX_SENDS_PER_HOUR = 5;
 const SIGNUP_VERIFICATION_EXPIRY_MS = 30 * 60 * 1000;
 
+function envValue(name) {
+  const raw = process.env[name];
+  if (typeof raw !== "string") {
+    return "";
+  }
+
+  return raw.trim();
+}
+
 function requireAuth(request) {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Authentication is required.");
@@ -215,14 +224,14 @@ function requireVerifiedAccount(request) {
 }
 
 function requireOtpConfig() {
-  if (!process.env.AUTH_OTP_SECRET || !process.env.AUTH_EMAIL_FROM) {
+  if (!envValue("AUTH_OTP_SECRET") || !envValue("AUTH_EMAIL_FROM")) {
     throw new HttpsError(
       "failed-precondition",
       "Email OTP is not configured on the server.",
     );
   }
 
-  if (!process.env.RESEND_API_KEY) {
+  if (!envValue("RESEND_API_KEY")) {
     throw new HttpsError(
       "failed-precondition",
       "The email delivery provider is not configured on the server.",
@@ -248,7 +257,7 @@ function generateOtpCode() {
 
 function hashOtpCode(uid, code) {
   return crypto
-    .createHmac("sha256", process.env.AUTH_OTP_SECRET)
+    .createHmac("sha256", envValue("AUTH_OTP_SECRET"))
     .update(`${uid}:${code}`)
     .digest("hex");
 }
@@ -331,15 +340,17 @@ async function assertEmailAvailableForSignup(email) {
 }
 
 async function sendOtpEmail({ email, code }) {
-  const productName = process.env.AUTH_EMAIL_PRODUCT_NAME || "Running Robot";
+  const productName = envValue("AUTH_EMAIL_PRODUCT_NAME") || "Running Robot";
+  const resendApiKey = envValue("RESEND_API_KEY");
+  const fromEmail = envValue("AUTH_EMAIL_FROM");
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.AUTH_EMAIL_FROM,
+      from: fromEmail,
       to: [email],
       subject: `${productName} verification code`,
       text:
@@ -356,6 +367,8 @@ async function sendOtpEmail({ email, code }) {
     const errorBody = await response.text();
     logger.error("Failed to send verification email", {
       status: response.status,
+      fromEmail,
+      toEmail: email,
       errorBody,
     });
     throw new HttpsError(
