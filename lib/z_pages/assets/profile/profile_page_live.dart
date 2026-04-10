@@ -506,7 +506,7 @@ class _ProfileHero extends StatelessWidget {
             child: _TopIconButton(
               icon: Icons.settings_rounded,
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF1F2937),
+              foregroundColor: const Color(0xFF6F52C8),
               onTap: onOpenSettings,
             ),
           ),

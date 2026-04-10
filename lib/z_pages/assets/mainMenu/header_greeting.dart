@@ -131,17 +131,20 @@ class _HeaderAvatarBadge extends StatelessWidget {
               colors: [
                 Color(0xFF8B5CF6),
                 Color(0xFF5B8DEF),
-              ],
+                ],
+              ),
             ),
-          ),
-          child: ClipOval(
-            child: image != null
-                ? Image(
-                    image: image!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _fallback(),
-                  )
-                : _fallback(),
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: ClipOval(
+              child: image != null
+                  ? Image(
+                      image: image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _fallback(),
+                    )
+                  : _fallback(),
+            ),
           ),
         ),
       ),
