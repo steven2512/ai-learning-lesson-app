@@ -489,7 +489,7 @@ class _ProfileHero extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            '- joined ${joinedYear ?? DateTime.now().year}',
+                            'joined ${joinedYear ?? DateTime.now().year}',
                             style: GoogleFonts.lato(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w900,
@@ -580,9 +580,8 @@ class _AvatarBadge extends StatelessWidget {
           colors: [
             Color(0xFFF472B6),
             Color(0xFF9B5CF7),
-            Color(0xFFFF8A3D),
           ],
-          stops: [0.0, 0.58, 1.0],
+          stops: [0.0, 1.0],
         ),
       ),
       child: Padding(
