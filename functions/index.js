@@ -1100,7 +1100,15 @@ exports.saveLessonProgress = onCall(async (request) => {
       { merge: true },
     );
 
-    return { savedStepIndex };
+    return {
+      savedStepIndex,
+      totalLearningSeconds,
+      todayKey,
+      dayLearningSeconds:
+        readInt(activitySnap.data()?.learningSeconds, 0) + elapsedSeconds,
+      dayLessonsCompleted:
+        readInt(activitySnap.data()?.lessonsCompleted, 0),
+    };
   });
 
   return response;
@@ -1178,7 +1186,15 @@ exports.pauseLessonSession = onCall(async (request) => {
       },
     );
 
-    return { totalLearningSeconds };
+    return {
+      totalLearningSeconds,
+      todayKey,
+      dayLearningSeconds:
+        readInt(activitySnap.data()?.learningSeconds, 0) + elapsedSeconds,
+      dayLessonsCompleted:
+        readInt(activitySnap.data()?.lessonsCompleted, 0),
+      savedStepIndex,
+    };
   });
 
   return response;
@@ -1307,6 +1323,12 @@ exports.completeLesson = onCall(async (request) => {
       lessonsCompleted,
       todayLessonCount,
       dailyStreak,
+      todayKey,
+      dayLearningSeconds:
+        readInt(activitySnap.data()?.learningSeconds, 0) + elapsedSeconds,
+      dayLessonsCompleted:
+        readInt(activitySnap.data()?.lessonsCompleted, 0) +
+        (alreadyCompleted ? 0 : 1),
     };
   });
 

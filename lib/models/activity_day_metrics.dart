@@ -49,6 +49,23 @@ class ActivityDayMetrics {
     };
   }
 
+  ActivityDayMetrics copyWith({
+    int? learningSeconds,
+    int? sessionSeconds,
+    int? lessonsCompleted,
+    bool? didOpenApp,
+    bool? didCompleteLesson,
+  }) {
+    return ActivityDayMetrics(
+      dateKey: dateKey,
+      learningSeconds: learningSeconds ?? this.learningSeconds,
+      sessionSeconds: sessionSeconds ?? this.sessionSeconds,
+      lessonsCompleted: lessonsCompleted ?? this.lessonsCompleted,
+      didOpenApp: didOpenApp ?? this.didOpenApp,
+      didCompleteLesson: didCompleteLesson ?? this.didCompleteLesson,
+    );
+  }
+
   static int _readInt(dynamic value) {
     if (value is int) return value;
     return int.tryParse(value?.toString() ?? '') ?? 0;

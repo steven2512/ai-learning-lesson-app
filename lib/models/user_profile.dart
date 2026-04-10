@@ -165,4 +165,60 @@ class UserProfile {
     }
     return age < 0 ? null : age;
   }
+
+  UserProfile copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? photoUrl,
+    DateTime? joinedAt,
+    int? currentLesson,
+    int? currentLessonStepIndex,
+    int? xp,
+    int? level,
+    int? lessonsCompleted,
+    int? totalLearningSeconds,
+    int? totalSessionSeconds,
+    int? todayLessonCount,
+    String? todayLessonCountDate,
+    int? dailyStreak,
+    String? lastDailyLessonDate,
+    int? activityStreak,
+    String? lastActivityDateKey,
+    int? age,
+    String? provider,
+    String? lastDevice,
+    String? appVersion,
+    String? timezone,
+    int? timezoneOffsetMinutes,
+  }) {
+    return UserProfile(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
+      joinedAt: joinedAt ?? this.joinedAt,
+      currentLesson: currentLesson ?? this.currentLesson,
+      currentLessonStepIndex:
+          currentLessonStepIndex ?? this.currentLessonStepIndex,
+      xp: xp ?? this.xp,
+      level: level ?? this.level,
+      lessonsCompleted: lessonsCompleted ?? this.lessonsCompleted,
+      totalLearningSeconds: totalLearningSeconds ?? this.totalLearningSeconds,
+      totalSessionSeconds: totalSessionSeconds ?? this.totalSessionSeconds,
+      todayLessonCount: todayLessonCount ?? this.todayLessonCount,
+      todayLessonCountDate: todayLessonCountDate ?? this.todayLessonCountDate,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
+      lastDailyLessonDate: lastDailyLessonDate ?? this.lastDailyLessonDate,
+      activityStreak: activityStreak ?? this.activityStreak,
+      lastActivityDateKey: lastActivityDateKey ?? this.lastActivityDateKey,
+      age: age ?? this.age,
+      provider: provider ?? this.provider,
+      lastDevice: lastDevice ?? this.lastDevice,
+      appVersion: appVersion ?? this.appVersion,
+      timezone: timezone ?? this.timezone,
+      timezoneOffsetMinutes:
+          timezoneOffsetMinutes ?? this.timezoneOffsetMinutes,
+    );
+  }
 }

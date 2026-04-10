@@ -5,6 +5,7 @@ import 'package:running_robot/models/activity_day_metrics.dart';
 import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/services/app_cache_service.dart';
+import 'package:running_robot/services/lesson_service.dart';
 import 'package:running_robot/services/progression_service.dart';
 
 enum LessonUiState { locked, available, inProgress, completed }
@@ -47,7 +48,8 @@ class AppProgressionController extends ChangeNotifier {
   Set<String> get weeklyActivityDateKeys =>
       _snapshot?.weeklyActivityDateKeys ?? const <String>{};
   Map<String, ActivityDayMetrics> get weeklyActivityByDateKey =>
-      _snapshot?.weeklyActivityByDateKey ?? const <String, ActivityDayMetrics>{};
+      _snapshot?.weeklyActivityByDateKey ??
+      const <String, ActivityDayMetrics>{};
 
   int get courseProgressPercent {
     if (totalLessonCount == 0) return 0;
@@ -133,6 +135,90 @@ class AppProgressionController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> applyLessonSessionSync(LessonSessionSyncResult result) async {
+    final snapshot = _snapshot;
+    final profile = snapshot?.profile;
+    final todayKey = result.todayKey;
+    if (snapshot == null || profile == null || todayKey == null) return;
+
+    final updatedDay = (snapshot.weeklyActivityByDateKey[todayKey] ??
+            ActivityDayMetrics(dateKey: todayKey))
+        .copyWith(
+      learningSeconds: result.dayLearningSeconds,
+      lessonsCompleted: result.dayLessonsCompleted,
+      didOpenApp: true,
+    );
+
+    _snapshot = ProgressionSnapshot(
+      profile: profile.copyWith(
+        currentLessonStepIndex: result.savedStepIndex,
+        totalLearningSeconds: result.totalLearningSeconds,
+      ),
+      lessonProgressById: snapshot.lessonProgressById,
+      weeklyActivityDateKeys: {
+        ...snapshot.weeklyActivityDateKeys,
+        if (updatedDay.hasActivity) todayKey,
+      },
+      weeklyActivityByDateKey: {
+        ...snapshot.weeklyActivityByDateKey,
+        todayKey: updatedDay,
+      },
+    );
+
+    notifyListeners();
+    await _persistSnapshot();
+  }
+
+  Future<void> applyLessonCompletion(LessonCompletionResult result) async {
+    final snapshot = _snapshot;
+    final profile = snapshot?.profile;
+    final todayKey = result.todayKey;
+    if (snapshot == null || profile == null || todayKey == null) return;
+
+    final updatedDay = (snapshot.weeklyActivityByDateKey[todayKey] ??
+            ActivityDayMetrics(dateKey: todayKey))
+        .copyWith(
+      learningSeconds: result.dayLearningSeconds,
+      lessonsCompleted: result.dayLessonsCompleted,
+      didOpenApp: true,
+      didCompleteLesson: result.dayLessonsCompleted > 0,
+    );
+
+    _snapshot = ProgressionSnapshot(
+      profile: profile.copyWith(
+        currentLesson: result.currentLesson,
+        currentLessonStepIndex: 0,
+        xp: profile.xp + result.xpAwarded,
+        level: result.level,
+        lessonsCompleted: result.lessonsCompleted,
+        totalLearningSeconds: result.totalLearningSeconds,
+        todayLessonCount: result.todayLessonCount,
+        todayLessonCountDate: todayKey,
+        dailyStreak: result.dailyStreak,
+        lastDailyLessonDate: todayKey,
+      ),
+      lessonProgressById: snapshot.lessonProgressById,
+      weeklyActivityDateKeys: {
+        ...snapshot.weeklyActivityDateKeys,
+        if (updatedDay.hasActivity) todayKey,
+      },
+      weeklyActivityByDateKey: {
+        ...snapshot.weeklyActivityByDateKey,
+        todayKey: updatedDay,
+      },
+    );
+
+    notifyListeners();
+    await _persistSnapshot();
+  }
+
+  Future<void> _persistSnapshot() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final snapshot = _snapshot;
+    if (user == null || snapshot == null) return;
+    await AppCacheService.writeProgressionSnapshot(user.uid, snapshot);
   }
 
   LessonProgress? lessonProgressByIdOrNull(String lessonId) {

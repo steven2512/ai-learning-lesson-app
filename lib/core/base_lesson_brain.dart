@@ -123,11 +123,13 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
   }
 
   Future<void> saveCurrentLessonStep(int stepIndex) async {
-    await LessonService.saveCurrentLessonStep(
+    final result = await LessonService.saveCurrentLessonStep(
       lessonId: widget.lessonId,
       globalLessonNumber: widget.globalLessonNumber,
       stepIndex: stepIndex,
     );
+    if (!mounted) return;
+    await ProgressionScope.read(context).applyLessonSessionSync(result);
   }
 
   Future<LessonCompletionResult> completeLesson() async {
@@ -150,11 +152,14 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
 
     _sessionSyncInFlight = true;
     try {
-      await LessonService.pauseLessonSession(
+      final result = await LessonService.pauseLessonSession(
         lessonId: widget.lessonId,
         globalLessonNumber: widget.globalLessonNumber,
         stepIndex: currentIndex,
       );
+      if (mounted) {
+        await ProgressionScope.read(context).applyLessonSessionSync(result);
+      }
       _lessonSessionActive = false;
     } catch (error) {
       debugPrint('Failed to pause lesson session: $error');
@@ -189,10 +194,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
   }
 
   Future<void> _exitLessonToMainMenu() async {
-    final progression = ProgressionScope.read(context);
     await _pauseLessonSession();
-    if (!mounted) return;
-    await progression.refresh();
     if (!mounted) return;
     widget.onNavigate(const RouteMainMenu(tab: 0));
   }
@@ -234,7 +236,7 @@ abstract class BaseLessonBrainState<T extends BaseLessonBrain> extends State<T>
         _lessonSessionActive = false;
         if (!mounted) return;
         final progression = ProgressionScope.read(context);
-        await progression.refresh();
+        await progression.applyLessonCompletion(completion);
         LessonNavigator.complete(
           widget.lessonId,
           widget.onNavigate,

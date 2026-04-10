@@ -27,6 +27,11 @@ class LessonCompletionResult {
   final int lessonsCompleted;
   final int todayLessonCount;
   final int dailyStreak;
+  final int level;
+  final int totalLearningSeconds;
+  final String? todayKey;
+  final int dayLearningSeconds;
+  final int dayLessonsCompleted;
 
   const LessonCompletionResult({
     required this.firstCompletion,
@@ -36,6 +41,27 @@ class LessonCompletionResult {
     required this.lessonsCompleted,
     required this.todayLessonCount,
     required this.dailyStreak,
+    required this.level,
+    required this.totalLearningSeconds,
+    required this.todayKey,
+    required this.dayLearningSeconds,
+    required this.dayLessonsCompleted,
+  });
+}
+
+class LessonSessionSyncResult {
+  final int savedStepIndex;
+  final int totalLearningSeconds;
+  final String? todayKey;
+  final int dayLearningSeconds;
+  final int dayLessonsCompleted;
+
+  const LessonSessionSyncResult({
+    required this.savedStepIndex,
+    required this.totalLearningSeconds,
+    required this.todayKey,
+    required this.dayLearningSeconds,
+    required this.dayLessonsCompleted,
   });
 }
 
@@ -87,35 +113,53 @@ class LessonService {
     );
   }
 
-  static Future<void> saveCurrentLessonStep({
+  static Future<LessonSessionSyncResult> saveCurrentLessonStep({
     required String lessonId,
     required int globalLessonNumber,
     required int stepIndex,
   }) async {
     final safeStepIndex = stepIndex < 0 ? 0 : stepIndex;
 
-    await _callProgressionFunction(
+    final data = await _callProgressionFunction(
       'saveLessonProgress',
       {
         'lessonId': lessonId,
         'stepIndex': safeStepIndex,
       },
     );
+
+    return LessonSessionSyncResult(
+      savedStepIndex: _readInt(data['savedStepIndex'], fallback: safeStepIndex),
+      totalLearningSeconds:
+          _readInt(data['totalLearningSeconds'], fallback: 0),
+      todayKey: data['todayKey']?.toString(),
+      dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
+      dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
+    );
   }
 
-  static Future<void> pauseLessonSession({
+  static Future<LessonSessionSyncResult> pauseLessonSession({
     required String lessonId,
     required int globalLessonNumber,
     required int stepIndex,
   }) async {
     final safeStepIndex = stepIndex < 0 ? 0 : stepIndex;
 
-    await _callProgressionFunction(
+    final data = await _callProgressionFunction(
       'pauseLessonSession',
       {
         'lessonId': lessonId,
         'stepIndex': safeStepIndex,
       },
+    );
+
+    return LessonSessionSyncResult(
+      savedStepIndex: _readInt(data['savedStepIndex'], fallback: safeStepIndex),
+      totalLearningSeconds:
+          _readInt(data['totalLearningSeconds'], fallback: 0),
+      todayKey: data['todayKey']?.toString(),
+      dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
+      dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
     );
   }
 
@@ -150,6 +194,12 @@ class LessonService {
       lessonsCompleted: _readInt(data['lessonsCompleted'], fallback: 0),
       todayLessonCount: _readInt(data['todayLessonCount'], fallback: 0),
       dailyStreak: _readInt(data['dailyStreak'], fallback: 0),
+      level: _readInt(data['level'], fallback: 1),
+      totalLearningSeconds:
+          _readInt(data['totalLearningSeconds'], fallback: 0),
+      todayKey: data['todayKey']?.toString(),
+      dayLearningSeconds: _readInt(data['dayLearningSeconds'], fallback: 0),
+      dayLessonsCompleted: _readInt(data['dayLessonsCompleted'], fallback: 0),
     );
   }
 
