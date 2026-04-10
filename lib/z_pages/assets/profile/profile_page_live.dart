@@ -311,16 +311,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: _ProfileStatCard(
                               icon: Icons.schedule_rounded,
-                              iconColor: const Color(0xFF7F56D9),
-                              badgeColor: const Color(0xFFF4ECFF),
+                              iconColor: const Color(0xFF1E96FF),
+                              badgeColor: const Color(0xFFCDE9FF),
                               title: 'Total time',
                               value: _formatDurationLabel(
                                 totalLearningSeconds,
                               ),
                               subtitle: 'learning',
                               gradient: const [
-                                Color(0xFFF8F3FF),
-                                Color(0xFFF1F6FF),
+                                Color(0xFFEAF7FF),
+                                Color(0xFFCDE9FF),
                               ],
                             ),
                           ),
@@ -328,14 +328,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: _ProfileStatCard(
                               icon: Icons.flag_rounded,
-                              iconColor: const Color(0xFFFF9F1C),
-                              badgeColor: const Color(0xFFFFF2DE),
+                              iconColor: const Color(0xFFF59A23),
+                              badgeColor: const Color(0xFFFFF1DF),
                               title: 'Total lessons',
                               value: completedLessons.toString(),
                               subtitle: 'completed',
                               gradient: const [
-                                Color(0xFFFFF7EC),
-                                Color(0xFFFFFBF2),
+                                Color(0xFFFFF8EF),
+                                Color(0xFFFFF0DF),
                               ],
                             ),
                           ),
@@ -707,13 +707,13 @@ class _WeeklyStreakHeatCard extends StatelessWidget {
   ];
 
   static const List<Color> _dayColors = [
-    Color(0xFF64C8FF),
-    Color(0xFF7F56D9),
-    Color(0xFF58CCB1),
-    Color(0xFFFFAF45),
-    Color(0xFF5B8DEF),
-    Color(0xFFFF7A59),
-    Color(0xFFA855F7),
+    Color(0xFF63D471),
+    Color(0xFF4CCB63),
+    Color(0xFF57D06B),
+    Color(0xFF72D97E),
+    Color(0xFF2FC653),
+    Color(0xFF66D57A),
+    Color(0xFF8AE39A),
   ];
 
   @override
@@ -882,9 +882,7 @@ class _StreakBarDay extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         color.withValues(alpha: isToday ? 1.0 : 0.92),
-                        isToday
-                            ? const Color(0xFF14213D)
-                            : color.withValues(alpha: 0.72),
+                        color.withValues(alpha: isToday ? 0.78 : 0.68),
                       ],
                     )
                   : LinearGradient(
@@ -930,19 +928,25 @@ class _ProfileStatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final Color badgeColor;
+  final Color badgeTextColor;
   final String title;
   final String value;
   final String subtitle;
   final List<Color> gradient;
+  final Color valueColor;
+  final Color subtitleColor;
 
   const _ProfileStatCard({
     required this.icon,
     required this.iconColor,
     required this.badgeColor,
+    this.badgeTextColor = const Color(0xFF24324A),
     required this.title,
     required this.value,
     required this.subtitle,
     required this.gradient,
+    this.valueColor = const Color(0xFF0F172A),
+    this.subtitleColor = const Color(0xFF758296),
   });
 
   @override
@@ -976,14 +980,14 @@ class _ProfileStatCard extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 16, color: iconColor),
+                Icon(icon, size: 17, color: iconColor),
                 const SizedBox(width: 6),
                 Text(
                   title,
                   style: GoogleFonts.lato(
-                    fontSize: 12.5,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w900,
-                    color: const Color(0xFF24324A),
+                    color: badgeTextColor,
                   ),
                 ),
               ],
@@ -993,9 +997,9 @@ class _ProfileStatCard extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.lato(
-              fontSize: 29,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF0F172A),
+              color: valueColor,
               height: 1,
             ),
           ),
@@ -1003,9 +1007,9 @@ class _ProfileStatCard extends StatelessWidget {
           Text(
             subtitle,
             style: GoogleFonts.lato(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF758296),
+              color: subtitleColor,
             ),
           ),
         ],
