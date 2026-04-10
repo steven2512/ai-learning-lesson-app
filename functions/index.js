@@ -15,6 +15,7 @@ const db = admin.firestore();
 const LESSON_XP_REWARD = 50;
 const XP_PER_LEVEL = 200;
 const MAX_SESSION_SECONDS_PER_FLUSH = 60 * 60 * 4;
+const MAX_APP_SESSION_SECONDS_PER_FLUSH = 60 * 60 * 12;
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
@@ -185,6 +186,80 @@ function activitySummaryPayload({ activityStreak, todayKey }) {
     activityStreak,
     lastActivityDateKey: todayKey,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
+function requireSessionSeconds(data) {
+  const rawSeconds = data?.sessionSeconds;
+  if (!Number.isInteger(rawSeconds) || rawSeconds <= 0) {
+    throw new HttpsError(
+      "invalid-argument",
+      "A valid positive sessionSeconds value is required.",
+    );
+  }
+
+  return Math.min(rawSeconds, MAX_APP_SESSION_SECONDS_PER_FLUSH);
+}
+
+function ensureActivityDay(transaction, activityRef, activitySnap, todayKey) {
+  transaction.set(
+    activityRef,
+    {
+      dateKey: todayKey,
+      didOpenApp: true,
+      lastSeenAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...(activitySnap.exists
+        ? {}
+        : {
+            firstSeenAt: admin.firestore.FieldValue.serverTimestamp(),
+          }),
+    },
+    { merge: true },
+  );
+}
+
+function incrementIfPositive(amount) {
+  return amount > 0 ? admin.firestore.FieldValue.increment(amount) : undefined;
+}
+
+function writeActivityDayMetrics(
+  transaction,
+  activityRef,
+  activitySnap,
+  todayKey,
+  {
+    learningSecondsDelta = 0,
+    sessionSecondsDelta = 0,
+    lessonsCompletedDelta = 0,
+    didCompleteLesson = false,
+  } = {},
+) {
+  const activityData = activitySnap.data() ?? {};
+
+  ensureActivityDay(transaction, activityRef, activitySnap, todayKey);
+
+  transaction.set(
+    activityRef,
+    {
+      ...(learningSecondsDelta > 0
+        ? { learningSeconds: incrementIfPositive(learningSecondsDelta) }
+        : {}),
+      ...(sessionSecondsDelta > 0
+        ? { sessionSeconds: incrementIfPositive(sessionSecondsDelta) }
+        : {}),
+      ...(lessonsCompletedDelta > 0
+        ? { lessonsCompleted: incrementIfPositive(lessonsCompletedDelta) }
+        : {}),
+      ...(didCompleteLesson ? { didCompleteLesson: true } : {}),
+    },
+    { merge: true },
+  );
+
+  return {
+    learningSeconds: readInt(activityData.learningSeconds, 0) + learningSecondsDelta,
+    sessionSeconds: readInt(activityData.sessionSeconds, 0) + sessionSecondsDelta,
+    lessonsCompleted: readInt(activityData.lessonsCompleted, 0) + lessonsCompletedDelta,
   };
 }
 
@@ -806,20 +881,7 @@ exports.markDailyActivity = onCall(async (request) => {
       readInt(userData.activityStreak, 0),
     );
 
-    transaction.set(
-      activityRef,
-      {
-        dateKey: todayKey,
-        didOpenApp: true,
-        lastSeenAt: admin.firestore.FieldValue.serverTimestamp(),
-        ...(activitySnap.exists
-          ? {}
-          : {
-              firstSeenAt: admin.firestore.FieldValue.serverTimestamp(),
-            }),
-      },
-      { merge: true },
-    );
+    ensureActivityDay(transaction, activityRef, activitySnap, todayKey);
 
     transaction.set(
       userRef,
@@ -840,6 +902,73 @@ exports.markDailyActivity = onCall(async (request) => {
     uid,
     activityStreak: response.activityStreak,
     todayKey: response.todayKey,
+  });
+
+  return response;
+});
+
+exports.flushAppSession = onCall(async (request) => {
+  const uid = requireAuth(request);
+  requireVerifiedAccount(request);
+  const sessionSeconds = requireSessionSeconds(request.data);
+
+  const response = await db.runTransaction(async (transaction) => {
+    const userRef = userDoc(uid);
+    const userSnap = await transaction.get(userRef);
+
+    if (!userSnap.exists) {
+      throw new HttpsError(
+        "failed-precondition",
+        "User profile must exist before tracking app sessions.",
+      );
+    }
+
+    const userData = userSnap.data() ?? {};
+    const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
+    const activityRef = activityDayDoc(uid, todayKey);
+    const activitySnap = await transaction.get(activityRef);
+    const activityStreak = computeNextDailyStreak(
+      userData.lastActivityDateKey ?? null,
+      todayKey,
+      readInt(userData.activityStreak, 0),
+    );
+
+    const dayMetrics = writeActivityDayMetrics(
+      transaction,
+      activityRef,
+      activitySnap,
+      todayKey,
+      {
+        sessionSecondsDelta: sessionSeconds,
+      },
+    );
+
+    transaction.set(
+      userRef,
+      {
+        ...activitySummaryPayload({
+          activityStreak,
+          todayKey,
+        }),
+        totalSessionSeconds:
+          readInt(userData.totalSessionSeconds, 0) + sessionSeconds,
+      },
+      { merge: true },
+    );
+
+    return {
+      activityStreak,
+      todayKey,
+      sessionSeconds: dayMetrics.sessionSeconds,
+      totalSessionSeconds:
+        readInt(userData.totalSessionSeconds, 0) + sessionSeconds,
+    };
+  });
+
+  logger.info("Flushed app session seconds", {
+    uid,
+    todayKey: response.todayKey,
+    sessionSeconds: sessionSeconds,
   });
 
   return response;
@@ -923,6 +1052,9 @@ exports.saveLessonProgress = onCall(async (request) => {
     const userData = userSnap.data() ?? {};
     const currentLesson = readInt(userData.currentLesson, 1);
     ensureUnlocked(currentLesson, lesson);
+    const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
+    const activityRef = activityDayDoc(uid, todayKey);
+    const activitySnap = await transaction.get(activityRef);
 
     const lessonData = lessonSnap.data() ?? {};
     const isCompleted = lessonData.isCompleted === true;
@@ -942,6 +1074,16 @@ exports.saveLessonProgress = onCall(async (request) => {
         { merge: true },
       );
     }
+
+    writeActivityDayMetrics(
+      transaction,
+      activityRef,
+      activitySnap,
+      todayKey,
+      {
+        learningSecondsDelta: elapsedSeconds,
+      },
+    );
 
     let savedStepIndex = readInt(userData.currentLessonStepIndex, 0);
     if (currentLesson === lesson.globalLessonNumber && !isCompleted) {
@@ -993,6 +1135,9 @@ exports.pauseLessonSession = onCall(async (request) => {
     const userData = userSnap.data() ?? {};
     const currentLesson = readInt(userData.currentLesson, 1);
     ensureUnlocked(currentLesson, lesson);
+    const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
+    const activityRef = activityDayDoc(uid, todayKey);
+    const activitySnap = await transaction.get(activityRef);
 
     const lessonData = lessonSnap.data() ?? {};
     const isCompleted = lessonData.isCompleted === true;
@@ -1021,6 +1166,16 @@ exports.pauseLessonSession = onCall(async (request) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
+    );
+
+    writeActivityDayMetrics(
+      transaction,
+      activityRef,
+      activitySnap,
+      todayKey,
+      {
+        learningSecondsDelta: elapsedSeconds,
+      },
     );
 
     return { totalLearningSeconds };
@@ -1053,6 +1208,9 @@ exports.completeLesson = onCall(async (request) => {
     const userData = userSnap.data() ?? {};
     const currentLesson = readInt(userData.currentLesson, 1);
     ensureUnlocked(currentLesson, lesson);
+    const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
+    const activityRef = activityDayDoc(uid, todayKey);
+    const activitySnap = await transaction.get(activityRef);
 
     const lessonData = lessonSnap.data() ?? {};
     const alreadyCompleted = lessonData.isCompleted === true;
@@ -1084,7 +1242,6 @@ exports.completeLesson = onCall(async (request) => {
       const nextLesson = lesson.globalLessonNumber < TOTAL_LESSON_COUNT
         ? lesson.globalLessonNumber + 1
         : lesson.globalLessonNumber;
-      const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
       const todayLessonCountDate = userData.todayLessonCountDate ?? null;
       const lastDailyLessonDate = userData.lastDailyLessonDate ?? null;
       const isSameDay = todayLessonCountDate === todayKey;
@@ -1127,6 +1284,18 @@ exports.completeLesson = onCall(async (request) => {
         { merge: true },
       );
     }
+
+    writeActivityDayMetrics(
+      transaction,
+      activityRef,
+      activitySnap,
+      todayKey,
+      {
+        learningSecondsDelta: elapsedSeconds,
+        lessonsCompletedDelta: alreadyCompleted ? 0 : 1,
+        didCompleteLesson: !alreadyCompleted,
+      },
+    );
 
     return {
       firstCompletion: !alreadyCompleted,

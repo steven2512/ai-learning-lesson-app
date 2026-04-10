@@ -58,6 +58,7 @@ service cloud.firestore {
         'level',
         'lessonsCompleted',
         'totalLearningSeconds',
+        'totalSessionSeconds',
         'todayLessonCount',
         'todayLessonCountDate',
         'dailyStreak',
@@ -154,6 +155,7 @@ service cloud.firestore {
           !(resource.data.level is int) ||
           !(resource.data.lessonsCompleted is int) ||
           !(resource.data.totalLearningSeconds is int) ||
+          !(resource.data.totalSessionSeconds is int) ||
           !(resource.data.todayLessonCount is int) ||
           !(resource.data.dailyStreak is int) ||
           !(resource.data.activityStreak is int);
@@ -218,6 +220,8 @@ service cloud.firestore {
           request.resource.data.lessonsCompleted >= 0 &&
           request.resource.data.totalLearningSeconds is int &&
           request.resource.data.totalLearningSeconds >= 0 &&
+          request.resource.data.totalSessionSeconds is int &&
+          request.resource.data.totalSessionSeconds >= 0 &&
           request.resource.data.todayLessonCount is int &&
           request.resource.data.todayLessonCount >= 0 &&
           optionalString(request.resource.data.todayLessonCountDate) &&
@@ -245,6 +249,7 @@ service cloud.firestore {
           request.resource.data.level == 1 &&
           request.resource.data.lessonsCompleted == 0 &&
           request.resource.data.totalLearningSeconds == 0 &&
+          request.resource.data.totalSessionSeconds == 0 &&
           request.resource.data.todayLessonCount == 0 &&
           request.resource.data.todayLessonCountDate == null &&
           request.resource.data.dailyStreak == 0 &&
@@ -265,6 +270,7 @@ service cloud.firestore {
           sameValue('level') &&
           sameValue('lessonsCompleted') &&
           sameValue('totalLearningSeconds') &&
+          sameValue('totalSessionSeconds') &&
           sameValue('todayLessonCount') &&
           sameValue('todayLessonCountDate') &&
           sameValue('dailyStreak') &&
@@ -284,6 +290,7 @@ service cloud.firestore {
           request.resource.data.level == levelForXp(request.resource.data.xp) &&
           validLegacyIntValue('lessonsCompleted', 0) &&
           validLegacyIntValue('totalLearningSeconds', 0) &&
+          validLegacyIntValue('totalSessionSeconds', 0) &&
           validLegacyIntValue('todayLessonCount', 0) &&
           (
             request.resource.data.todayLessonCountDate ==
@@ -318,6 +325,7 @@ service cloud.firestore {
           sameValue('level') &&
           sameValue('lessonsCompleted') &&
           sameValue('totalLearningSeconds') &&
+          sameValue('totalSessionSeconds') &&
           sameValue('todayLessonCount') &&
           sameValue('todayLessonCountDate') &&
           sameValue('dailyStreak') &&
@@ -350,6 +358,7 @@ service cloud.firestore {
           sameValue('lastLogin') &&
           sameValue('level') &&
           sameValue('totalLearningSeconds') &&
+          sameValue('totalSessionSeconds') &&
           sameValue('activityStreak') &&
           sameValue('lastActivityDateKey') &&
           request.resource.data.lessonsCompleted ==
