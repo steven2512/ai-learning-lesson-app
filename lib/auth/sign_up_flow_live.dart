@@ -89,6 +89,7 @@ class _SignupFlowState extends State<SignupFlow> {
     if (_isSubmitting) return;
 
     setState(() => _isSubmitting = true);
+    AuthAccountService.beginPendingVerifiedSignup(email);
     try {
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -101,9 +102,14 @@ class _SignupFlowState extends State<SignupFlow> {
       await _waitForVerifiedSignupClaim();
       await cred.user!.updateDisplayName(name);
       await cred.user!.reload();
+      AuthAccountService.clearPendingVerifiedSignup();
       await _onSignupSuccess(FirebaseAuth.instance.currentUser ?? cred.user!);
     } on FirebaseAuthException catch (e) {
+      AuthAccountService.clearPendingVerifiedSignup();
       _showSnackBar(e.message ?? 'Unable to create account right now.');
+    } catch (e) {
+      AuthAccountService.clearPendingVerifiedSignup();
+      _showSnackBar('Unable to finish signup right now.');
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

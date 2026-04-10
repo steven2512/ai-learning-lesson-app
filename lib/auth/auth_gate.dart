@@ -102,6 +102,14 @@ class _AuthenticatedSessionGateState extends State<_AuthenticatedSessionGate> {
           );
         }
 
+        if (AuthAccountService.isPendingVerifiedSignupFor(widget.user)) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
         if (status.requiresEmailOtp && !status.isVerified) {
           AppProgressionController.instance.clear();
           return EmailOtpVerificationPage(

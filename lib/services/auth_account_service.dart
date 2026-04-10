@@ -21,6 +21,25 @@ class AuthVerificationStatus {
 class AuthAccountService {
   static const String appVersion = '1.0.0+1';
   static final _functions = FirebaseFunctions.instance;
+  static String? _pendingVerifiedSignupEmail;
+
+  static void beginPendingVerifiedSignup(String email) {
+    _pendingVerifiedSignupEmail = email.trim().toLowerCase();
+  }
+
+  static void clearPendingVerifiedSignup() {
+    _pendingVerifiedSignupEmail = null;
+  }
+
+  static bool isPendingVerifiedSignupFor(User? user) {
+    final pendingEmail = _pendingVerifiedSignupEmail;
+    final currentEmail = user?.email?.trim().toLowerCase();
+    if (pendingEmail == null || currentEmail == null) {
+      return false;
+    }
+
+    return pendingEmail == currentEmail;
+  }
 
   static Future<void> sendPasswordResetEmail(String email) async {
     await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
@@ -89,11 +108,11 @@ class AuthAccountService {
   static Future<int> startSignupEmailOtp(String email) async {
     final result = await _functions
         .httpsCallable(
-          'startSignupEmailOtp',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 20),
-          ),
-        )
+      'startSignupEmailOtp',
+      options: HttpsCallableOptions(
+        timeout: const Duration(seconds: 20),
+      ),
+    )
         .call({
       'email': email.trim(),
     });
@@ -124,11 +143,11 @@ class AuthAccountService {
   }) async {
     final result = await _functions
         .httpsCallable(
-          'verifySignupEmailOtp',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 20),
-          ),
-        )
+      'verifySignupEmailOtp',
+      options: HttpsCallableOptions(
+        timeout: const Duration(seconds: 20),
+      ),
+    )
         .call({
       'email': email.trim(),
       'code': code.trim(),
@@ -143,11 +162,11 @@ class AuthAccountService {
   ) async {
     await _functions
         .httpsCallable(
-          'claimVerifiedSignupEmail',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 20),
-          ),
-        )
+      'claimVerifiedSignupEmail',
+      options: HttpsCallableOptions(
+        timeout: const Duration(seconds: 20),
+      ),
+    )
         .call({
       'verificationToken': verificationToken,
     });
@@ -157,6 +176,7 @@ class AuthAccountService {
   }
 
   static Future<void> signOut() async {
+    clearPendingVerifiedSignup();
     try {
       await GoogleSignIn.instance.signOut();
     } catch (_) {
