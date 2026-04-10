@@ -6,13 +6,38 @@ import 'package:running_robot/services/auth_account_service.dart';
 
 class EmailOtpVerificationPage extends StatefulWidget {
   final String email;
-  final Future<void> Function() onVerified;
+  final Future<void> Function()? onVerified;
+  final Future<void> Function(String verificationToken)? onSignupVerified;
+  final bool isSignupFlow;
 
   const EmailOtpVerificationPage({
     super.key,
     required this.email,
-    required this.onVerified,
-  });
+    required Future<void> Function() onVerified,
+  })  : onSignupVerified = null,
+        onVerified = onVerified,
+        isSignupFlow = false;
+
+  const EmailOtpVerificationPage.forSignup({
+    super.key,
+    required this.email,
+    required Future<void> Function(String verificationToken) onVerified,
+  })  : onSignupVerified = onVerified,
+        onVerified = null,
+        isSignupFlow = true;
+
+  Future<void> handleVerified(String? verificationToken) async {
+    if (isSignupFlow) {
+      final callback = onSignupVerified;
+      if (callback == null || verificationToken == null) return;
+      await callback(verificationToken);
+      return;
+    }
+
+    final callback = onVerified;
+    if (callback == null) return;
+    await callback();
+  }
 
   @override
   State<EmailOtpVerificationPage> createState() =>
@@ -44,7 +69,9 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
 
     setState(() => _isSending = true);
     try {
-      final cooldownSeconds = await AuthAccountService.sendEmailOtp();
+      final cooldownSeconds = widget.isSignupFlow
+          ? await AuthAccountService.startSignupEmailOtp(widget.email)
+          : await AuthAccountService.sendEmailOtp();
       _startCooldown(cooldownSeconds);
       if (showSuccessMessage && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,8 +104,17 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
 
     setState(() => _isVerifying = true);
     try {
-      await AuthAccountService.verifyEmailOtp(code);
-      await widget.onVerified();
+      String? verificationToken;
+      if (widget.isSignupFlow) {
+        verificationToken = await AuthAccountService.verifySignupEmailOtp(
+          email: widget.email,
+          code: code,
+        );
+      } else {
+        await AuthAccountService.verifyEmailOtp(code);
+      }
+
+      await widget.handleVerified(verificationToken);
     } on FirebaseFunctionsException catch (error) {
       _showSnackBar(error.message ?? 'Unable to verify that code.');
     } catch (_) {
@@ -177,7 +213,7 @@ class _EmailOtpVerificationPageState extends State<EmailOtpVerificationPage> {
                       controller: _codeController,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
-                      inputFormatters: const [
+                      inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       decoration: InputDecoration(

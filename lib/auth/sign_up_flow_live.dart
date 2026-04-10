@@ -9,8 +9,13 @@ import 'package:running_robot/services/user_profile_service.dart';
 
 class SignupFlow extends StatefulWidget {
   final String initialEmail;
+  final String signupVerificationToken;
 
-  const SignupFlow({super.key, required this.initialEmail});
+  const SignupFlow({
+    super.key,
+    required this.initialEmail,
+    required this.signupVerificationToken,
+  });
 
   @override
   State<SignupFlow> createState() => _SignupFlowState();
@@ -23,7 +28,7 @@ class _SignupFlowState extends State<SignupFlow> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  DateTime? _selectedDob = DateTime(2000, 1, 1);
+  int _selectedAge = 18;
   int _currentPage = 0;
   bool _isSubmitting = false;
 
@@ -90,6 +95,9 @@ class _SignupFlowState extends State<SignupFlow> {
         password: password,
       );
 
+      await AuthAccountService.claimVerifiedSignupEmail(
+        widget.signupVerificationToken,
+      );
       await cred.user!.updateDisplayName(name);
       await cred.user!.reload();
       await _onSignupSuccess(FirebaseAuth.instance.currentUser ?? cred.user!);
@@ -194,15 +202,29 @@ class _SignupFlowState extends State<SignupFlow> {
                   'Continue',
                 ),
                 _pageContent(
-                  'What is your Date of Birth?',
+                  'How old are you?',
                   Expanded(
-                    child: CupertinoDatePicker(
-                      mode: CupertinoDatePickerMode.date,
-                      maximumDate: DateTime.now(),
-                      initialDateTime: _selectedDob,
-                      onDateTimeChanged: (value) {
-                        setState(() => _selectedDob = value);
+                    child: CupertinoPicker(
+                      itemExtent: 48,
+                      scrollController: FixedExtentScrollController(
+                        initialItem: _selectedAge - 13,
+                      ),
+                      onSelectedItemChanged: (index) {
+                        setState(() => _selectedAge = index + 13);
                       },
+                      children: List.generate(
+                        88,
+                        (index) => Center(
+                          child: Text(
+                            '${index + 13}',
+                            style: GoogleFonts.lato(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   'Continue',
@@ -279,5 +301,11 @@ class _SignupFlowState extends State<SignupFlow> {
         ],
       ),
     );
+  }
+
+  DateTime? get _selectedDob {
+    final now = DateTime.now();
+    final birthYear = now.year - _selectedAge;
+    return DateTime(birthYear, 1, 1);
   }
 }

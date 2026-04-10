@@ -6,6 +6,7 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:running_robot/auth/auth_gate.dart';
+import 'package:running_robot/auth/email_otp_verification_page.dart';
 import 'package:running_robot/auth/sign_up_flow_live.dart';
 import 'package:running_robot/auth/start_button.dart';
 import 'package:running_robot/services/auth_account_service.dart';
@@ -27,6 +28,49 @@ class _SignupPageState extends State<SignupPage> {
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _openSignupVerification(String email) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => EmailOtpVerificationPage.forSignup(
+          email: email,
+          onVerified: (verificationToken) async {
+            if (!mounted) return;
+            Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => SignupFlow(
+                  initialEmail: email,
+                  signupVerificationToken: verificationToken,
+                ),
+                transitionsBuilder: (_, animation, __, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeInOut;
+                  final tween = Tween(begin: begin, end: end)
+                      .chain(CurveTween(curve: curve));
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+          final tween = Tween(begin: begin, end: end)
+              .chain(CurveTween(curve: curve));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _runAuthAction(Future<void> Function() action) async {
@@ -260,12 +304,9 @@ class _SignupPageState extends State<SignupPage> {
                       TextField(
                         controller: _emailController,
                         onChanged: (value) {
-                          setState(() {
-                            _emailError = value.isEmpty ||
-                                    AuthAccountService.isValidEmailFormat(value)
-                                ? null
-                                : 'Invalid email format';
-                          });
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
                         },
                         keyboardType: TextInputType.emailAddress,
                         decoration: _inputDecoration('Enter your email'),
@@ -283,27 +324,11 @@ class _SignupPageState extends State<SignupPage> {
                           if (email.isEmpty ||
                               !AuthAccountService.isValidEmailFormat(email)) {
                             setState(() {
-                              _emailError = 'Invalid email format';
+                              _emailError = 'Enter a valid email address.';
                             });
                             return;
                           }
-                          Navigator.of(context).push(
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) =>
-                                  SignupFlow(initialEmail: email),
-                              transitionsBuilder: (_, animation, __, child) {
-                                const begin = Offset(1.0, 0.0);
-                                const end = Offset.zero;
-                                const curve = Curves.easeInOut;
-                                final tween = Tween(begin: begin, end: end)
-                                    .chain(CurveTween(curve: curve));
-                                return SlideTransition(
-                                  position: animation.drive(tween),
-                                  child: child,
-                                );
-                              },
-                            ),
-                          );
+                          _openSignupVerification(email);
                         },
                       ),
                       if (_emailError != null) ...[
