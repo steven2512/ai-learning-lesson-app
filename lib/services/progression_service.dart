@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:running_robot/models/activity_day_metrics.dart';
 import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/services/user_profile_service.dart';
@@ -19,11 +20,13 @@ class ProgressionSnapshot {
   final UserProfile profile;
   final Map<String, LessonProgress> lessonProgressById;
   final Set<String> weeklyActivityDateKeys;
+  final Map<String, ActivityDayMetrics> weeklyActivityByDateKey;
 
   const ProgressionSnapshot({
     required this.profile,
     required this.lessonProgressById,
     required this.weeklyActivityDateKeys,
+    required this.weeklyActivityByDateKey,
   });
 }
 
@@ -64,16 +67,20 @@ class ProgressionService {
     }
 
     final weeklyActivityDateKeys = <String>{};
+    final weeklyActivityByDateKey = <String, ActivityDayMetrics>{};
     for (final doc in activitySnapshots.docs) {
-      final data = doc.data();
-      final dateKey = data['dateKey']?.toString();
-      weeklyActivityDateKeys.add(dateKey?.isNotEmpty == true ? dateKey! : doc.id);
+      final dayMetrics = ActivityDayMetrics.fromMap(doc.id, doc.data());
+      weeklyActivityByDateKey[dayMetrics.dateKey] = dayMetrics;
+      if (dayMetrics.hasActivity) {
+        weeklyActivityDateKeys.add(dayMetrics.dateKey);
+      }
     }
 
     return ProgressionSnapshot(
       profile: profile,
       lessonProgressById: lessonProgressById,
       weeklyActivityDateKeys: weeklyActivityDateKeys,
+      weeklyActivityByDateKey: weeklyActivityByDateKey,
     );
   }
 

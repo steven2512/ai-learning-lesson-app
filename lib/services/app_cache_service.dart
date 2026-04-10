@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:running_robot/models/activity_day_metrics.dart';
 import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/services/progression_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppCacheService {
-  static const int _schemaVersion = 2;
+  static const int _schemaVersion = 3;
   static const String _snapshotPrefix = 'app_shell_snapshot_';
 
   static String _snapshotKey(String uid) => '$_snapshotPrefix$uid';
@@ -48,6 +49,9 @@ class AppCacheService {
         weeklyActivityDateKeys: _decodeWeeklyActivityDateKeys(
           data['weeklyActivityDateKeys'],
         ),
+        weeklyActivityByDateKey: _decodeWeeklyActivityByDateKey(
+          data['weeklyActivityByDateKey'],
+        ),
       );
     } catch (_) {
       return null;
@@ -70,6 +74,10 @@ class AppCacheService {
         },
         'weeklyActivityDateKeys': snapshot.weeklyActivityDateKeys.toList()
           ..sort(),
+        'weeklyActivityByDateKey': {
+          for (final entry in snapshot.weeklyActivityByDateKey.entries)
+            entry.key: entry.value.toMap(),
+        },
       },
     };
     await prefs.setString(_snapshotKey(uid), jsonEncode(payload));
@@ -93,6 +101,7 @@ class AppCacheService {
       'level': profile.level,
       'lessonsCompleted': profile.lessonsCompleted,
       'totalLearningSeconds': profile.totalLearningSeconds,
+      'totalSessionSeconds': profile.totalSessionSeconds,
       'todayLessonCount': profile.todayLessonCount,
       'todayLessonCountDate': profile.todayLessonCountDate,
       'dailyStreak': profile.dailyStreak,
@@ -131,6 +140,24 @@ class AppCacheService {
       if (value != null && value.isNotEmpty) {
         values.add(value);
       }
+    }
+    return values;
+  }
+
+  static Map<String, ActivityDayMetrics> _decodeWeeklyActivityByDateKey(
+    dynamic raw,
+  ) {
+    if (raw is! Map) return const <String, ActivityDayMetrics>{};
+
+    final values = <String, ActivityDayMetrics>{};
+    for (final entry in raw.entries) {
+      final key = entry.key?.toString();
+      final value = entry.value;
+      if (key == null || value is! Map) continue;
+      values[key] = ActivityDayMetrics.fromMap(
+        key,
+        Map<String, dynamic>.from(value),
+      );
     }
     return values;
   }

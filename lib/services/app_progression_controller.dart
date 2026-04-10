@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:running_robot/core/lesson_manifest.dart';
+import 'package:running_robot/models/activity_day_metrics.dart';
 import 'package:running_robot/models/lesson_progress.dart';
 import 'package:running_robot/models/user_profile.dart';
 import 'package:running_robot/services/app_cache_service.dart';
@@ -37,6 +38,7 @@ class AppProgressionController extends ChangeNotifier {
   int get totalXp => profile?.xp ?? 0;
   int get level => profile?.level ?? 1;
   int get totalLearningSeconds => profile?.totalLearningSeconds ?? 0;
+  int get totalSessionSeconds => profile?.totalSessionSeconds ?? 0;
   int get dailyStreak => profile?.dailyStreak ?? 0;
   int get todayLessonCount => profile?.todayLessonCount ?? 0;
   String? get lastDailyLessonDate => profile?.lastDailyLessonDate;
@@ -44,6 +46,8 @@ class AppProgressionController extends ChangeNotifier {
   String? get lastActivityDateKey => profile?.lastActivityDateKey;
   Set<String> get weeklyActivityDateKeys =>
       _snapshot?.weeklyActivityDateKeys ?? const <String>{};
+  Map<String, ActivityDayMetrics> get weeklyActivityByDateKey =>
+      _snapshot?.weeklyActivityByDateKey ?? const <String, ActivityDayMetrics>{};
 
   int get courseProgressPercent {
     if (totalLessonCount == 0) return 0;
