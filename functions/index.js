@@ -59,6 +59,10 @@ function lessonDoc(uid, lessonId) {
   return userDoc(uid).collection("lessonProgress").doc(lessonId);
 }
 
+function activityDayDoc(uid, dateKey) {
+  return userDoc(uid).collection("activityDays").doc(dateKey);
+}
+
 function levelForXp(xp) {
   const safeXp = Math.max(0, readInt(xp, 0));
   return Math.floor(safeXp / XP_PER_LEVEL) + 1;
@@ -150,6 +154,14 @@ function userCompletionSummaryPayload({
   };
 }
 
+function activitySummaryPayload({ activityStreak, todayKey }) {
+  return {
+    activityStreak,
+    lastActivityDateKey: todayKey,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
 function ensureUnlocked(currentLesson, lesson) {
   if (lesson.globalLessonNumber > currentLesson) {
     throw new HttpsError(
@@ -158,6 +170,70 @@ function ensureUnlocked(currentLesson, lesson) {
     );
   }
 }
+
+exports.markDailyActivity = onCall(async (request) => {
+  const uid = requireAuth(request);
+
+  const response = await db.runTransaction(async (transaction) => {
+    const userRef = userDoc(uid);
+    const userSnap = await transaction.get(userRef);
+
+    if (!userSnap.exists) {
+      throw new HttpsError(
+        "failed-precondition",
+        "User profile must exist before tracking daily activity.",
+      );
+    }
+
+    const userData = userSnap.data() ?? {};
+    const todayKey = dateKeyForOffset(userData.timezoneOffsetMinutes);
+    const activityRef = activityDayDoc(uid, todayKey);
+    const activitySnap = await transaction.get(activityRef);
+
+    const activityStreak = computeNextDailyStreak(
+      userData.lastActivityDateKey ?? null,
+      todayKey,
+      readInt(userData.activityStreak, 0),
+    );
+
+    transaction.set(
+      activityRef,
+      {
+        dateKey: todayKey,
+        didOpenApp: true,
+        lastSeenAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...(activitySnap.exists
+          ? {}
+          : {
+              firstSeenAt: admin.firestore.FieldValue.serverTimestamp(),
+            }),
+      },
+      { merge: true },
+    );
+
+    transaction.set(
+      userRef,
+      activitySummaryPayload({
+        activityStreak,
+        todayKey,
+      }),
+      { merge: true },
+    );
+
+    return {
+      activityStreak,
+      todayKey,
+    };
+  });
+
+  logger.info("Tracked daily activity", {
+    uid,
+    activityStreak: response.activityStreak,
+    todayKey: response.todayKey,
+  });
+
+  return response;
+});
 
 exports.startLesson = onCall(async (request) => {
   const uid = requireAuth(request);

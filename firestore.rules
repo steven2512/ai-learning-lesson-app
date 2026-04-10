@@ -62,6 +62,8 @@ service cloud.firestore {
         'todayLessonCountDate',
         'dailyStreak',
         'lastDailyLessonDate',
+        'activityStreak',
+        'lastActivityDateKey',
         'lastDevice',
         'appVersion',
         'timezone',
@@ -117,6 +119,8 @@ service cloud.firestore {
         'todayLessonCountDate',
         'dailyStreak',
         'lastDailyLessonDate',
+        'activityStreak',
+        'lastActivityDateKey',
         'updatedAt'
       ];
     }
@@ -151,7 +155,8 @@ service cloud.firestore {
           !(resource.data.lessonsCompleted is int) ||
           !(resource.data.totalLearningSeconds is int) ||
           !(resource.data.todayLessonCount is int) ||
-          !(resource.data.dailyStreak is int);
+          !(resource.data.dailyStreak is int) ||
+          !(resource.data.activityStreak is int);
     }
 
     function validLegacyIntValue(field, fallback) {
@@ -219,6 +224,9 @@ service cloud.firestore {
           request.resource.data.dailyStreak is int &&
           request.resource.data.dailyStreak >= 0 &&
           optionalString(request.resource.data.lastDailyLessonDate) &&
+          request.resource.data.activityStreak is int &&
+          request.resource.data.activityStreak >= 0 &&
+          optionalString(request.resource.data.lastActivityDateKey) &&
           optionalTimestamp(request.resource.data.dob) &&
           optionalString(request.resource.data.provider) &&
           optionalString(request.resource.data.lastDevice) &&
@@ -240,7 +248,9 @@ service cloud.firestore {
           request.resource.data.todayLessonCount == 0 &&
           request.resource.data.todayLessonCountDate == null &&
           request.resource.data.dailyStreak == 0 &&
-          request.resource.data.lastDailyLessonDate == null;
+          request.resource.data.lastDailyLessonDate == null &&
+          request.resource.data.activityStreak == 0 &&
+          request.resource.data.lastActivityDateKey == null;
     }
 
     function validMetadataUpdate() {
@@ -257,7 +267,9 @@ service cloud.firestore {
           sameValue('todayLessonCount') &&
           sameValue('todayLessonCountDate') &&
           sameValue('dailyStreak') &&
-          sameValue('lastDailyLessonDate');
+          sameValue('lastDailyLessonDate') &&
+          sameValue('activityStreak') &&
+          sameValue('lastActivityDateKey');
     }
 
     function validLegacySchemaRepair(userId) {
@@ -282,6 +294,12 @@ service cloud.firestore {
             request.resource.data.lastDailyLessonDate ==
                 existingStringOrDefault('lastDailyLessonDate', null) ||
             request.resource.data.lastDailyLessonDate == null
+          ) &&
+          validLegacyIntValue('activityStreak', 0) &&
+          (
+            request.resource.data.lastActivityDateKey ==
+                existingStringOrDefault('lastActivityDateKey', null) ||
+            request.resource.data.lastActivityDateKey == null
           );
     }
 
@@ -299,6 +317,8 @@ service cloud.firestore {
           sameValue('todayLessonCountDate') &&
           sameValue('dailyStreak') &&
           sameValue('lastDailyLessonDate') &&
+          sameValue('activityStreak') &&
+          sameValue('lastActivityDateKey') &&
           request.resource.data.currentLessonStepIndex is int &&
           request.resource.data.currentLessonStepIndex >= 0;
     }
@@ -325,6 +345,8 @@ service cloud.firestore {
           sameValue('lastLogin') &&
           sameValue('level') &&
           sameValue('totalLearningSeconds') &&
+          sameValue('activityStreak') &&
+          sameValue('lastActivityDateKey') &&
           request.resource.data.lessonsCompleted ==
               resource.data.lessonsCompleted + 1 &&
           request.resource.data.xp == resource.data.xp + 50 &&
@@ -441,6 +463,10 @@ service cloud.firestore {
           (validMetadataUpdate() || validLegacySchemaRepair(userId));
 
       match /lessonProgress/{lessonId} {
+        allow read: if isOwner(userId);
+      }
+
+      match /activityDays/{dateKey} {
         allow read: if isOwner(userId);
       }
     }
